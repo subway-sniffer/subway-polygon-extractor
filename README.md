@@ -299,6 +299,29 @@ y -> 3D Z
 층/높이 값 -> 3D Y
 ```
 
+## 3D 개발용 예시 JSON
+
+현재 샘플 이미지에서 추출한 grouping 결과를 예시 JSON으로 제공합니다.
+
+```text
+examples/grouped_polygons_example.json
+```
+
+이 파일은 transform + auto-centering이 끝난 polygon 좌표와 색상 정보를 함께 포함합니다.
+
+3D 제작 시 주로 사용할 필드:
+
+```text
+groups[].group_id                  층/구역 후보 group ID
+groups[].dominant_color_rgb        group 대표 색상
+polygons[].group_id                polygon이 속한 group ID
+polygons[].color_cluster           K-Means cluster ID
+polygons[].color_rgb               polygon별 재질 색상
+polygons[].points_transformed      3D mesh 생성용 2D 좌표
+```
+
+`semantic.layer`, `semantic.zone_type`은 아직 확정하지 않으며 이후 OCR/LLM 단계에서 채웁니다.
+
 ## 테스트: `color_clusters.json` 재실행
 
 저장된 K-Means cluster center와 selected 값을 다시 읽어서 폴리곤을 뽑는 시험입니다.
