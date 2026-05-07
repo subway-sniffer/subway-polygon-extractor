@@ -1,4 +1,6 @@
 __pycache__/
 *.pyc
 debug_output/
+output/
+tests/output*/
 venv/

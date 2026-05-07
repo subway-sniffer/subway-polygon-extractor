@@ -1,0 +1,7 @@
+{
+  "floor_blue": {
+    "color_space": "hsv",
+    "lower": [90, 50, 50],
+    "upper": [110, 255, 255]
+  }
+}

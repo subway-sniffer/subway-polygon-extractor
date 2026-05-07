@@ -35,6 +35,27 @@ def save_debug_images(debug_original, polygon_canvas, output_dir):
     return original_path, canvas_path
 
 
+def save_cluster_debug_images(img, clusters, output_dir):
+    """Save one mask and one color preview image for each K-Means cluster."""
+    output_path = Path(output_dir) / "clusters"
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    saved_paths = []
+    for cluster in clusters:
+        cluster_id = cluster["id"]
+        mask = cluster["mask"]
+        result = cv2.bitwise_and(img, img, mask=mask)
+
+        mask_path = output_path / f"cluster_{cluster_id:02d}_mask.png"
+        result_path = output_path / f"cluster_{cluster_id:02d}_result.png"
+
+        cv2.imwrite(str(mask_path), mask)
+        cv2.imwrite(str(result_path), result)
+        saved_paths.append((mask_path, result_path))
+
+    return saved_paths
+
+
 def show_debug_images(debug_original, polygon_canvas):
     """Show debug images with OpenCV windows."""
     cv2.imshow("1. Debug: What did OpenCV find?", debug_original)
