@@ -60,7 +60,7 @@ def build_clustering_valid_mask(img):
     """Create a mask that excludes white background, black text, and red markers."""
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-    white_mask = cv2.inRange(hsv, np.array([0, 0, 220]), np.array([179, 45, 255]))
+    white_mask = cv2.inRange(hsv, np.array([0, 0, 245]), np.array([179, 25, 255]))
     black_mask = cv2.inRange(hsv, np.array([0, 0, 0]), np.array([179, 255, 55]))
     red_mask = cv2.inRange(hsv, np.array([0, 100, 100]), np.array([10, 255, 255]))
     red_mask += cv2.inRange(hsv, np.array([160, 100, 100]), np.array([179, 255, 255]))
@@ -124,10 +124,14 @@ def extract_color_clusters(img, k=6, color_space="lab", attempts=5, rng_seed=42)
             }
         )
 
+    clusters = sorted(clusters, key=lambda cluster: cluster["pixel_count"], reverse=True)
+    for cluster_id, cluster in enumerate(clusters, start=1):
+        cluster["id"] = cluster_id
+
     return {
         "color_space": color_space.lower(),
         "valid_mask": valid_mask,
-        "centers": centers,
+        "centers": np.array([cluster["center"] for cluster in clusters], dtype=np.float32),
         "clusters": clusters,
     }
 

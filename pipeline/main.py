@@ -19,7 +19,7 @@ try:
         save_color_metadata,
         save_floor_polygons_json,
     )
-    from pipeline.marker_detection import detect_red_markers, get_perspective_matrix
+    from pipeline.marker_detection import get_or_create_marker_config
     from pipeline.polygon_extraction import (
         DEFAULT_LOWER_BLUE,
         DEFAULT_UPPER_BLUE,
@@ -46,7 +46,7 @@ except ModuleNotFoundError:
         parse_cluster_ids,
     )
     from export_json import build_extraction_metadata, load_color_ranges, save_color_metadata, save_floor_polygons_json
-    from marker_detection import detect_red_markers, get_perspective_matrix
+    from marker_detection import get_or_create_marker_config
     from polygon_extraction import (
         DEFAULT_LOWER_BLUE,
         DEFAULT_UPPER_BLUE,
@@ -85,6 +85,8 @@ def parse_args():
     )
     parser.add_argument("--color-config", default="config/color_ranges.json", help="HSV color range config path.")
     parser.add_argument("--color-range", default="floor_blue", help="Color range name to use in HSV mode.")
+    parser.add_argument("--marker-config", default="config/marker_config.json", help="Marker detection cache config path.")
+    parser.add_argument("--refresh-markers", action="store_true", help="Detect red markers again and overwrite marker config.")
     parser.add_argument("--output-dir", default="../test_image_output/output", help="Directory for JSON output files.")
     parser.add_argument("--min-area", type=float, default=DEFAULT_MIN_AREA, help="Minimum contour area.")
     parser.add_argument("--epsilon-ratio", type=float, default=DEFAULT_EPSILON_RATIO, help="approxPolyDP epsilon ratio.")
@@ -307,6 +309,8 @@ def run_pipeline(
     include_clusters=None,
     color_config="config/color_ranges.json",
     color_range="floor_blue",
+    marker_config="config/marker_config.json",
+    refresh_markers=False,
     output_dir="../test_image_output/output",
     min_area=DEFAULT_MIN_AREA,
     epsilon_ratio=DEFAULT_EPSILON_RATIO,
@@ -319,8 +323,12 @@ def run_pipeline(
     """Run marker detection, polygon extraction, vertex transform, and visualization."""
     img = load_image(image_path)
 
-    marker_points = detect_red_markers(img)
-    matrix, max_w, max_h = get_perspective_matrix(marker_points)
+    marker_points, matrix, max_w, max_h, marker_metadata, markers_refreshed = get_or_create_marker_config(
+        img,
+        image_path,
+        marker_config,
+        refresh=refresh_markers,
+    )
     raw_polygons, cluster_result, selected_hsv_range, selected_cluster_ids, polygon_groups = extract_raw_polygons(
         img,
         mode=mode,
@@ -373,6 +381,8 @@ def run_pipeline(
     return {
         "mode": mode,
         "markers": marker_points,
+        "marker_metadata": marker_metadata,
+        "markers_refreshed": markers_refreshed,
         "raw_polygons": raw_polygons,
         "shifted_polygons": shifted_polygons,
         "color_groups": color_groups,
@@ -393,6 +403,8 @@ def main():
         include_clusters=args.include_clusters,
         color_config=args.color_config,
         color_range=args.color_range,
+        marker_config=args.marker_config,
+        refresh_markers=args.refresh_markers,
         output_dir=args.output_dir,
         min_area=args.min_area,
         epsilon_ratio=args.epsilon_ratio,
@@ -403,6 +415,7 @@ def main():
         debug_dir=args.debug_dir,
     )
     print(f"markers={len(result['markers'])}, polygons={len(result['raw_polygons'])}")
+    print(f"marker_config={args.marker_config}, refreshed={result['markers_refreshed']}")
     if result["cluster_result"] is not None:
         for cluster in result["cluster_result"]["clusters"]:
             center = [round(float(value), 2) for value in cluster["center"]]

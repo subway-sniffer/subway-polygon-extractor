@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 import cv2
 import numpy as np
 
@@ -88,3 +91,57 @@ def get_perspective_matrix(points):
 
     matrix = cv2.getPerspectiveTransform(src_pts, dst_pts)
     return matrix, TARGET_WIDTH, target_height
+
+
+def build_marker_config(image_path, points, matrix, target_width, target_height):
+    """Build serializable marker detection metadata."""
+    ordered_points = order_points(np.array(points)).tolist() if len(points) == 4 else []
+    return {
+        "image": image_path,
+        "marker_points": points,
+        "ordered_marker_points": ordered_points,
+        "target_width": target_width,
+        "target_height": target_height,
+        "perspective_matrix": matrix.tolist() if matrix is not None else None,
+    }
+
+
+def save_marker_config(config, config_path):
+    """Save marker detection metadata to JSON."""
+    path = Path(config_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as file:
+        json.dump(config, file, ensure_ascii=False, indent=2)
+    return path
+
+
+def load_marker_config(config_path):
+    """Load marker detection metadata from JSON."""
+    path = Path(config_path)
+    if not path.exists():
+        return None
+    with path.open("r", encoding="utf-8") as file:
+        return json.load(file)
+
+
+def marker_config_to_runtime(config):
+    """Convert saved marker config values to runtime matrix and point objects."""
+    matrix = np.array(config["perspective_matrix"], dtype=np.float32)
+    target_width = int(config["target_width"])
+    target_height = int(config["target_height"])
+    points = config.get("marker_points", [])
+    return points, matrix, target_width, target_height
+
+
+def get_or_create_marker_config(img, image_path, config_path, refresh=False):
+    """Load marker config when available, otherwise detect markers and save config."""
+    config = None if refresh else load_marker_config(config_path)
+    if config is not None:
+        points, matrix, target_width, target_height = marker_config_to_runtime(config)
+        return points, matrix, target_width, target_height, config, False
+
+    points = detect_red_markers(img)
+    matrix, target_width, target_height = get_perspective_matrix(points)
+    config = build_marker_config(image_path, points, matrix, target_width, target_height)
+    save_marker_config(config, config_path)
+    return points, matrix, target_width, target_height, config, True

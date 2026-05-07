@@ -20,7 +20,7 @@ from pipeline.color_clustering import (  # noqa: E402
     rebuild_clusters_from_metadata,
 )
 from pipeline.export_json import save_color_metadata, save_floor_polygons_json  # noqa: E402
-from pipeline.marker_detection import detect_red_markers, get_perspective_matrix  # noqa: E402
+from pipeline.marker_detection import get_or_create_marker_config  # noqa: E402
 from pipeline.polygon_extraction import DEFAULT_EPSILON_RATIO, DEFAULT_MIN_AREA, extract_polygons_from_mask  # noqa: E402
 from pipeline.transform import auto_center_polygons, transform_polygons  # noqa: E402
 
@@ -64,7 +64,7 @@ def selected_cluster_ids_from_metadata(cluster_metadata):
     return [cluster["id"] for cluster in cluster_metadata["clusters"] if cluster.get("selected", False)]
 
 
-def extract_centered_polygons_from_cluster_file(img, cluster_file, min_area, epsilon_ratio):
+def extract_centered_polygons_from_cluster_file(img, image_path, cluster_file, marker_config, refresh_markers, min_area, epsilon_ratio):
     """Read color_clusters.json and extract centered polygons from saved cluster centers."""
     cluster_metadata = load_json(cluster_file)
     rebuilt_cluster_result = rebuild_clusters_from_metadata(img, cluster_metadata)
@@ -97,8 +97,12 @@ def extract_centered_polygons_from_cluster_file(img, cluster_file, min_area, eps
             }
         )
 
-    marker_points = detect_red_markers(img)
-    matrix, max_w, max_h = get_perspective_matrix(marker_points)
+    marker_points, matrix, max_w, max_h, _marker_metadata, _markers_refreshed = get_or_create_marker_config(
+        img,
+        image_path,
+        marker_config,
+        refresh=refresh_markers,
+    )
     if matrix is None or max_w <= 0 or max_h <= 0:
         return marker_points, raw_polygons, [], [], (1000, 1000)
 
@@ -208,7 +212,9 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Replay polygon extraction from saved color_clusters.json.")
     parser.add_argument("--image", default="test_marker.png", help="Input image path.")
     parser.add_argument("--output-dir", default="../test_image_output/tests/output_replay_k4", help="Test output directory.")
-    parser.add_argument("--include-clusters", default="1,3", help="Selected cluster ids for the k=4 test.")
+    parser.add_argument("--marker-config", default="config/marker_config.json", help="Marker detection cache config path.")
+    parser.add_argument("--refresh-markers", action="store_true", help="Detect red markers again and overwrite marker config.")
+    parser.add_argument("--include-clusters", default="1,2,3", help="Selected cluster ids for the k=4 test.")
     parser.add_argument("--kmeans-k", type=int, default=4, help="K-Means cluster count for this test.")
     parser.add_argument("--min-area", type=float, default=DEFAULT_MIN_AREA, help="Minimum contour area.")
     parser.add_argument("--epsilon-ratio", type=float, default=DEFAULT_EPSILON_RATIO, help="approxPolyDP epsilon ratio.")
@@ -244,7 +250,10 @@ def main():
 
     marker_points, raw_polygons, shifted_polygons, color_groups, canvas_size = extract_centered_polygons_from_cluster_file(
         img,
+        args.image,
         cluster_file,
+        marker_config=args.marker_config,
+        refresh_markers=args.refresh_markers,
         min_area=args.min_area,
         epsilon_ratio=args.epsilon_ratio,
     )

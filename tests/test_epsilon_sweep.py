@@ -55,7 +55,7 @@ def parse_args():
     parser.add_argument("--ratios", default="0.001,0.003,0.005,0.01", help="Comma-separated epsilon ratios.")
     parser.add_argument("--mode", choices=["hsv", "kmeans"], default="kmeans", help="Extraction mode.")
     parser.add_argument("--kmeans-k", type=int, default=4, help="K-Means cluster count.")
-    parser.add_argument("--include-clusters", default="1,3", help="Selected K-Means cluster ids.")
+    parser.add_argument("--include-clusters", default="1,2,3", help="Selected K-Means cluster ids.")
     parser.add_argument("--open-kernel", type=int, default=3, help="Per-cluster MORPH_OPEN kernel size.")
     parser.add_argument("--close-kernel", type=int, default=5, help="Per-cluster MORPH_CLOSE kernel size.")
     parser.add_argument("--debug", action="store_true", help="Save debug images for every ratio.")
