@@ -428,25 +428,33 @@ floor_polygons.json
 ../venv/bin/python pipeline/polygon_grouping.py \
   --input ../test_image_output/output/floor_polygons.json \
   --output ../test_image_output/output/polygon_groups.json \
-  --debug-image ../test_image_output/output/debug/polygon_groups.png \
-  --target-groups 2
+  --debug-image ../test_image_output/output/debug/polygon_groups.png
 ```
 
 기본 인접 기준:
 
 ```text
-adjacency_distance=25
-same_color_distance=100
+adjacency_mode=contact_area
+contact_distance=8
+min_contact_area=700
 ```
 
-인접 조건:
+인접 조건은 두 polygon을 채운 mask로 만든 뒤, `contact_distance`만큼 확장했을 때 서로 맞닿거나 겹치는 픽셀 면적이 `min_contact_area` 이상인지 확인합니다.
+
+쉽게 말하면 단순히 "가장 가까운 점이 가까운가"가 아니라, "붙어 있는 면적이 충분히 큰가"를 봅니다.
+
+기존 거리 기반 기준을 사용하려면 다음 옵션을 사용합니다.
+
+```bash
+../venv/bin/python pipeline/polygon_grouping.py --adjacency-mode distance
+```
+
+거리 기반 모드에서는 다음 조건을 사용합니다.
 
 - bbox 간 gap이 `adjacency_distance` 이하
 - polygon 외곽선 최단거리가 `adjacency_distance` 이하
 - 같은 color_cluster이고 centroid 거리가 `same_color_distance` 이하
 - 한 polygon의 centroid가 다른 polygon의 bbox 안에 있음
-
-같은 색상 조건은 너무 멀리 떨어진 동일 색상 폴리곤이 묶이지 않도록 bbox gap도 `same_color_distance` 이하일 때만 적용합니다.
 
 목표 그룹 수 자동 조정:
 
@@ -496,22 +504,18 @@ adjacency_edges  어떤 polygon끼리 어떤 이유로 연결됐는지 기록
 
 ```text
 polygons=10
-groups=1
-edges=18
+groups=2
+edges=9
 ```
 
-connected components 방식이라 인접 관계가 사슬처럼 이어지면 하나의 큰 group이 될 수 있습니다.
-group이 너무 크게 묶이면 `--target-groups`, `--target-layers`, `--adjacency-distance`, `--same-color-distance` 값을 조정합니다.
-
-현재 샘플에서 `--target-groups 2` 결과:
+현재 샘플의 contact area 기준 결과:
 
 ```text
-polygons=10
-groups=2
-edges=11
 group_001: 5 polygons
 group_002: 5 polygons
 ```
+
+group이 너무 크게 묶이면 `--min-contact-area`를 높이고, 너무 잘게 나뉘면 `--min-contact-area`를 낮춥니다.
 
 debug image와 group별 image는 polygon 내부를 기존 K-Means cluster 색상(`color_rgb`)으로 채우고, group bbox/외곽선만 group 표시색으로 그립니다.
 
@@ -520,16 +524,31 @@ debug image와 group별 image는 polygon 내부를 기존 K-Means cluster 색상
 ```bash
 ../venv/bin/python pipeline/polygon_grouping.py \
   --input ../test_image_output/output/floor_polygons.json \
-  --adjacency-distance 10 \
-  --same-color-distance 60
+  --contact-distance 8 \
+  --min-contact-area 700
 ```
 
 ## 테스트: 폴리곤 Grouping 이미지
 
-grouping을 실행하고 group별 채움 이미지를 저장하는 테스트입니다.
+grouping을 실행하고 group별 채움 이미지를 저장하는 테스트입니다. 기본 샘플 기준으로 `groups=2`, `edges=9`인지 검증하고, 모든 edge가 `contact_area` 기준으로 생성됐는지도 확인합니다.
 
 ```bash
 ../venv/bin/python tests/test_polygon_grouping.py
+```
+
+다른 임계값을 시험할 때는 기대값을 함께 바꿀 수 있습니다.
+
+```bash
+../venv/bin/python tests/test_polygon_grouping.py \
+  --min-contact-area 1200 \
+  --expected-groups 2 \
+  --expected-edges 8
+```
+
+검증 없이 이미지와 JSON만 저장하려면:
+
+```bash
+../venv/bin/python tests/test_polygon_grouping.py --no-validate
 ```
 
 테스트 산출물:

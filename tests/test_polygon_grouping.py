@@ -57,6 +57,35 @@ def save_group_images(polygons, groups, output_dir, canvas_width, canvas_height)
     return saved_paths
 
 
+def validate_grouping_result(payload, expected_groups=None, expected_edges=None, require_contact_area_edges=False):
+    """Validate grouping output for repeatable sample tests."""
+    grouping = payload["grouping"]
+    edges = payload["adjacency_edges"]
+
+    if expected_groups is not None and grouping["group_count"] != expected_groups:
+        raise AssertionError(f"expected groups={expected_groups}, got {grouping['group_count']}")
+
+    if expected_edges is not None and grouping["edge_count"] != expected_edges:
+        raise AssertionError(f"expected edges={expected_edges}, got {grouping['edge_count']}")
+
+    if require_contact_area_edges:
+        invalid_edges = [edge for edge in edges if "contact_area" not in edge.get("reasons", [])]
+        missing_area = [edge for edge in edges if edge.get("contact_area") is None]
+        if invalid_edges or missing_area:
+            raise AssertionError("expected every edge to be created by contact_area and include contact_area value")
+
+
+def print_contact_area_summary(edges):
+    """Print contact area values for quick manual inspection."""
+    contact_edges = [edge for edge in edges if edge.get("contact_area") is not None]
+    if not contact_edges:
+        return
+
+    print("contact_area_edges:")
+    for edge in sorted(contact_edges, key=lambda item: item["contact_area"], reverse=True):
+        print(f"  {edge['a']} - {edge['b']}: contact_area={edge['contact_area']}")
+
+
 def parse_args():
     """Parse test options."""
     parser = argparse.ArgumentParser(description="Test polygon grouping and save per-group images.")
@@ -64,13 +93,20 @@ def parse_args():
     parser.add_argument("--output", default="../test_image_output/tests/output_polygon_grouping/polygon_groups.json")
     parser.add_argument("--debug-image", default="../test_image_output/tests/output_polygon_grouping/polygon_groups.png")
     parser.add_argument("--group-image-dir", default="../test_image_output/tests/output_polygon_grouping/group_images")
+    parser.add_argument("--adjacency-mode", choices=["contact_area", "distance"], default="contact_area")
     parser.add_argument("--adjacency-distance", type=float, default=25)
     parser.add_argument("--same-color-distance", type=float, default=100)
-    parser.add_argument("--target-groups", type=int, default=2)
+    parser.add_argument("--contact-distance", type=int, default=8)
+    parser.add_argument("--min-contact-area", type=int, default=700)
+    parser.add_argument("--target-groups", type=int, default=None)
     parser.add_argument("--target-layers", type=int, default=None)
     parser.add_argument("--target-group-strategy", choices=["centroid_y", "strongest_edges"], default="centroid_y")
     parser.add_argument("--canvas-width", type=int, default=1400)
     parser.add_argument("--canvas-height", type=int, default=900)
+    parser.add_argument("--expected-groups", type=int, default=2)
+    parser.add_argument("--expected-edges", type=int, default=9)
+    parser.add_argument("--require-contact-area-edges", action="store_true", default=True)
+    parser.add_argument("--no-validate", action="store_true")
     return parser.parse_args()
 
 
@@ -79,7 +115,14 @@ def main():
     args = parse_args()
     source_data = load_json(args.input)
     polygons = load_input_polygons(source_data)
-    graph = build_adjacency_graph(polygons, args.adjacency_distance, args.same_color_distance)
+    graph = build_adjacency_graph(
+        polygons,
+        args.adjacency_distance,
+        args.same_color_distance,
+        args.adjacency_mode,
+        args.contact_distance,
+        args.min_contact_area,
+    )
     target_group_count = args.target_groups if args.target_groups is not None else args.target_layers
     graph, target_metadata = select_edges_for_target_groups(
         polygons,
@@ -100,6 +143,13 @@ def main():
         target_metadata,
     )
     save_json(payload, args.output)
+    if not args.no_validate:
+        validate_grouping_result(
+            payload,
+            expected_groups=args.expected_groups,
+            expected_edges=args.expected_edges,
+            require_contact_area_edges=args.require_contact_area_edges,
+        )
     draw_polygon_groups_debug(
         polygons_with_groups,
         groups,
@@ -116,6 +166,7 @@ def main():
     )
 
     print(f"polygons={len(polygons)}, groups={len(groups)}, edges={len(graph['edges'])}")
+    print_contact_area_summary(graph["edges"])
     print(f"output={args.output}")
     print(f"debug_image={args.debug_image}")
     print(f"group_images={len(group_image_paths)}")

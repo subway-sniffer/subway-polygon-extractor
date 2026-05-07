@@ -214,6 +214,50 @@ def polygon_min_distance(points_a, points_b):
     return float(min_distance)
 
 
+def shifted_contour(poly, origin_x, origin_y):
+    """Return polygon contour shifted into a local ROI."""
+    contour = np.array(poly["points_transformed"], dtype=np.int32).reshape((-1, 1, 2)).copy()
+    contour[:, :, 0] -= int(origin_x)
+    contour[:, :, 1] -= int(origin_y)
+    return contour
+
+
+def polygon_contact_area(poly_a, poly_b, contact_distance):
+    """Return near-contact area between two filled polygons."""
+    contour_a = np.array(poly_a["points_transformed"], dtype=np.int32).reshape((-1, 1, 2))
+    contour_b = np.array(poly_b["points_transformed"], dtype=np.int32).reshape((-1, 1, 2))
+    all_points = np.vstack([contour_a.reshape((-1, 2)), contour_b.reshape((-1, 2))])
+    x, y, w, h = cv2.boundingRect(all_points)
+    padding = int(contact_distance) + 3
+    origin_x = x - padding
+    origin_y = y - padding
+    roi_w = max(1, w + (padding * 2))
+    roi_h = max(1, h + (padding * 2))
+
+    mask_a = np.zeros((roi_h, roi_w), dtype=np.uint8)
+    mask_b = np.zeros((roi_h, roi_w), dtype=np.uint8)
+    cv2.fillPoly(mask_a, [shifted_contour(poly_a, origin_x, origin_y)], 255)
+    cv2.fillPoly(mask_b, [shifted_contour(poly_b, origin_x, origin_y)], 255)
+
+    intersection_area = int(np.count_nonzero((mask_a > 0) & (mask_b > 0)))
+    if contact_distance <= 0:
+        return {
+            "contact_area": intersection_area,
+            "intersection_area": intersection_area,
+        }
+
+    kernel_size = (int(contact_distance) * 2) + 1
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (kernel_size, kernel_size))
+    dilated_a = cv2.dilate(mask_a, kernel)
+    dilated_b = cv2.dilate(mask_b, kernel)
+    near_b_from_a = int(np.count_nonzero((dilated_a > 0) & (mask_b > 0)))
+    near_a_from_b = int(np.count_nonzero((dilated_b > 0) & (mask_a > 0)))
+    return {
+        "contact_area": near_b_from_a + near_a_from_b,
+        "intersection_area": intersection_area,
+    }
+
+
 def centroid_distance(poly_a, poly_b):
     """Return centroid distance between two polygon records."""
     a = np.array(poly_a["centroid_transformed"], dtype=np.float64)
@@ -221,33 +265,47 @@ def centroid_distance(poly_a, poly_b):
     return float(np.linalg.norm(a - b))
 
 
-def adjacency_details(poly_a, poly_b, adjacency_distance, same_color_distance):
+def adjacency_details(
+    poly_a,
+    poly_b,
+    adjacency_distance,
+    same_color_distance,
+    adjacency_mode="contact_area",
+    contact_distance=8,
+    min_contact_area=700,
+):
     """Return adjacency decision details for a polygon pair."""
     gap = bbox_gap(poly_a["bbox_transformed"], poly_b["bbox_transformed"])
     centroid_dist = centroid_distance(poly_a, poly_b)
     reasons = []
     polygon_distance = None
+    contact = {"contact_area": None, "intersection_area": None}
 
-    if gap <= adjacency_distance:
-        reasons.append("bbox_close")
+    if adjacency_mode == "contact_area":
+        contact = polygon_contact_area(poly_a, poly_b, contact_distance)
+        if contact["contact_area"] >= min_contact_area:
+            reasons.append("contact_area")
+    else:
+        if gap <= adjacency_distance:
+            reasons.append("bbox_close")
 
-    if point_in_bbox(poly_a["centroid_transformed"], poly_b["bbox_transformed"]) or point_in_bbox(
-        poly_b["centroid_transformed"],
-        poly_a["bbox_transformed"],
-    ):
-        reasons.append("centroid_inside_bbox")
+        if point_in_bbox(poly_a["centroid_transformed"], poly_b["bbox_transformed"]) or point_in_bbox(
+            poly_b["centroid_transformed"],
+            poly_a["bbox_transformed"],
+        ):
+            reasons.append("centroid_inside_bbox")
 
-    if gap <= max(adjacency_distance, same_color_distance):
-        polygon_distance = polygon_min_distance(poly_a["points_transformed"], poly_b["points_transformed"])
-        if polygon_distance <= adjacency_distance:
-            reasons.append("polygon_distance")
+        if gap <= max(adjacency_distance, same_color_distance):
+            polygon_distance = polygon_min_distance(poly_a["points_transformed"], poly_b["points_transformed"])
+            if polygon_distance <= adjacency_distance:
+                reasons.append("polygon_distance")
 
-    if (
-        poly_a.get("color_cluster") == poly_b.get("color_cluster")
-        and centroid_dist <= same_color_distance
-        and gap <= same_color_distance
-    ):
-        reasons.append("same_color_centroid")
+        if (
+            poly_a.get("color_cluster") == poly_b.get("color_cluster")
+            and centroid_dist <= same_color_distance
+            and gap <= same_color_distance
+        ):
+            reasons.append("same_color_centroid")
 
     return {
         "adjacent": bool(reasons),
@@ -255,21 +313,54 @@ def adjacency_details(poly_a, poly_b, adjacency_distance, same_color_distance):
         "bbox_gap": gap,
         "polygon_distance": polygon_distance,
         "centroid_distance": centroid_dist,
+        "contact_area": contact["contact_area"],
+        "intersection_area": contact["intersection_area"],
     }
 
 
-def are_polygons_adjacent(poly_a, poly_b, adjacency_distance, same_color_distance):
+def are_polygons_adjacent(
+    poly_a,
+    poly_b,
+    adjacency_distance,
+    same_color_distance,
+    adjacency_mode="contact_area",
+    contact_distance=8,
+    min_contact_area=700,
+):
     """Return whether two polygon records are adjacent."""
-    return adjacency_details(poly_a, poly_b, adjacency_distance, same_color_distance)["adjacent"]
+    return adjacency_details(
+        poly_a,
+        poly_b,
+        adjacency_distance,
+        same_color_distance,
+        adjacency_mode,
+        contact_distance,
+        min_contact_area,
+    )["adjacent"]
 
 
-def build_adjacency_graph(polygons, adjacency_distance, same_color_distance):
+def build_adjacency_graph(
+    polygons,
+    adjacency_distance,
+    same_color_distance,
+    adjacency_mode="contact_area",
+    contact_distance=8,
+    min_contact_area=700,
+):
     """Build an adjacency graph from polygon records."""
     adjacency = {poly["polygon_id"]: set() for poly in polygons}
     edges = []
     for i, poly_a in enumerate(polygons):
         for poly_b in polygons[i + 1:]:
-            details = adjacency_details(poly_a, poly_b, adjacency_distance, same_color_distance)
+            details = adjacency_details(
+                poly_a,
+                poly_b,
+                adjacency_distance,
+                same_color_distance,
+                adjacency_mode,
+                contact_distance,
+                min_contact_area,
+            )
             if not details["adjacent"]:
                 continue
             a_id = poly_a["polygon_id"]
@@ -284,6 +375,8 @@ def build_adjacency_graph(polygons, adjacency_distance, same_color_distance):
                     "bbox_gap": details["bbox_gap"],
                     "polygon_distance": details["polygon_distance"],
                     "centroid_distance": details["centroid_distance"],
+                    "contact_area": details["contact_area"],
+                    "intersection_area": details["intersection_area"],
                 }
             )
     return {"adjacency": adjacency, "edges": edges}
@@ -567,8 +660,11 @@ def group_polygons_payload(source_data, source_file, polygons, graph, groups, po
         "coordinate_space": "transformed_auto_centered",
         "grouping": {
             "method": "adjacency_connected_components",
+            "adjacency_mode": args.adjacency_mode,
             "adjacency_distance": args.adjacency_distance,
             "same_color_distance": args.same_color_distance,
+            "contact_distance": args.contact_distance,
+            "min_contact_area": args.min_contact_area,
             "input_polygon_count": len(polygons),
             "group_count": len(groups),
             "edge_count": len(graph["edges"]),
@@ -586,8 +682,11 @@ def parse_args():
     parser.add_argument("--input", default="../test_image_output/output/floor_polygons.json")
     parser.add_argument("--output", default="../test_image_output/output/polygon_groups.json")
     parser.add_argument("--debug-image", default="../test_image_output/output/debug/polygon_groups.png")
+    parser.add_argument("--adjacency-mode", choices=["contact_area", "distance"], default="contact_area")
     parser.add_argument("--adjacency-distance", type=float, default=25)
     parser.add_argument("--same-color-distance", type=float, default=100)
+    parser.add_argument("--contact-distance", type=int, default=8)
+    parser.add_argument("--min-contact-area", type=int, default=700)
     parser.add_argument("--target-groups", type=int, default=None)
     parser.add_argument("--target-layers", type=int, default=None)
     parser.add_argument("--target-group-strategy", choices=["centroid_y", "strongest_edges"], default="centroid_y")
@@ -602,7 +701,14 @@ def main():
     source_file = Path(args.input)
     source_data = load_json(source_file)
     polygons = load_input_polygons(source_data)
-    graph = build_adjacency_graph(polygons, args.adjacency_distance, args.same_color_distance)
+    graph = build_adjacency_graph(
+        polygons,
+        args.adjacency_distance,
+        args.same_color_distance,
+        args.adjacency_mode,
+        args.contact_distance,
+        args.min_contact_area,
+    )
     target_group_count = args.target_groups if args.target_groups is not None else args.target_layers
     graph, target_metadata = select_edges_for_target_groups(
         polygons,

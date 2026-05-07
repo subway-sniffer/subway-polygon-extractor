@@ -4,30 +4,20 @@
   "coordinate_space": "transformed_auto_centered",
   "grouping": {
     "method": "adjacency_connected_components",
+    "adjacency_mode": "contact_area",
     "adjacency_distance": 25,
     "same_color_distance": 100,
+    "contact_distance": 8,
+    "min_contact_area": 700,
     "input_polygon_count": 10,
     "group_count": 2,
-    "edge_count": 11,
+    "edge_count": 9,
     "target_grouping": {
-      "enabled": true,
-      "requested_group_count": 2,
+      "enabled": false,
+      "requested_group_count": null,
       "achieved_group_count": 2,
-      "selected_edge_count": 11,
-      "candidate_edge_count": 18,
-      "edge_selection": "centroid_y_bands",
-      "polygon_bands": {
-        "poly_001": 2,
-        "poly_002": 1,
-        "poly_003": 2,
-        "poly_004": 1,
-        "poly_005": 1,
-        "poly_006": 1,
-        "poly_007": 2,
-        "poly_008": 2,
-        "poly_009": 2,
-        "poly_010": 1
-      }
+      "selected_edge_count": 9,
+      "candidate_edge_count": 9
     }
   },
   "groups": [
@@ -3007,146 +2997,109 @@
       "a": "poly_001",
       "b": "poly_009",
       "reasons": [
-        "bbox_close",
-        "polygon_distance"
+        "contact_area"
       ],
       "bbox_gap": 0.0,
-      "polygon_distance": 0.0,
+      "polygon_distance": null,
       "centroid_distance": 149.98372494541178,
-      "target_band": 2,
-      "merge_score": 1.499837249454118
+      "contact_area": 770,
+      "intersection_area": 23
     },
     {
       "a": "poly_002",
       "b": "poly_010",
       "reasons": [
-        "bbox_close",
-        "polygon_distance"
+        "contact_area"
       ],
       "bbox_gap": 0.0,
-      "polygon_distance": 0.0,
+      "polygon_distance": null,
       "centroid_distance": 374.91936304416237,
-      "target_band": 1,
-      "merge_score": 3.749193630441624
+      "contact_area": 2748,
+      "intersection_area": 56
     },
     {
       "a": "poly_003",
       "b": "poly_007",
       "reasons": [
-        "bbox_close",
-        "polygon_distance"
+        "contact_area"
       ],
       "bbox_gap": 0.0,
-      "polygon_distance": 0.0,
+      "polygon_distance": null,
       "centroid_distance": 83.08085748279021,
-      "target_band": 2,
-      "merge_score": 0.830808574827902
-    },
-    {
-      "a": "poly_003",
-      "b": "poly_008",
-      "reasons": [
-        "bbox_close",
-        "polygon_distance"
-      ],
-      "bbox_gap": 2.0,
-      "polygon_distance": 3.9372753494107604,
-      "centroid_distance": 89.596407140671,
-      "target_band": 2,
-      "merge_score": 2.89596407140671
+      "contact_area": 11192,
+      "intersection_area": 216
     },
     {
       "a": "poly_003",
       "b": "poly_009",
       "reasons": [
-        "bbox_close",
-        "polygon_distance"
+        "contact_area"
       ],
       "bbox_gap": 0.0,
-      "polygon_distance": 0.0,
+      "polygon_distance": null,
       "centroid_distance": 460.4088150079054,
-      "target_band": 2,
-      "merge_score": 4.604088150079054
-    },
-    {
-      "a": "poly_004",
-      "b": "poly_005",
-      "reasons": [
-        "same_color_centroid"
-      ],
-      "bbox_gap": 39.0,
-      "polygon_distance": 44.06651873432984,
-      "centroid_distance": 88.44868683269233,
-      "target_band": 1,
-      "merge_score": 29.884486868326924
+      "contact_area": 2673,
+      "intersection_area": 98
     },
     {
       "a": "poly_004",
       "b": "poly_010",
       "reasons": [
-        "bbox_close",
-        "centroid_inside_bbox",
-        "polygon_distance"
+        "contact_area"
       ],
       "bbox_gap": 0.0,
-      "polygon_distance": 0.0,
+      "polygon_distance": null,
       "centroid_distance": 67.11055146450519,
-      "target_band": 1,
-      "merge_score": -2.3288944853549483
+      "contact_area": 4468,
+      "intersection_area": 38
     },
     {
       "a": "poly_005",
       "b": "poly_010",
       "reasons": [
-        "bbox_close",
-        "centroid_inside_bbox",
-        "polygon_distance"
+        "contact_area"
       ],
       "bbox_gap": 0.0,
-      "polygon_distance": 0.0,
+      "polygon_distance": null,
       "centroid_distance": 74.54247851796998,
-      "target_band": 1,
-      "merge_score": -2.2545752148203
+      "contact_area": 4557,
+      "intersection_area": 28
     },
     {
       "a": "poly_006",
       "b": "poly_010",
       "reasons": [
-        "bbox_close",
-        "polygon_distance"
+        "contact_area"
       ],
       "bbox_gap": 0.0,
-      "polygon_distance": 0.0,
+      "polygon_distance": null,
       "centroid_distance": 383.476154824725,
-      "target_band": 1,
-      "merge_score": 3.8347615482472497
+      "contact_area": 2044,
+      "intersection_area": 41
     },
     {
       "a": "poly_007",
       "b": "poly_009",
       "reasons": [
-        "bbox_close",
-        "centroid_inside_bbox",
-        "polygon_distance"
+        "contact_area"
       ],
       "bbox_gap": 0.0,
-      "polygon_distance": 0.0765699253153551,
+      "polygon_distance": null,
       "centroid_distance": 389.07649657149267,
-      "target_band": 2,
-      "merge_score": 0.8907649657149266
+      "contact_area": 1996,
+      "intersection_area": 9
     },
     {
       "a": "poly_008",
       "b": "poly_009",
       "reasons": [
-        "bbox_close",
-        "polygon_distance"
+        "contact_area"
       ],
       "bbox_gap": 0.0,
-      "polygon_distance": 0.0,
+      "polygon_distance": null,
       "centroid_distance": 402.57678548009847,
-      "target_band": 2,
-      "merge_score": 4.025767854800985
+      "contact_area": 1418,
+      "intersection_area": 54
     }
   ]
 }
