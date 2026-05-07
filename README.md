@@ -30,6 +30,7 @@ pipeline/
 tests/
   test_replay_color_clusters.py   저장된 color_clusters.json 재실행 시험
   test_epsilon_sweep.py           epsilon_ratio 비교 시험
+  test_polygon_grouping.py        인접 폴리곤 grouping 및 group별 이미지 시험
 
 config/
   color_ranges.json       HSV 색상 범위 설정
@@ -374,10 +375,143 @@ epsilon_ratio=0.005, polygons=10, total_edges=155
 epsilon_ratio=0.01, polygons=10, total_edges=92
 ```
 
+## 폴리곤 Grouping
+
+인접한 transformed polygon들을 같은 층 또는 같은 구역일 가능성이 높은 candidate group으로 묶습니다.
+
+이 단계에서는 실제 `layer`, `zone_type`을 확정하지 않습니다. 해당 semantic 값은 이후 OCR/LLM 단계에서 채웁니다.
+
+입력 좌표 기준:
+
+```text
+floor_polygons.json
+-> color_groups[].polygons
+-> perspectiveTransform + auto-centering 완료 좌표
+```
+
+기본 실행:
+
+```bash
+../venv/bin/python pipeline/polygon_grouping.py \
+  --input ../test_image_output/output/floor_polygons.json \
+  --output ../test_image_output/output/polygon_groups.json \
+  --debug-image ../test_image_output/output/debug/polygon_groups.png \
+  --target-groups 2
+```
+
+기본 인접 기준:
+
+```text
+adjacency_distance=25
+same_color_distance=100
+```
+
+인접 조건:
+
+- bbox 간 gap이 `adjacency_distance` 이하
+- polygon 외곽선 최단거리가 `adjacency_distance` 이하
+- 같은 color_cluster이고 centroid 거리가 `same_color_distance` 이하
+- 한 polygon의 centroid가 다른 polygon의 bbox 안에 있음
+
+같은 색상 조건은 너무 멀리 떨어진 동일 색상 폴리곤이 묶이지 않도록 bbox gap도 `same_color_distance` 이하일 때만 적용합니다.
+
+목표 그룹 수 자동 조정:
+
+```bash
+../venv/bin/python pipeline/polygon_grouping.py --target-groups 2
+```
+
+또는 층 후보 개수라는 의미로 다음 alias를 사용할 수 있습니다.
+
+```bash
+../venv/bin/python pipeline/polygon_grouping.py --target-layers 2
+```
+
+`--target-groups` 또는 `--target-layers`가 있으면 기본 전략은 `centroid_y`입니다.
+
+```text
+target_group_strategy=centroid_y
+```
+
+이 전략은 transform + auto-centering 이후 polygon centroid의 y 위치를 기준으로 N개 band를 만들고, 같은 band 안의 adjacency edge만 유지합니다.  
+실제 `layer` 값을 B1/B2처럼 확정하는 것은 아니며, OCR/LLM 단계 전의 층 후보 분리입니다.
+
+edge 강도만으로 N개 그룹을 만들고 싶으면 다음 옵션을 사용합니다.
+
+```bash
+../venv/bin/python pipeline/polygon_grouping.py \
+  --target-groups 2 \
+  --target-group-strategy strongest_edges
+```
+
+출력:
+
+```text
+../test_image_output/output/polygon_groups.json
+../test_image_output/output/debug/polygon_groups.png
+```
+
+`polygon_groups.json` 주요 필드:
+
+```text
+groups           candidate semantic group 목록
+polygons         group_id가 부여된 polygon 목록
+adjacency_edges  어떤 polygon끼리 어떤 이유로 연결됐는지 기록
+```
+
+현재 샘플에서 target 없이 전체 connected components만 쓰면:
+
+```text
+polygons=10
+groups=1
+edges=18
+```
+
+connected components 방식이라 인접 관계가 사슬처럼 이어지면 하나의 큰 group이 될 수 있습니다.
+group이 너무 크게 묶이면 `--target-groups`, `--target-layers`, `--adjacency-distance`, `--same-color-distance` 값을 조정합니다.
+
+현재 샘플에서 `--target-groups 2` 결과:
+
+```text
+polygons=10
+groups=2
+edges=11
+group_001: 5 polygons
+group_002: 5 polygons
+```
+
+debug image와 group별 image는 polygon 내부를 기존 K-Means cluster 색상(`color_rgb`)으로 채우고, group bbox/외곽선만 group 표시색으로 그립니다.
+
+예:
+
+```bash
+../venv/bin/python pipeline/polygon_grouping.py \
+  --input ../test_image_output/output/floor_polygons.json \
+  --adjacency-distance 10 \
+  --same-color-distance 60
+```
+
+## 테스트: 폴리곤 Grouping 이미지
+
+grouping을 실행하고 group별 채움 이미지를 저장하는 테스트입니다.
+
+```bash
+../venv/bin/python tests/test_polygon_grouping.py
+```
+
+테스트 산출물:
+
+```text
+../test_image_output/tests/output_polygon_grouping/polygon_groups.json
+../test_image_output/tests/output_polygon_grouping/polygon_groups.png
+../test_image_output/tests/output_polygon_grouping/group_images/group_001_filled.png
+../test_image_output/tests/output_polygon_grouping/group_images/group_002_filled.png
+```
+
 ## 문법 검사
 
 ```bash
-../venv/bin/python -m py_compile pipeline/main.py pipeline/marker_detection.py pipeline/polygon_extraction.py pipeline/transform.py pipeline/visualization.py pipeline/export_json.py pipeline/color_clustering.py tests/test_replay_color_clusters.py tests/test_epsilon_sweep.py
+../venv/bin/python -m py_compile pipeline/main.py pipeline/marker_detection.py pipeline/polygon_extraction.py pipeline/transform.py pipeline/visualization.py pipeline/export_json.py pipeline/color_clustering.py pipeline/polygon_grouping.py tests/test_replay_color_clusters.py tests/test_epsilon_sweep.py tests/test_polygon_grouping.py
 ```
 
 ## 주의사항
