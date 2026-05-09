@@ -6,6 +6,15 @@ import numpy as np
 
 
 TARGET_WIDTH = 1000
+MARKER_HSV_RANGES = {
+    "red": [
+        ([0, 100, 100], [10, 255, 255]),
+        ([160, 100, 100], [179, 255, 255]),
+    ],
+    "magenta": [
+        ([140, 80, 80], [170, 255, 255]),
+    ],
+}
 
 
 def order_points(pts):
@@ -25,16 +34,16 @@ def order_points(pts):
     return np.array([tl, tr, br, bl], dtype="float32")
 
 
-def detect_red_markers(img):
-    """Detect red marker centroids with HSV thresholding and compactness filtering."""
+def detect_markers_by_hsv(img, hsv_ranges):
+    """Detect marker centroids with HSV thresholding and compactness filtering."""
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    lower_red1 = np.array([0, 100, 100])
-    upper_red1 = np.array([10, 255, 255])
-    lower_red2 = np.array([160, 100, 100])
-    upper_red2 = np.array([179, 255, 255])
+    marker_mask = np.zeros(hsv.shape[:2], dtype=np.uint8)
+    for lower, upper in hsv_ranges:
+        lower_hsv = np.array(lower, dtype=np.uint8)
+        upper_hsv = np.array(upper, dtype=np.uint8)
+        marker_mask = cv2.bitwise_or(marker_mask, cv2.inRange(hsv, lower_hsv, upper_hsv))
 
-    red_mask = cv2.inRange(hsv, lower_red1, upper_red1) + cv2.inRange(hsv, lower_red2, upper_red2)
-    contours, _ = cv2.findContours(red_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(marker_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     points = []
     shape_threshold = 40
@@ -54,6 +63,19 @@ def detect_red_markers(img):
                     )
 
     return points
+
+
+def detect_markers(img, marker_color="red"):
+    """Detect marker centroids for a named marker color."""
+    if marker_color not in MARKER_HSV_RANGES:
+        available = ", ".join(sorted(MARKER_HSV_RANGES))
+        raise ValueError(f"지원하지 않는 marker_color입니다: {marker_color}. 사용 가능: {available}")
+    return detect_markers_by_hsv(img, MARKER_HSV_RANGES[marker_color])
+
+
+def detect_red_markers(img):
+    """Detect red marker centroids with HSV thresholding and compactness filtering."""
+    return detect_markers(img, marker_color="red")
 
 
 def get_perspective_matrix(points):
@@ -93,11 +115,13 @@ def get_perspective_matrix(points):
     return matrix, TARGET_WIDTH, target_height
 
 
-def build_marker_config(image_path, points, matrix, target_width, target_height):
+def build_marker_config(image_path, points, matrix, target_width, target_height, marker_color="red"):
     """Build serializable marker detection metadata."""
     ordered_points = order_points(np.array(points)).tolist() if len(points) == 4 else []
     return {
         "image": image_path,
+        "marker_color": marker_color,
+        "marker_hsv_ranges": MARKER_HSV_RANGES.get(marker_color),
         "marker_points": points,
         "ordered_marker_points": ordered_points,
         "target_width": target_width,
@@ -133,15 +157,15 @@ def marker_config_to_runtime(config):
     return points, matrix, target_width, target_height
 
 
-def get_or_create_marker_config(img, image_path, config_path, refresh=False):
+def get_or_create_marker_config(img, image_path, config_path, refresh=False, marker_color="red"):
     """Load marker config when available, otherwise detect markers and save config."""
     config = None if refresh else load_marker_config(config_path)
     if config is not None:
         points, matrix, target_width, target_height = marker_config_to_runtime(config)
         return points, matrix, target_width, target_height, config, False
 
-    points = detect_red_markers(img)
+    points = detect_markers(img, marker_color=marker_color)
     matrix, target_width, target_height = get_perspective_matrix(points)
-    config = build_marker_config(image_path, points, matrix, target_width, target_height)
+    config = build_marker_config(image_path, points, matrix, target_width, target_height, marker_color)
     save_marker_config(config, config_path)
     return points, matrix, target_width, target_height, config, True

@@ -1,5 +1,6 @@
 import argparse
 from pathlib import Path
+from types import SimpleNamespace
 
 import cv2
 import numpy as np
@@ -19,7 +20,7 @@ try:
         save_color_metadata,
         save_floor_polygons_json,
     )
-    from pipeline.marker_detection import get_or_create_marker_config
+    from pipeline.marker_detection import MARKER_HSV_RANGES, get_or_create_marker_config
     from pipeline.polygon_extraction import (
         DEFAULT_LOWER_BLUE,
         DEFAULT_UPPER_BLUE,
@@ -27,6 +28,17 @@ try:
         DEFAULT_MIN_AREA,
         extract_polygons_by_hsv,
         extract_polygons_from_mask,
+    )
+    from pipeline.polygon_grouping import (
+        build_adjacency_graph,
+        build_polygon_groups,
+        connected_components,
+        draw_polygon_groups_debug,
+        group_polygons_payload,
+        load_input_polygons,
+        load_json,
+        save_json,
+        select_edges_for_target_groups,
     )
     from pipeline.transform import auto_center_polygons, transform_polygons
     from pipeline.visualization import (
@@ -46,7 +58,7 @@ except ModuleNotFoundError:
         parse_cluster_ids,
     )
     from export_json import build_extraction_metadata, load_color_ranges, save_color_metadata, save_floor_polygons_json
-    from marker_detection import get_or_create_marker_config
+    from marker_detection import MARKER_HSV_RANGES, get_or_create_marker_config
     from polygon_extraction import (
         DEFAULT_LOWER_BLUE,
         DEFAULT_UPPER_BLUE,
@@ -54,6 +66,17 @@ except ModuleNotFoundError:
         DEFAULT_MIN_AREA,
         extract_polygons_by_hsv,
         extract_polygons_from_mask,
+    )
+    from polygon_grouping import (
+        build_adjacency_graph,
+        build_polygon_groups,
+        connected_components,
+        draw_polygon_groups_debug,
+        group_polygons_payload,
+        load_input_polygons,
+        load_json,
+        save_json,
+        select_edges_for_target_groups,
     )
     from transform import auto_center_polygons, transform_polygons
     from visualization import (
@@ -86,7 +109,13 @@ def parse_args():
     parser.add_argument("--color-config", default="config/color_ranges.json", help="HSV color range config path.")
     parser.add_argument("--color-range", default="floor_blue", help="Color range name to use in HSV mode.")
     parser.add_argument("--marker-config", default="config/marker_config.json", help="Marker detection cache config path.")
-    parser.add_argument("--refresh-markers", action="store_true", help="Detect red markers again and overwrite marker config.")
+    parser.add_argument(
+        "--marker-color",
+        choices=sorted(MARKER_HSV_RANGES.keys()),
+        default="red",
+        help="Marker color to detect when marker config is refreshed or missing.",
+    )
+    parser.add_argument("--refresh-markers", action="store_true", help="Detect markers again and overwrite marker config.")
     parser.add_argument("--output-dir", default="../test_image_output/output", help="Directory for JSON output files.")
     parser.add_argument("--min-area", type=float, default=DEFAULT_MIN_AREA, help="Minimum contour area.")
     parser.add_argument("--epsilon-ratio", type=float, default=DEFAULT_EPSILON_RATIO, help="approxPolyDP epsilon ratio.")
@@ -95,6 +124,19 @@ def parse_args():
     parser.add_argument("--debug", action="store_true", help="Draw and save debug images.")
     parser.add_argument("--show", action="store_true", help="Show OpenCV windows for debug images.")
     parser.add_argument("--debug-dir", help="Directory for saved debug images. Defaults to <output-dir>/debug.")
+    parser.add_argument("--run-grouping", action="store_true", help="Run polygon grouping after floor_polygons.json is saved.")
+    parser.add_argument("--grouping-output", help="Path for polygon_groups.json. Defaults to <output-dir>/polygon_groups.json.")
+    parser.add_argument("--grouping-debug-image", help="Path for grouping debug PNG. Defaults to <debug-dir>/polygon_groups.png.")
+    parser.add_argument("--adjacency-mode", choices=["contact_area", "distance"], default="contact_area")
+    parser.add_argument("--adjacency-distance", type=float, default=25)
+    parser.add_argument("--same-color-distance", type=float, default=100)
+    parser.add_argument("--contact-distance", type=int, default=8)
+    parser.add_argument("--min-contact-area", type=int, default=700)
+    parser.add_argument("--target-groups", type=int, default=None)
+    parser.add_argument("--target-layers", type=int, default=None)
+    parser.add_argument("--target-group-strategy", choices=["centroid_y", "strongest_edges"], default="centroid_y")
+    parser.add_argument("--grouping-canvas-width", type=int, default=1400)
+    parser.add_argument("--grouping-canvas-height", type=int, default=900)
     return parser.parse_args()
 
 
@@ -302,6 +344,75 @@ def save_extraction_outputs(
     }
 
 
+def run_polygon_grouping(
+    floor_polygons_file,
+    output_path,
+    debug_image_path,
+    adjacency_mode="contact_area",
+    adjacency_distance=25,
+    same_color_distance=100,
+    contact_distance=8,
+    min_contact_area=700,
+    target_groups=None,
+    target_layers=None,
+    target_group_strategy="centroid_y",
+    canvas_width=1400,
+    canvas_height=900,
+):
+    """Run polygon grouping from a saved floor_polygons.json file."""
+    source_data = load_json(floor_polygons_file)
+    polygons = load_input_polygons(source_data)
+    graph = build_adjacency_graph(
+        polygons,
+        adjacency_distance,
+        same_color_distance,
+        adjacency_mode,
+        contact_distance,
+        min_contact_area,
+    )
+    target_group_count = target_groups if target_groups is not None else target_layers
+    graph, target_metadata = select_edges_for_target_groups(
+        polygons,
+        graph,
+        target_group_count,
+        target_group_strategy,
+    )
+    components = connected_components(graph)
+    groups, polygons_with_groups = build_polygon_groups(polygons, components)
+    grouping_args = SimpleNamespace(
+        adjacency_mode=adjacency_mode,
+        adjacency_distance=adjacency_distance,
+        same_color_distance=same_color_distance,
+        contact_distance=contact_distance,
+        min_contact_area=min_contact_area,
+    )
+    payload = group_polygons_payload(
+        source_data,
+        floor_polygons_file,
+        polygons,
+        graph,
+        groups,
+        polygons_with_groups,
+        grouping_args,
+        target_metadata,
+    )
+    output_path = save_json(payload, output_path)
+    debug_image_path = draw_polygon_groups_debug(
+        polygons_with_groups,
+        groups,
+        debug_image_path,
+        canvas_width=canvas_width,
+        canvas_height=canvas_height,
+    )
+    return {
+        "output_file": output_path,
+        "debug_image": debug_image_path,
+        "group_count": len(groups),
+        "edge_count": len(graph["edges"]),
+        "polygon_count": len(polygons),
+    }
+
+
 def run_pipeline(
     image_path,
     mode="hsv",
@@ -310,6 +421,7 @@ def run_pipeline(
     color_config="config/color_ranges.json",
     color_range="floor_blue",
     marker_config="config/marker_config.json",
+    marker_color="red",
     refresh_markers=False,
     output_dir="../test_image_output/output",
     min_area=DEFAULT_MIN_AREA,
@@ -319,6 +431,19 @@ def run_pipeline(
     debug=False,
     show=False,
     debug_dir=None,
+    run_grouping=False,
+    grouping_output=None,
+    grouping_debug_image=None,
+    adjacency_mode="contact_area",
+    adjacency_distance=25,
+    same_color_distance=100,
+    contact_distance=8,
+    min_contact_area=700,
+    target_groups=None,
+    target_layers=None,
+    target_group_strategy="centroid_y",
+    grouping_canvas_width=1400,
+    grouping_canvas_height=900,
 ):
     """Run marker detection, polygon extraction, vertex transform, and visualization."""
     img = load_image(image_path)
@@ -328,6 +453,7 @@ def run_pipeline(
         image_path,
         marker_config,
         refresh=refresh_markers,
+        marker_color=marker_color,
     )
     raw_polygons, cluster_result, selected_hsv_range, selected_cluster_ids, polygon_groups = extract_raw_polygons(
         img,
@@ -378,6 +504,27 @@ def run_pipeline(
         morphology=build_morphology_config(open_kernel, close_kernel) if mode == "kmeans" else None,
     )
 
+    grouping_result = None
+    if run_grouping:
+        resolved_debug_dir = debug_dir or str(Path(output_dir) / "debug")
+        grouping_output = grouping_output or str(Path(output_dir) / "polygon_groups.json")
+        grouping_debug_image = grouping_debug_image or str(Path(resolved_debug_dir) / "polygon_groups.png")
+        grouping_result = run_polygon_grouping(
+            output_paths["floor_polygons_file"],
+            grouping_output,
+            grouping_debug_image,
+            adjacency_mode=adjacency_mode,
+            adjacency_distance=adjacency_distance,
+            same_color_distance=same_color_distance,
+            contact_distance=contact_distance,
+            min_contact_area=min_contact_area,
+            target_groups=target_groups,
+            target_layers=target_layers,
+            target_group_strategy=target_group_strategy,
+            canvas_width=grouping_canvas_width,
+            canvas_height=grouping_canvas_height,
+        )
+
     return {
         "mode": mode,
         "markers": marker_points,
@@ -390,6 +537,7 @@ def run_pipeline(
         "debug_paths": debug_paths,
         "cluster_result": cluster_result,
         "output_paths": output_paths,
+        "grouping_result": grouping_result,
     }
 
 
@@ -404,6 +552,7 @@ def main():
         color_config=args.color_config,
         color_range=args.color_range,
         marker_config=args.marker_config,
+        marker_color=args.marker_color,
         refresh_markers=args.refresh_markers,
         output_dir=args.output_dir,
         min_area=args.min_area,
@@ -413,9 +562,22 @@ def main():
         debug=args.debug,
         show=args.show,
         debug_dir=args.debug_dir,
+        run_grouping=args.run_grouping,
+        grouping_output=args.grouping_output,
+        grouping_debug_image=args.grouping_debug_image,
+        adjacency_mode=args.adjacency_mode,
+        adjacency_distance=args.adjacency_distance,
+        same_color_distance=args.same_color_distance,
+        contact_distance=args.contact_distance,
+        min_contact_area=args.min_contact_area,
+        target_groups=args.target_groups,
+        target_layers=args.target_layers,
+        target_group_strategy=args.target_group_strategy,
+        grouping_canvas_width=args.grouping_canvas_width,
+        grouping_canvas_height=args.grouping_canvas_height,
     )
     print(f"markers={len(result['markers'])}, polygons={len(result['raw_polygons'])}")
-    print(f"marker_config={args.marker_config}, refreshed={result['markers_refreshed']}")
+    print(f"marker_config={args.marker_config}, marker_color={args.marker_color}, refreshed={result['markers_refreshed']}")
     if result["cluster_result"] is not None:
         for cluster in result["cluster_result"]["clusters"]:
             center = [round(float(value), 2) for value in cluster["center"]]
@@ -426,6 +588,13 @@ def main():
         print(f"debug_canvas={canvas_path}")
     print(f"color_metadata={result['output_paths']['color_metadata_file']}")
     print(f"floor_polygons={result['output_paths']['floor_polygons_file']}")
+    if result["grouping_result"]:
+        grouping = result["grouping_result"]
+        print(
+            "polygon_groups="
+            f"{grouping['output_file']}, groups={grouping['group_count']}, edges={grouping['edge_count']}"
+        )
+        print(f"grouping_debug_image={grouping['debug_image']}")
 
 
 if __name__ == "__main__":
