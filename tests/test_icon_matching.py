@@ -2,6 +2,8 @@ import argparse
 from pathlib import Path
 import sys
 
+import cv2
+
 ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
@@ -28,6 +30,8 @@ def parse_args():
     parser.add_argument("--iou-threshold", type=float, default=0.35)
     parser.add_argument("--use-edges", action="store_true")
     parser.add_argument("--no-flipped", action="store_true", help="Disable horizontally flipped template matching.")
+    parser.add_argument("--show", action="store_true")
+    parser.add_argument("--show-ms", type=int, default=3000)
     return parser.parse_args()
 
 
@@ -53,6 +57,13 @@ def main():
     print(f"raw_matches={result['raw_match_count']}, matches={result['match_count']}")
     print(f"output={output_path}")
     print(f"debug_image={debug_path}")
+
+    if args.show:
+        debug_image = cv2.imread(str(debug_path))
+        if debug_image is not None:
+            cv2.imshow("icon matches", debug_image)
+            cv2.waitKey(args.show_ms)
+            cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":

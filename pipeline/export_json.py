@@ -56,6 +56,7 @@ def build_extraction_metadata(
     selected_color_ranges=None,
     selected_clusters=None,
     morphology=None,
+    bridge_correction=None,
 ):
     """Build reproducibility metadata for floor polygon extraction."""
     metadata = {
@@ -72,18 +73,34 @@ def build_extraction_metadata(
         metadata["selected_clusters"] = selected_clusters
     if morphology is not None:
         metadata["morphology"] = morphology
+    if bridge_correction is not None:
+        metadata["bridge_correction"] = bridge_correction
 
     return metadata
 
 
-def save_floor_polygons_json(polygons, extraction_metadata, output_path, color_groups=None):
-    """Save transformed floor polygons and extraction metadata as JSON."""
+def save_floor_polygons_json(
+    polygons,
+    extraction_metadata,
+    output_path,
+    color_groups=None,
+    source_color_groups=None,
+    intermediate_polygons=None,
+    image_metadata=None,
+):
+    """Save floor polygons, source coordinates, and extraction metadata as JSON."""
     payload = {
         "extraction": extraction_metadata,
         "polygons": polygons,
     }
+    if image_metadata is not None:
+        payload["image"] = image_metadata
     if color_groups is not None:
         payload["color_groups"] = color_groups
+    if source_color_groups is not None:
+        payload["source_color_groups"] = source_color_groups
+    if intermediate_polygons is not None:
+        payload["intermediate_polygons"] = intermediate_polygons
     return save_color_metadata(payload, output_path)
 
 

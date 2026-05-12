@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Subway Polygon Editor</title>
+    <link rel="stylesheet" href="/static/style.css">
+  </head>
+  <body>
+    <aside class="sidebar">
+      <header>
+        <h1>Polygon Editor</h1>
+        <div id="status">Loading...</div>
+      </header>
+
+      <section>
+        <h2>View</h2>
+        <button id="fitViewBtn">Fit</button>
+        <button id="resetViewBtn">Reset</button>
+        <label class="row">
+          <input id="showIdsToggle" type="checkbox">
+          polygon id
+        </label>
+        <label class="row">
+          <input id="showConnectionsToggle" type="checkbox">
+          auto connection candidates
+        </label>
+        <label class="row">
+          <input id="showHiddenToggle" type="checkbox">
+          hidden polygons
+        </label>
+      </section>
+
+      <section>
+        <h2>Selected</h2>
+        <dl id="selectedInfo">
+          <dt>polygon</dt><dd>-</dd>
+          <dt>cluster</dt><dd>-</dd>
+          <dt>area</dt><dd>-</dd>
+        </dl>
+        <label>
+          Layer
+          <input id="layerInput" list="layerOptions" placeholder="B1">
+          <datalist id="layerOptions">
+            <option value="B1"></option>
+            <option value="B2"></option>
+            <option value="B3"></option>
+            <option value="B4"></option>
+          </datalist>
+        </label>
+        <button id="setLayerBtn">Set Layer</button>
+        <button id="toggleHideBtn">Hide / Show</button>
+        <button id="deletePolygonBtn">Delete Polygon (Delete)</button>
+        <button id="undoDeletePolygonBtn">Undo Last Delete</button>
+        <div id="deleteStatus">inactive</div>
+      </section>
+
+      <section>
+        <h2>Simple Keep</h2>
+        <button id="startKeepBtn">Start Simple Keep (A)</button>
+        <button id="applyKeepBtn">Apply Simple Keep (Shift)</button>
+        <button id="resetKeepBtn">Reset Simple Keep (Esc)</button>
+        <div id="keepStatus">inactive</div>
+      </section>
+
+      <section>
+        <h2>Manual Merge</h2>
+        <button id="startAutoMergeBtn">Start Auto Merge (R)</button>
+        <button id="applyAutoMergeBtn">Apply Auto Merge (Shift)</button>
+        <button id="resetAutoMergeBtn">Reset Auto Merge (Esc)</button>
+        <div id="autoMergeStatus">inactive</div>
+        <button id="startMergeBtn">Start Merge (Q)</button>
+        <button id="removeOrangePathBtn" class="path-one">Remove Orange Path (F)</button>
+        <button id="applyMergeBtn">Apply Merge (Shift)</button>
+        <button id="undoMergeBtn">Undo Last Merge (Z)</button>
+        <button id="resetMergeBtn">Reset Merge (Esc)</button>
+        <div id="mergeStatus">inactive</div>
+      </section>
+
+      <section>
+        <h2>Straighten Edge</h2>
+        <button id="startStraightenBtn">Start Straighten (W)</button>
+        <button id="straightenOrangePathBtn" class="path-one">Remove Orange Path (F)</button>
+        <button id="applyStraightenBtn">Apply Straighten (Shift)</button>
+        <button id="undoStraightenBtn">Undo Last Straighten</button>
+        <button id="resetStraightenBtn">Reset Straighten (Esc)</button>
+        <div id="straightenStatus">inactive</div>
+      </section>
+
+      <section>
+        <h2>Move Vertex</h2>
+        <button id="startMoveBtn">Start Move Vertex (E)</button>
+        <button id="resetMoveBtn">Reset Move (Esc)</button>
+        <div id="moveStatus">inactive</div>
+      </section>
+
+      <section>
+        <h2>Insert Vertex</h2>
+        <button id="startInsertVertexBtn">Start Insert Vertex (X)</button>
+        <button id="undoInsertVertexBtn">Undo Last Insert</button>
+        <button id="resetInsertVertexBtn">Reset Insert (Esc)</button>
+        <div id="insertVertexStatus">inactive</div>
+      </section>
+
+      <section>
+        <h2>Shared Edge</h2>
+        <button id="startSharedEdgeBtn">Start Shared Edge (T)</button>
+        <button id="toggleSharedEdgeADirectionBtn">Toggle A Range Direction</button>
+        <button id="toggleSharedEdgeBDirectionBtn">Toggle B Range Direction</button>
+        <button id="cycleSharedEdgeOrderBtn">Replace Order: Auto / Keep / Reverse</button>
+        <button id="applySharedEdgeBtn">Apply Shared Edge (Shift)</button>
+        <button id="undoSharedEdgeBtn">Undo Last Shared Edge</button>
+        <button id="resetSharedEdgeBtn">Reset Shared Edge (Esc)</button>
+        <div id="sharedEdgeStatus">inactive</div>
+      </section>
+
+      <section>
+        <h2>Add Polygon</h2>
+        <button id="startAddPolygonBtn">Start Add Polygon (D)</button>
+        <button id="applyAddPolygonBtn">Apply Add Polygon (Shift)</button>
+        <button id="undoAddPointBtn">Undo Last Point (Backspace)</button>
+        <button id="resetAddPolygonBtn">Reset Add Polygon (Esc)</button>
+        <div id="addPolygonStatus">inactive</div>
+      </section>
+
+      <section>
+        <h2>Cut Hole</h2>
+        <button id="startCutHoleBtn">Start Cut Hole (C)</button>
+        <button id="applyCutHoleBtn">Apply Cut Hole (Shift)</button>
+        <button id="undoHolePointBtn">Undo Last Hole Point (Backspace)</button>
+        <button id="undoCutHoleBtn">Undo Last Cut Hole</button>
+        <button id="resetCutHoleBtn">Reset Cut Hole (Esc)</button>
+        <div id="cutHoleStatus">inactive</div>
+      </section>
+
+      <section>
+        <h2>Save</h2>
+        <button id="resetAllBtn">Reset To Initial Polygons</button>
+        <button id="saveBtn">Save annotations</button>
+        <button id="previewFinalBtn">Preview Final</button>
+        <button id="loadExportedFinalBtn">Load Exported Final</button>
+        <button id="exportFinalBtn">Export Final Polygons</button>
+        <button id="exportPlanesBtn">Export Scene Planes</button>
+        <pre id="saveResult"></pre>
+      </section>
+    </aside>
+
+    <main class="canvas-wrap">
+      <canvas id="editorCanvas"></canvas>
+    </main>
+
+    <script src="/static/editor.js"></script>
+  </body>
+</html>

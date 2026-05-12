@@ -237,6 +237,124 @@ python3 pipeline/main.py \
 
 2단계에서는 이미 `config/test1_marker_config.json`이 있으므로 보통 `--refresh-markers`를 빼고 실행합니다.
 
+아이콘 때문에 같은 색상 mask가 끊기는 경우에는 `icon_matches.json`을 이용해 polygon 추출 직전에 cluster mask를 보정할 수 있습니다.
+
+먼저 아이콘을 검출합니다.
+
+```bash
+python3 tests/test_icon_matching.py --image test1.png
+```
+
+그다음 선택한 cluster로 최종 polygon을 생성할 때 icon bridge 옵션을 추가합니다.
+
+```bash
+python3 pipeline/main.py \
+  --image test1.png \
+  --mode kmeans \
+  --kmeans-k 6 \
+  --include-clusters 1,2,3 \
+  --marker-color magenta \
+  --marker-config config/test1_marker_config.json \
+  --output-dir ../test_image_output/test1/final \
+  --debug \
+  --debug-dir ../test_image_output/test1/final/debug \
+  --icon-bridge-matches ../test_image_output/tests/output_icon_matching/icon_matches.json \
+  --run-grouping
+```
+
+icon bridge는 아이콘 bbox 주변에서 같은 cluster mask가 양쪽에 있는 방향을 찾고, 그 두 점을 선으로 이어 mask를 보정합니다. 보정 debug mask는 아래에 저장됩니다.
+
+```text
+../test_image_output/test1/final/debug/icon_bridge/
+```
+
+계단, 엘리베이터처럼 특정 색상 cluster가 바닥 polygon을 끊는 경우에는 bridge cluster 보정을 사용할 수 있습니다. 이 방식은 bridge cluster 전체를 바닥 mask에 합치지 않고, 같은 cluster가 bridge component 양쪽에 있을 때만 여러 scan-line으로 연결 mask를 추가합니다.
+
+예를 들어 cluster `1,2,3`을 바닥으로 뽑고 cluster `4,5,6`을 계단/연결부처럼 무시하고 넘어갈 색으로 볼 때:
+
+```bash
+python3 pipeline/main.py \
+  --image test1.png \
+  --mode kmeans \
+  --kmeans-k 6 \
+  --include-clusters 1,2,3 \
+  --bridge-clusters 4,5,6 \
+  --marker-color magenta \
+  --marker-config config/test1_marker_config.json \
+  --output-dir ../test_image_output/test1/final \
+  --debug \
+  --debug-dir ../test_image_output/test1/final/debug \
+  --run-grouping
+```
+
+주요 조절값:
+
+```text
+--bridge-contact-radius 10      bridge 주변에서 같은 cluster가 닿았다고 볼 허용 반경
+--bridge-search-radius 40       bridge 양쪽에서 같은 cluster를 찾는 최대 거리
+--bridge-scan-step 4            연결 band를 만들 scan-line 간격
+--bridge-line-thickness 4       연결 mask 선 두께
+--bridge-min-area 20            너무 작은 bridge component 제거 기준
+```
+
+bridge cluster 보정만 따로 비교하려면 아래 테스트를 실행합니다.
+
+```bash
+python3 tests/test_mask_bridge.py \
+  --image test1.png \
+  --include-clusters 1,2,3 \
+  --bridge-clusters 4,5,6
+```
+
+테스트 결과는 아래에 저장됩니다.
+
+```text
+../test_image_output/tests/output_mask_bridge/
+```
+
+다만 3D 변환까지 생각하면 바닥 polygon을 억지로 붙이는 것보다, 계단/엘리베이터/연결부를 별도 연결 후보로 저장하는 방식이 더 안전합니다. 이 경우 `--bridge-clusters` 대신 `--detect-connections`를 사용합니다.
+
+```bash
+python3 pipeline/main.py \
+  --image test1.png \
+  --mode kmeans \
+  --kmeans-k 6 \
+  --include-clusters 1,2,3 \
+  --marker-color magenta \
+  --marker-config config/test1_marker_config.json \
+  --output-dir ../test_image_output/test1/final \
+  --debug \
+  --debug-dir ../test_image_output/test1/final/debug \
+  --detect-connections \
+  --connection-bridge-clusters 4,5,6 \
+  --run-grouping
+```
+
+이 방식은 floor polygon은 그대로 두고, bridge cluster 주변에 있는 polygon 후보를 `connections.json`으로 저장합니다.
+
+```text
+../test_image_output/test1/final/connections.json
+../test_image_output/test1/final/debug/connections.png
+```
+
+주요 조절값:
+
+```text
+--connection-bridge-clusters 4,5,6   계단/엘리베이터/연결부 후보로 볼 cluster
+--connection-search-distance 80      bridge 주변 polygon 탐색 거리
+--connection-max-nearby 6            bridge 하나당 저장할 주변 polygon 최대 개수
+--connection-min-area 300            너무 작은 bridge component 제거 기준
+```
+
+connection 후보 검출만 따로 시험하려면 아래 명령을 사용합니다.
+
+```bash
+python3 tests/test_connection_detection.py \
+  --image test1.png \
+  --include-clusters 1,2,3 \
+  --connection-bridge-clusters 4,5,6
+```
+
 `marker_config.json`에 저장되는 정보:
 
 ```text
