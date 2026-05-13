@@ -162,6 +162,29 @@ def next_wall_id(annotations):
     return f"wall_{len(annotations.get('manual_walls', [])) + 1:03d}"
 
 
+def transform_connection_points(connections, transform_metadata=None, transform_info=None):
+    """Attach transformed endpoint coordinates to manual connection records."""
+    output = [dict(connection) for connection in connections]
+    if not transform_metadata or not transform_info:
+        return output
+    matrix = transform_metadata["perspective_matrix"]
+    shift = transform_info["auto_center_shift"]
+    for connection in output:
+        if connection.get("from_point_source"):
+            connection["from_point_transformed"] = transform_source_points(
+                [connection["from_point_source"]],
+                matrix,
+                shift=shift,
+            )[0]
+        if connection.get("to_point_source"):
+            connection["to_point_transformed"] = transform_source_points(
+                [connection["to_point_source"]],
+                matrix,
+                shift=shift,
+            )[0]
+    return output
+
+
 def nearest_vertex_index(points, clicked_point):
     """Return the nearest polygon vertex index to a clicked point."""
     vertices = normalize_points(points)
@@ -354,6 +377,11 @@ def build_final_polygons_payload(polygons_path, annotations, transform_metadata=
         for wall in walls:
             if wall.get("points_source"):
                 wall["points_transformed"] = transform_source_points(wall["points_source"], matrix, shift=shift)
+    connections = transform_connection_points(
+        annotations.get("manual_connections", []),
+        transform_metadata=transform_metadata,
+        transform_info=transform_info,
+    )
     return {
         "image": polygon_data.get("image", {}),
         "extraction": polygon_data.get("extraction", {}),
@@ -361,11 +389,13 @@ def build_final_polygons_payload(polygons_path, annotations, transform_metadata=
             "hidden_polygon_count": len(annotations.get("hidden_polygon_ids", [])),
             "manual_polygon_count": len(annotations.get("manual_polygons", [])),
             "manual_wall_count": len(walls),
+            "manual_connection_count": len(connections),
             "final_polygon_count": len(polygons),
             "transform": transform_info,
         },
         "polygons": polygons,
         "walls": walls,
+        "connections": connections,
     }
 
 
@@ -414,6 +444,11 @@ def build_working_final_payload(polygons_path, working_polygons, annotations, tr
         for wall in walls:
             if wall.get("points_source"):
                 wall["points_transformed"] = transform_source_points(wall["points_source"], matrix, shift=shift)
+    connections = transform_connection_points(
+        annotations.get("manual_connections", []),
+        transform_metadata=transform_metadata,
+        transform_info=transform_info,
+    )
 
     return {
         "image": polygon_data.get("image", {}),
@@ -423,11 +458,13 @@ def build_working_final_payload(polygons_path, working_polygons, annotations, tr
             "hidden_polygon_count": 0,
             "manual_polygon_count": len(polygons),
             "manual_wall_count": len(walls),
+            "manual_connection_count": len(connections),
             "final_polygon_count": len(polygons),
             "transform": transform_info,
         },
         "polygons": polygons,
         "walls": walls,
+        "connections": connections,
     }
 
 
@@ -631,6 +668,63 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
                 "alignment_offset_xy": offset,
             }
         )
+    connection_records = []
+    for connection in annotations.get("manual_connections", []):
+        from_point = connection.get("from_point_source")
+        to_point = connection.get("to_point_source")
+        if not from_point or not to_point:
+            continue
+        from_layer = connection.get("from_layer")
+        to_layer = connection.get("to_layer")
+        from_xy = scene_xy_from_point(
+            from_point,
+            transform_metadata=transform_metadata,
+            transform_info=transform_info,
+            scale=scale,
+            invert_y=invert_y,
+        )
+        to_xy = scene_xy_from_point(
+            to_point,
+            transform_metadata=transform_metadata,
+            transform_info=transform_info,
+            scale=scale,
+            invert_y=invert_y,
+        )
+        from_offset = alignment_offsets.get(from_layer, [0.0, 0.0])
+        to_offset = alignment_offsets.get(to_layer, [0.0, 0.0])
+        from_z = layer_z.get(from_layer, default_z)
+        to_z = layer_z.get(to_layer, default_z)
+        connection_records.append(
+            {
+                "connection_id": connection.get("connection_id"),
+                "type": connection.get("type", "connection"),
+                "asset_type": connection.get("asset_type", connection.get("type", "connection")),
+                "label": connection.get("label"),
+                "bidirectional": bool(connection.get("bidirectional", True)),
+                "from": {
+                    "polygon_id": connection.get("from_polygon_id"),
+                    "layer": from_layer,
+                    "point_source": from_point,
+                    "position": [
+                        float(from_xy[0]) + from_offset[0],
+                        float(from_xy[1]) + from_offset[1],
+                        float(from_z),
+                    ],
+                    "alignment_offset_xy": from_offset,
+                },
+                "to": {
+                    "polygon_id": connection.get("to_polygon_id"),
+                    "layer": to_layer,
+                    "point_source": to_point,
+                    "position": [
+                        float(to_xy[0]) + to_offset[0],
+                        float(to_xy[1]) + to_offset[1],
+                        float(to_z),
+                    ],
+                    "alignment_offset_xy": to_offset,
+                },
+            }
+        )
     return {
         "metadata": {
             "format": "plane1-compatible",
@@ -649,6 +743,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         },
         "planes": planes,
         "walls": wall_records,
+        "connections": connection_records,
     }
 
 
@@ -1319,6 +1414,7 @@ def create_app(args):
                 "saved": True,
                 "output": str(saved_path),
                 "plane_count": len(payload["planes"]),
+                "connection_count": len(payload.get("connections", [])),
                 "format": payload.get("metadata", {}).get("format"),
             }
         )

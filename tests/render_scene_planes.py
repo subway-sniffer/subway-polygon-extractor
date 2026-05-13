@@ -30,6 +30,26 @@ def collect_bounds(planes):
     return float(x_min), float(y_min), float(x_max), float(y_max)
 
 
+def collect_scene_bounds(data):
+    """Collect min/max XY bounds for planes and connection endpoints."""
+    points = []
+    for plane in data.get("planes", []):
+        points.extend(plane_xy_points(plane))
+    for connection in data.get("connections", []):
+        from_pos = (connection.get("from") or {}).get("position")
+        to_pos = (connection.get("to") or {}).get("position")
+        if from_pos:
+            points.append([float(from_pos[0]), float(from_pos[1])])
+        if to_pos:
+            points.append([float(to_pos[0]), float(to_pos[1])])
+    if not points:
+        return 0.0, 0.0, 1.0, 1.0
+    arr = np.array(points, dtype=np.float32)
+    x_min, y_min = np.min(arr, axis=0)
+    x_max, y_max = np.max(arr, axis=0)
+    return float(x_min), float(y_min), float(x_max), float(y_max)
+
+
 def project_points(points, bounds, image_size, margin):
     """Project scene XY coordinates to image pixels."""
     x_min, y_min, x_max, y_max = bounds
@@ -48,7 +68,7 @@ def project_points(points, bounds, image_size, margin):
 def draw_scene_planes(data, image_size=(1600, 1000), margin=40):
     """Render scene planes to a flat debug image."""
     planes = data.get("planes", [])
-    bounds = collect_bounds(planes)
+    bounds = collect_scene_bounds(data)
     canvas = np.full((image_size[1], image_size[0], 3), 245, dtype=np.uint8)
 
     for plane in planes:
@@ -98,6 +118,25 @@ def draw_scene_planes(data, image_size=(1600, 1000), margin=40):
         line = project_points(wall_points, bounds, image_size, margin)
         cv2.line(canvas, tuple(line[0]), tuple(line[1]), (30, 30, 220), 3, lineType=cv2.LINE_AA)
 
+    for connection in data.get("connections", []):
+        from_pos = (connection.get("from") or {}).get("position")
+        to_pos = (connection.get("to") or {}).get("position")
+        if not from_pos or not to_pos:
+            continue
+        line = project_points(
+            [[float(from_pos[0]), float(from_pos[1])], [float(to_pos[0]), float(to_pos[1])]],
+            bounds,
+            image_size,
+            margin,
+        )
+        cv2.line(canvas, tuple(line[0]), tuple(line[1]), (0, 132, 255), 4, lineType=cv2.LINE_AA)
+        for point in line:
+            cv2.circle(canvas, tuple(point), 6, (0, 132, 255), -1, lineType=cv2.LINE_AA)
+        label = connection.get("connection_id") or connection.get("label")
+        if label:
+            mid = np.mean(line, axis=0).astype(int)
+            cv2.putText(canvas, str(label), (int(mid[0]) + 4, int(mid[1]) - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (20, 20, 20), 1, cv2.LINE_AA)
+
     return canvas
 
 
@@ -119,6 +158,11 @@ def render_layers(data, output_dir, image_size=(1600, 1000), margin=40):
             "walls": [
                 wall for wall in data.get("walls", [])
                 if str((wall.get("semantic") or {}).get("layer") or wall.get("layer") or "unassigned") == layer
+            ],
+            "connections": [
+                connection for connection in data.get("connections", [])
+                if str((connection.get("from") or {}).get("layer") or "unassigned") == layer
+                or str((connection.get("to") or {}).get("layer") or "unassigned") == layer
             ],
         }
         image = draw_scene_planes(layer_data, image_size=image_size, margin=margin)

@@ -90,6 +90,16 @@ const state = {
     toLayer: null,
     toPolygonId: null,
   },
+  stair: {
+    active: false,
+    label: "",
+    fromPoint: null,
+    fromLayer: null,
+    fromPolygonId: null,
+    toPoint: null,
+    toLayer: null,
+    toPolygonId: null,
+  },
   sharedEdge: {
     active: false,
     sourcePolygonIds: [],
@@ -126,6 +136,8 @@ const addPolygonStatus = document.getElementById("addPolygonStatus");
 const cutHoleStatus = document.getElementById("cutHoleStatus");
 const layerAlignStatus = document.getElementById("layerAlignStatus");
 const alignLabelInput = document.getElementById("alignLabelInput");
+const stairStatus = document.getElementById("stairStatus");
+const stairLabelInput = document.getElementById("stairLabelInput");
 const keepStatus = document.getElementById("keepStatus");
 
 function resizeCanvas() {
@@ -237,6 +249,51 @@ function drawConnections() {
     ctx.beginPath();
     ctx.arc(center.x, center.y, 4, 0, Math.PI * 2);
     ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawStairConnections() {
+  ctx.save();
+  for (const conn of state.annotations.manual_connections || []) {
+    if (conn.type !== "stair" || !conn.from_point_source || !conn.to_point_source) continue;
+    drawPath([conn.from_point_source, conn.to_point_source], "rgba(255, 132, 0, 0.95)", 4);
+    const fromScreen = worldToScreen(conn.from_point_source);
+    const toScreen = worldToScreen(conn.to_point_source);
+    ctx.fillStyle = "#ff8400";
+    ctx.strokeStyle = "#111111";
+    ctx.lineWidth = 1;
+    for (const screen of [fromScreen, toScreen]) {
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+    const labelPoint = [
+      (conn.from_point_source[0] + conn.to_point_source[0]) / 2,
+      (conn.from_point_source[1] + conn.to_point_source[1]) / 2,
+    ];
+    drawCanvasLabel(labelPoint, conn.connection_id || conn.label || "stair", "#ff8400", 8, -8);
+  }
+  if (state.stair.active) {
+    const points = [state.stair.fromPoint, state.stair.toPoint].filter(Boolean);
+    if (points.length === 2) drawPath(points, "rgba(0, 180, 255, 0.95)", 4);
+    points.forEach((point, index) => {
+      const screen = worldToScreen(point);
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, 7, 0, Math.PI * 2);
+      ctx.fillStyle = index === 0 ? "#00aaff" : "#ff8400";
+      ctx.strokeStyle = "#111111";
+      ctx.lineWidth = 1;
+      ctx.fill();
+      ctx.stroke();
+    });
+    if (state.stair.fromPoint && state.stair.fromLayer) {
+      drawCanvasLabel(state.stair.fromPoint, `${state.stair.fromLayer} ${state.stair.fromPolygonId}`, "#00aaff", 8, -8);
+    }
+    if (state.stair.toPoint && state.stair.toLayer) {
+      drawCanvasLabel(state.stair.toPoint, `${state.stair.toLayer} ${state.stair.toPolygonId}`, "#ff8400", 8, 18);
+    }
   }
   ctx.restore();
 }
@@ -784,6 +841,7 @@ function draw() {
     drawPolygon(poly);
   }
   drawConnections();
+  drawStairConnections();
   drawMergePreview();
   drawStraightenPreview();
   drawMovePreview();
@@ -1638,6 +1696,135 @@ function undoLastLayerAlignPair() {
   });
 }
 
+function nextStairConnectionId() {
+  const numbers = (state.annotations.manual_connections || [])
+    .filter((conn) => conn.type === "stair")
+    .map((conn) => {
+      const match = String(conn.connection_id || "").match(/^stair_(\d+)$/);
+      return match ? Number(match[1]) : 0;
+    });
+  const next = Math.max(0, ...numbers) + 1;
+  return `stair_${String(next).padStart(3, "0")}`;
+}
+
+function updateStairStatus(message = null) {
+  const count = (state.annotations.manual_connections || []).filter((conn) => conn.type === "stair").length;
+  if (!state.stair.active) {
+    stairStatus.textContent = [
+      message,
+      `stairs: ${count}`,
+    ].filter(Boolean).join("\n") || "inactive";
+    return;
+  }
+  const next = !state.stair.fromPoint
+    ? "Click stair start point on a layered polygon"
+    : !state.stair.toPoint
+      ? "Click stair destination point"
+      : "Stair ready";
+  stairStatus.textContent = [
+    message,
+    "mode: stair connection",
+    `from: ${state.stair.fromLayer || "-"} (${state.stair.fromPolygonId || "-"})`,
+    `to: ${state.stair.toLayer || "-"} (${state.stair.toPolygonId || "-"})`,
+    `label: ${state.stair.label || "auto"}`,
+    `stairs: ${count}`,
+    next,
+  ].filter(Boolean).join("\n");
+}
+
+function startStairConnection() {
+  if (!canEdit()) return;
+  state.tool = "stair";
+  state.stair = {
+    active: true,
+    label: stairLabelInput.value.trim(),
+    fromPoint: null,
+    fromLayer: null,
+    fromPolygonId: null,
+    toPoint: null,
+    toLayer: null,
+    toPolygonId: null,
+  };
+  updateStairStatus();
+  draw();
+}
+
+function resetStairConnection() {
+  state.tool = "select";
+  state.stair = {
+    active: false,
+    label: stairLabelInput.value.trim(),
+    fromPoint: null,
+    fromLayer: null,
+    fromPolygonId: null,
+    toPoint: null,
+    toLayer: null,
+    toPolygonId: null,
+  };
+  updateStairStatus();
+  draw();
+}
+
+function addStairPoint(world, poly) {
+  if (!state.stair.active) return;
+  if (!poly) {
+    updateStairStatus("Click inside a polygon.");
+    return;
+  }
+  const layer = polygonLayerValue(poly);
+  if (!layer) {
+    updateStairStatus(`Set layer first: ${poly.polygon_id}`);
+    return;
+  }
+  const point = [Number(world.x.toFixed(2)), Number(world.y.toFixed(2))];
+  if (!state.stair.fromPoint) {
+    state.stair.fromPoint = point;
+    state.stair.fromLayer = layer;
+    state.stair.fromPolygonId = poly.polygon_id;
+    updateStairStatus();
+    draw();
+    return;
+  }
+  const connectionId = nextStairConnectionId();
+  state.stair.toPoint = point;
+  state.stair.toLayer = layer;
+  state.stair.toPolygonId = poly.polygon_id;
+  state.annotations.manual_connections = state.annotations.manual_connections || [];
+  state.annotations.manual_connections.push({
+    connection_id: connectionId,
+    type: "stair",
+    asset_type: "stair",
+    label: state.stair.label || connectionId,
+    from_polygon_id: state.stair.fromPolygonId,
+    to_polygon_id: state.stair.toPolygonId,
+    from_layer: state.stair.fromLayer,
+    to_layer: state.stair.toLayer,
+    from_point_source: state.stair.fromPoint,
+    to_point_source: state.stair.toPoint,
+    bidirectional: true,
+  });
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    resetStairConnection();
+    updateStairStatus(`${connectionId} saved.`);
+  });
+}
+
+function undoLastStairConnection() {
+  state.annotations.manual_connections = state.annotations.manual_connections || [];
+  for (let index = state.annotations.manual_connections.length - 1; index >= 0; index -= 1) {
+    if (state.annotations.manual_connections[index].type !== "stair") continue;
+    const removed = state.annotations.manual_connections.splice(index, 1)[0];
+    saveAnnotations().then((result) => {
+      saveResult.textContent = JSON.stringify(result, null, 2);
+      updateStairStatus(`Removed ${removed.connection_id || removed.label}.`);
+      draw();
+    });
+    return;
+  }
+  updateStairStatus("No stair connection to undo.");
+}
+
 function startSimpleKeep() {
   if (!canEdit()) return;
   state.tool = "keep";
@@ -2370,6 +2557,7 @@ function resetToInitialPolygons() {
   state.annotations.manual_polygons = [];
   state.annotations.manual_edits = [];
   state.annotations.manual_merges = [];
+  state.annotations.manual_connections = [];
   state.annotations.manual_walls = [];
   state.annotations.layer_alignment_pairs = [];
   state.manualPolygons = [];
@@ -2383,6 +2571,7 @@ function resetToInitialPolygons() {
   resetAutoMerge();
   resetAddPolygon();
   resetCutHole();
+  resetStairConnection();
   resetLayerAlign();
   resetSharedEdge();
   updateSelectedInfo();
@@ -2625,6 +2814,7 @@ function loadProject() {
       state.polygons = project.polygon_data.polygons || [];
       state.connections = project.connections?.connections || [];
       state.annotations = project.annotations || state.annotations;
+      state.annotations.manual_connections = state.annotations.manual_connections || [];
       state.manualPolygons = state.annotations.manual_polygons || [];
       const image = new Image();
       image.onload = () => {
@@ -2650,6 +2840,7 @@ function togglePreviewFinal() {
     resetMoveVertex();
     resetInsertVertex();
     resetSimpleKeep();
+    resetStairConnection();
     resetLayerAlign();
   }
   const visibleCount = allPolygons().length;
@@ -2682,7 +2873,7 @@ function loadExportedFinal() {
         manual_polygons: [],
         manual_edits: [],
         manual_merges: [],
-        manual_connections: [],
+        manual_connections: data.connections || [],
         manual_walls: data.walls || [],
         layer_alignment_pairs: state.annotations.layer_alignment_pairs || [],
       };
@@ -2696,6 +2887,7 @@ function loadExportedFinal() {
       resetSimpleKeep();
       resetAddPolygon();
       resetCutHole();
+      resetStairConnection();
       resetLayerAlign();
       resetSharedEdge();
       updateSelectedInfo();
@@ -2906,6 +3098,10 @@ canvas.addEventListener("click", (event) => {
     addLayerAlignPoint(world, poly);
     return;
   }
+  if (state.tool === "stair") {
+    addStairPoint(world, poly);
+    return;
+  }
   if (state.tool === "sharedEdge") {
     addSharedEdgeVertex(world, poly);
     return;
@@ -3003,6 +3199,9 @@ document.getElementById("resetCutHoleBtn").addEventListener("click", resetCutHol
 document.getElementById("startLayerAlignBtn").addEventListener("click", startLayerAlign);
 document.getElementById("undoLayerAlignBtn").addEventListener("click", undoLastLayerAlignPair);
 document.getElementById("resetLayerAlignBtn").addEventListener("click", resetLayerAlign);
+document.getElementById("startStairBtn").addEventListener("click", startStairConnection);
+document.getElementById("undoStairBtn").addEventListener("click", undoLastStairConnection);
+document.getElementById("resetStairBtn").addEventListener("click", resetStairConnection);
 document.getElementById("resetAllBtn").addEventListener("click", resetToInitialPolygons);
 document.getElementById("saveBtn").addEventListener("click", () => {
   saveAnnotations().then((result) => {
@@ -3079,6 +3278,9 @@ document.addEventListener("keydown", (event) => {
   } else if (key === "y") {
     event.preventDefault();
     startLayerAlign();
+  } else if (key === "u") {
+    event.preventDefault();
+    startStairConnection();
   } else if (key === "g") {
     event.preventDefault();
     toggleSharedEdgeDirection("polygon_a");
@@ -3122,6 +3324,7 @@ document.addEventListener("keydown", (event) => {
     else if (state.tool === "addPolygon") resetAddPolygon();
     else if (state.tool === "cutHole") resetCutHole();
     else if (state.tool === "layerAlign") resetLayerAlign();
+    else if (state.tool === "stair") resetStairConnection();
     else if (state.tool === "sharedEdge") resetSharedEdge();
     else if (state.tool === "autoMerge") resetAutoMerge();
     else if (state.tool === "merge") resetMerge();
