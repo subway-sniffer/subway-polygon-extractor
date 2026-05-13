@@ -48,6 +48,7 @@ def default_annotations():
         "manual_merges": [],
         "manual_connections": [],
         "manual_walls": [],
+        "layer_alignment_pairs": [],
     }
 
 
@@ -372,6 +373,11 @@ def build_working_final_payload(polygons_path, working_polygons, annotations, tr
     """Build final_polygons.json directly from the editor working polygon set."""
     polygon_data = load_json(polygons_path)
     polygons = [dict(poly) for poly in working_polygons]
+    layers = annotations.get("polygon_layers", {})
+    for poly in polygons:
+        poly.setdefault("semantic", dict(DEFAULT_SEMANTIC))
+        if layers.get(poly.get("polygon_id")):
+            poly["semantic"]["layer"] = layers[poly["polygon_id"]]
 
     if transform_metadata:
         matrix = transform_metadata["perspective_matrix"]
@@ -438,26 +444,129 @@ def parse_layer_z(value):
     return mapping
 
 
-def polygon_layer(poly):
+def polygon_layer(poly, annotations=None):
     """Return layer value from a polygon semantic field."""
+    annotations = annotations or {}
+    polygon_id = poly.get("polygon_id")
+    annotation_layer = annotations.get("polygon_layers", {}).get(polygon_id)
+    if annotation_layer:
+        return annotation_layer
     return (poly.get("semantic") or {}).get("layer")
 
 
-def build_plane_payload(polygons_path, annotations, transform_metadata=None, scale=0.01, default_z=0.0, layer_z=None, invert_y=False):
-    """Build examples/plane1.json-style planes from final polygons."""
-    _, polygons, transform_info = final_polygon_records(polygons_path, annotations, transform_metadata)
+def color_rgba(color_rgb, alpha=1.0):
+    """Convert 0-255 RGB into normalized RGBA used by plane_with_color.json."""
+    rgb = color_rgb or [180, 180, 180]
+    return [float(rgb[0]) / 255.0, float(rgb[1]) / 255.0, float(rgb[2]) / 255.0, float(alpha)]
+
+
+def scene_xy_from_point(point, transform_metadata=None, transform_info=None, scale=0.01, invert_y=False):
+    """Convert a source-space point into scene export XY coordinates."""
+    x, y = point
+    if transform_metadata and transform_info:
+        transformed = transform_source_points(
+            [[x, y]],
+            transform_metadata["perspective_matrix"],
+            shift=transform_info["auto_center_shift"],
+        )[0]
+        x, y = transformed
+    out_y = -float(y) if invert_y else float(y)
+    return [float(x) * scale, out_y * scale]
+
+
+def build_layer_alignment_offsets(alignment_pairs, transform_metadata=None, transform_info=None, scale=0.01, invert_y=False, reference_layer=None):
+    """Build cumulative XY offsets from pairwise layer alignment points."""
+    pairs = alignment_pairs or []
+    if not pairs:
+        return {}, None
+
+    graph = {}
+    layers = set()
+    for pair in pairs:
+        from_layer = pair.get("from_layer")
+        to_layer = pair.get("to_layer")
+        from_point = pair.get("from_point_source") or pair.get("from_point")
+        to_point = pair.get("to_point_source") or pair.get("to_point")
+        if not from_layer or not to_layer or not from_point or not to_point:
+            continue
+        from_xy = scene_xy_from_point(from_point, transform_metadata, transform_info, scale=scale, invert_y=invert_y)
+        to_xy = scene_xy_from_point(to_point, transform_metadata, transform_info, scale=scale, invert_y=invert_y)
+        delta = [to_xy[0] - from_xy[0], to_xy[1] - from_xy[1]]
+        reverse = [-delta[0], -delta[1]]
+        graph.setdefault(from_layer, []).append((to_layer, delta))
+        graph.setdefault(to_layer, []).append((from_layer, reverse))
+        layers.update([from_layer, to_layer])
+
+    if not graph:
+        return {}, None
+    root = reference_layer if reference_layer in graph else ("B1" if "B1" in graph else sorted(layers)[0])
+    offsets = {root: [0.0, 0.0]}
+    queue = [root]
+    while queue:
+        layer = queue.pop(0)
+        for next_layer, delta_to_next in graph.get(layer, []):
+            if next_layer in offsets:
+                continue
+            # delta_to_next moves next_layer into current layer coordinates, so subtract it when traversing current -> next.
+            offsets[next_layer] = [
+                offsets[layer][0] - delta_to_next[0],
+                offsets[layer][1] - delta_to_next[1],
+            ]
+            queue.append(next_layer)
+    return offsets, root
+
+
+def apply_xy_offset_to_vertices(vertices, offset):
+    """Apply a 2D offset to 3D vertices."""
+    if not offset:
+        return vertices
+    return [[float(x) + offset[0], float(y) + offset[1], float(z)] for x, y, z in vertices]
+
+
+def build_plane_payload_from_records(polygons, walls, annotations=None, transform_metadata=None, transform_info=None, scale=0.01, default_z=0.0, layer_z=None, invert_y=False):
+    """Build examples/plane_with_color.json-style planes from polygon records."""
+    annotations = annotations or {}
     layer_z = layer_z or {}
+    alignment_offsets, reference_layer = build_layer_alignment_offsets(
+        annotations.get("layer_alignment_pairs", []),
+        transform_metadata=transform_metadata,
+        transform_info=transform_info,
+        scale=scale,
+        invert_y=invert_y,
+        reference_layer=annotations.get("layer_alignment_reference"),
+    )
     planes = []
     for poly in polygons:
-        points = poly.get("points_transformed") or poly.get("points_source")
+        if transform_metadata and transform_info and poly.get("points_source"):
+            points = transform_source_points(
+                poly["points_source"],
+                transform_metadata["perspective_matrix"],
+                shift=transform_info["auto_center_shift"],
+            )
+        else:
+            points = poly.get("points_transformed") or poly.get("points_source")
         if not points:
             continue
-        layer = polygon_layer(poly)
+        layer = polygon_layer(poly, annotations=annotations)
         z_value = layer_z.get(layer, default_z)
         vertices = []
         for x, y in points:
             out_y = -float(y) if invert_y else float(y)
             vertices.append([float(x) * scale, out_y * scale, float(z_value)])
+        offset = alignment_offsets.get(layer, [0.0, 0.0])
+        vertices = apply_xy_offset_to_vertices(vertices, offset)
+        if transform_metadata and transform_info and poly.get("holes_source"):
+            hole_sets = [
+                transform_source_points(
+                    hole,
+                    transform_metadata["perspective_matrix"],
+                    shift=transform_info["auto_center_shift"],
+                )
+                for hole in poly.get("holes_source", [])
+                if len(hole) >= 3
+            ]
+        else:
+            hole_sets = poly.get("holes_transformed") or poly.get("holes_source") or []
         planes.append(
             {
                 "name": f"{layer}_{poly['polygon_id']}" if layer else poly["polygon_id"],
@@ -465,28 +574,34 @@ def build_plane_payload(polygons_path, annotations, transform_metadata=None, sca
                 "source_polygon_ids": poly.get("source_polygon_ids"),
                 "layer": layer,
                 "color_rgb": poly.get("color_rgb"),
+                "color": color_rgba(poly.get("color_rgb")),
                 "vertices": vertices,
                 "holes": [
-                    [
-                        [float(x) * scale, (-float(y) if invert_y else float(y)) * scale, float(z_value)]
-                        for x, y in hole
-                    ]
-                    for hole in (poly.get("holes_transformed") or poly.get("holes_source") or [])
+                    apply_xy_offset_to_vertices(
+                        [
+                            [float(x) * scale, (-float(y) if invert_y else float(y)) * scale, float(z_value)]
+                            for x, y in hole
+                        ],
+                        offset,
+                    )
+                    for hole in hole_sets
                     if len(hole) >= 3
                 ],
+                "alignment_offset_xy": offset,
             }
         )
-    walls = []
-    for wall in annotations.get("manual_walls", []):
-        wall_points = wall.get("points_source")
-        if not wall_points or len(wall_points) < 2:
-            continue
-        if transform_metadata and transform_info:
+    wall_records = []
+    for wall in walls:
+        if transform_metadata and transform_info and wall.get("points_source"):
             wall_points = transform_source_points(
-                wall_points,
+                wall["points_source"],
                 transform_metadata["perspective_matrix"],
                 shift=transform_info["auto_center_shift"],
             )
+        else:
+            wall_points = wall.get("points_transformed") or wall.get("points_source")
+        if not wall_points or len(wall_points) < 2:
+            continue
         layer = wall.get("semantic", {}).get("layer")
         z_value = layer_z.get(layer, default_z)
         height = float(wall.get("height", 1.0))
@@ -495,19 +610,25 @@ def build_plane_payload(polygons_path, annotations, transform_metadata=None, sca
         y2 = -float(p2[1]) if invert_y else float(p2[1])
         x1 = float(p1[0])
         x2 = float(p2[0])
-        walls.append(
+        offset = alignment_offsets.get(layer, [0.0, 0.0])
+        wall_records.append(
             {
                 "name": wall.get("wall_id"),
                 "wall_id": wall.get("wall_id"),
                 "source_polygon_ids": wall.get("source_polygon_ids"),
                 "type": wall.get("type", "shared_boundary_wall"),
                 "height": height,
-                "vertices": [
-                    [x1 * scale, y1 * scale, z_value],
-                    [x2 * scale, y2 * scale, z_value],
-                    [x2 * scale, y2 * scale, z_value + height],
-                    [x1 * scale, y1 * scale, z_value + height],
-                ],
+                "color": [0.8, 0.1, 0.1, 1.0],
+                "vertices": apply_xy_offset_to_vertices(
+                    [
+                        [x1 * scale, y1 * scale, z_value],
+                        [x2 * scale, y2 * scale, z_value],
+                        [x2 * scale, y2 * scale, z_value + height],
+                        [x1 * scale, y1 * scale, z_value + height],
+                    ],
+                    offset,
+                ),
+                "alignment_offset_xy": offset,
             }
         )
     return {
@@ -519,10 +640,39 @@ def build_plane_payload(polygons_path, annotations, transform_metadata=None, sca
             "layer_z": layer_z,
             "invert_y": invert_y,
             "transform": transform_info,
+            "layer_alignment": {
+                "reference_layer": reference_layer,
+                "offsets": alignment_offsets,
+                "pair_count": len(annotations.get("layer_alignment_pairs", [])),
+                "mode": "xy",
+            },
         },
         "planes": planes,
-        "walls": walls,
+        "walls": wall_records,
     }
+
+
+def build_plane_payload(polygons_path, annotations, transform_metadata=None, scale=0.01, default_z=0.0, layer_z=None, invert_y=False):
+    """Build examples/plane_with_color.json-style planes from final polygons."""
+    _, polygons, transform_info = final_polygon_records(polygons_path, annotations, transform_metadata)
+    walls = [dict(wall) for wall in annotations.get("manual_walls", [])]
+    if transform_metadata and transform_info:
+        matrix = transform_metadata["perspective_matrix"]
+        shift = transform_info["auto_center_shift"]
+        for wall in walls:
+            if wall.get("points_source"):
+                wall["points_transformed"] = transform_source_points(wall["points_source"], matrix, shift=shift)
+    return build_plane_payload_from_records(
+        polygons,
+        walls,
+        annotations=annotations,
+        transform_metadata=transform_metadata,
+        transform_info=transform_info,
+        scale=scale,
+        default_z=default_z,
+        layer_z=layer_z,
+        invert_y=invert_y,
+    )
 
 
 def keep_path_from_remove_choice(points, start_index, end_index, remove_path):
@@ -1137,22 +1287,39 @@ def create_app(args):
     @app.route("/api/export/planes", methods=["POST"])
     def export_planes():
         """Export final polygons to examples/plane1.json-style plane records."""
+        data = request.get_json(silent=True) or {}
         annotations = load_annotations(output_path)
-        payload = build_plane_payload(
-            polygons_path,
-            annotations,
-            transform_metadata,
-            scale=args.plane_scale,
-            default_z=args.default_z,
-            layer_z=layer_z,
-            invert_y=args.invert_y,
-        )
+        working_polygons = data.get("working_polygons")
+        if working_polygons:
+            final_payload = build_working_final_payload(polygons_path, working_polygons, annotations, transform_metadata)
+            payload = build_plane_payload_from_records(
+                final_payload["polygons"],
+                final_payload.get("walls", []),
+                annotations=annotations,
+                transform_metadata=transform_metadata,
+                transform_info=final_payload.get("manual_export", {}).get("transform"),
+                scale=args.plane_scale,
+                default_z=args.default_z,
+                layer_z=layer_z,
+                invert_y=args.invert_y,
+            )
+        else:
+            payload = build_plane_payload(
+                polygons_path,
+                annotations,
+                transform_metadata,
+                scale=args.plane_scale,
+                default_z=args.default_z,
+                layer_z=layer_z,
+                invert_y=args.invert_y,
+            )
         saved_path = save_json(payload, plane_output_path)
         return jsonify(
             {
                 "saved": True,
                 "output": str(saved_path),
                 "plane_count": len(payload["planes"]),
+                "format": payload.get("metadata", {}).get("format"),
             }
         )
 

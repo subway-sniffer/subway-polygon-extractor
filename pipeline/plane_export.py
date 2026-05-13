@@ -55,6 +55,12 @@ def points_to_vertices(points, z_value=0.0, scale=1.0, invert_y=False):
     return vertices
 
 
+def color_rgba(color_rgb, alpha=1.0):
+    """Convert 0-255 RGB into normalized RGBA."""
+    rgb = color_rgb or [180, 180, 180]
+    return [float(rgb[0]) / 255.0, float(rgb[1]) / 255.0, float(rgb[2]) / 255.0, float(alpha)]
+
+
 def apply_manual_annotations(polygons, annotations=None):
     """Apply hidden original polygons and append manually edited polygons."""
     annotations = annotations or {}
@@ -81,6 +87,7 @@ def build_planes(polygons, coordinate_key="points_transformed", scale=1.0, defau
                 "polygon_id": poly.get("polygon_id"),
                 "layer": layer,
                 "color_rgb": poly.get("color_rgb"),
+                "color": color_rgba(poly.get("color_rgb")),
                 "vertices": points_to_vertices(points, z_value=z_value, scale=scale, invert_y=invert_y),
             }
         )

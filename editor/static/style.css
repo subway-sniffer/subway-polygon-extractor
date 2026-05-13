@@ -116,6 +116,7 @@ dd {
 #sharedEdgeStatus,
 #addPolygonStatus,
 #cutHoleStatus,
+#layerAlignStatus,
 #keepStatus {
   min-height: 44px;
   padding: 8px;

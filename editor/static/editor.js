@@ -10,6 +10,7 @@ const state = {
     manual_merges: [],
     manual_connections: [],
     manual_walls: [],
+    layer_alignment_pairs: [],
   },
   scale: 1,
   offsetX: 0,
@@ -79,6 +80,16 @@ const state = {
     polygonId: null,
     points: [],
   },
+  layerAlign: {
+    active: false,
+    label: "elevator_A",
+    fromPoint: null,
+    fromLayer: null,
+    fromPolygonId: null,
+    toPoint: null,
+    toLayer: null,
+    toPolygonId: null,
+  },
   sharedEdge: {
     active: false,
     sourcePolygonIds: [],
@@ -113,6 +124,8 @@ const deleteStatus = document.getElementById("deleteStatus");
 const sharedEdgeStatus = document.getElementById("sharedEdgeStatus");
 const addPolygonStatus = document.getElementById("addPolygonStatus");
 const cutHoleStatus = document.getElementById("cutHoleStatus");
+const layerAlignStatus = document.getElementById("layerAlignStatus");
+const alignLabelInput = document.getElementById("alignLabelInput");
 const keepStatus = document.getElementById("keepStatus");
 
 function resizeCanvas() {
@@ -159,6 +172,13 @@ function allPolygons() {
   const hidden = hiddenIds();
   if (!state.previewFinal && state.showHidden) return polygons;
   return polygons.filter((poly) => !hidden.has(poly.polygon_id));
+}
+
+function finalWorkingPolygons() {
+  const hidden = hiddenIds();
+  const visible = (polygons) => polygons.filter((poly) => !hidden.has(poly.polygon_id));
+  if (state.loadedFinalWorkingSet) return visible(state.polygons);
+  return [...visible(state.polygons), ...visible(state.manualPolygons)];
 }
 
 function drawPolygon(poly) {
@@ -715,6 +735,37 @@ function drawCutHolePreview() {
   ctx.restore();
 }
 
+function drawLayerAlignPreview() {
+  ctx.save();
+  for (const pair of state.annotations.layer_alignment_pairs || []) {
+    if (!pair.from_point_source || !pair.to_point_source) continue;
+    drawPath([pair.from_point_source, pair.to_point_source], "rgba(123, 44, 255, 0.75)", 3);
+    drawCanvasLabel(pair.from_point_source, `${pair.from_layer} ${pair.label || ""}`, "#7b2cff", 8, -8);
+    drawCanvasLabel(pair.to_point_source, `${pair.to_layer} ${pair.label || ""}`, "#7b2cff", 8, 18);
+  }
+  if (state.layerAlign.active) {
+    const points = [state.layerAlign.fromPoint, state.layerAlign.toPoint].filter(Boolean);
+    if (points.length === 2) drawPath(points, "rgba(0, 180, 255, 0.95)", 4);
+    points.forEach((point, index) => {
+      const screen = worldToScreen(point);
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = index === 0 ? "#00aaff" : "#7b2cff";
+      ctx.strokeStyle = "#111111";
+      ctx.lineWidth = 1;
+      ctx.fill();
+      ctx.stroke();
+    });
+    if (state.layerAlign.fromPoint && state.layerAlign.fromLayer) {
+      drawCanvasLabel(state.layerAlign.fromPoint, `${state.layerAlign.fromLayer} ${state.layerAlign.fromPolygonId}`, "#00aaff", 8, -8);
+    }
+    if (state.layerAlign.toPoint && state.layerAlign.toLayer) {
+      drawCanvasLabel(state.layerAlign.toPoint, `${state.layerAlign.toLayer} ${state.layerAlign.toPolygonId}`, "#7b2cff", 8, 18);
+    }
+  }
+  ctx.restore();
+}
+
 function draw() {
   const size = canvasSize();
   ctx.clearRect(0, 0, size.width, size.height);
@@ -740,6 +791,7 @@ function draw() {
   drawKeepPreview();
   drawAddPolygonPreview();
   drawCutHolePreview();
+  drawLayerAlignPreview();
   drawSharedEdgePreview();
 }
 
@@ -798,7 +850,7 @@ function updateSelectedInfo() {
     updateDeleteStatus();
     return;
   }
-  const layer = state.annotations.polygon_layers?.[poly.polygon_id] || "";
+  const layer = state.annotations.polygon_layers?.[poly.polygon_id] || poly.semantic?.layer || "";
   layerInput.value = layer;
   selectedInfo.innerHTML = `
     <dt>polygon</dt><dd>${poly.polygon_id}</dd>
@@ -818,7 +870,18 @@ function updateDeleteStatus(message = null) {
   ].filter(Boolean).join("\n");
 }
 
+function syncLayerAnnotationsFromPolygons() {
+  state.annotations.polygon_layers = state.annotations.polygon_layers || {};
+  for (const poly of [...state.polygons, ...state.manualPolygons]) {
+    const layer = poly.semantic?.layer;
+    if (layer && !state.annotations.polygon_layers[poly.polygon_id]) {
+      state.annotations.polygon_layers[poly.polygon_id] = layer;
+    }
+  }
+}
+
 function saveAnnotations() {
+  syncLayerAnnotationsFromPolygons();
   return fetch("/api/annotations", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
@@ -827,7 +890,7 @@ function saveAnnotations() {
 }
 
 function workingPolygonsPayload() {
-  return allPolygons();
+  return finalWorkingPolygons();
 }
 
 function remainingHiddenSourceIds() {
@@ -1450,6 +1513,127 @@ function undoLastCutHole() {
   saveAnnotations().then((result) => {
     saveResult.textContent = JSON.stringify(result, null, 2);
     cutHoleStatus.textContent = `Undid ${removedEdit.edit_id || removedPolygonId}.`;
+    draw();
+  });
+}
+
+function updateLayerAlignStatus(message = null) {
+  if (!state.layerAlign.active) {
+    layerAlignStatus.textContent = [
+      message,
+      `pairs: ${(state.annotations.layer_alignment_pairs || []).length}`,
+    ].filter(Boolean).join("\n") || "inactive";
+    return;
+  }
+  const next = !state.layerAlign.fromPoint
+    ? "Click first elevator point on a layered polygon"
+    : !state.layerAlign.toPoint
+      ? "Click matching elevator point on another layered polygon"
+      : "Pair ready";
+  layerAlignStatus.textContent = [
+    message,
+    "mode: layer align xy",
+    `from: ${state.layerAlign.fromLayer || "-"} (${state.layerAlign.fromPolygonId || "-"})`,
+    `to: ${state.layerAlign.toLayer || "-"} (${state.layerAlign.toPolygonId || "-"})`,
+    `label: ${state.layerAlign.label}`,
+    `pairs: ${(state.annotations.layer_alignment_pairs || []).length}`,
+    next,
+  ].filter(Boolean).join("\n");
+}
+
+function startLayerAlign() {
+  if (!canEdit()) return;
+  state.tool = "layerAlign";
+  state.layerAlign = {
+    active: true,
+    label: alignLabelInput.value.trim() || "elevator_A",
+    fromPoint: null,
+    fromLayer: null,
+    fromPolygonId: null,
+    toPoint: null,
+    toLayer: null,
+    toPolygonId: null,
+  };
+  updateLayerAlignStatus();
+  draw();
+}
+
+function resetLayerAlign() {
+  state.tool = "select";
+  state.layerAlign = {
+    active: false,
+    label: alignLabelInput.value.trim() || "elevator_A",
+    fromPoint: null,
+    fromLayer: null,
+    fromPolygonId: null,
+    toPoint: null,
+    toLayer: null,
+    toPolygonId: null,
+  };
+  updateLayerAlignStatus();
+  draw();
+}
+
+function polygonLayerValue(poly) {
+  if (!poly) return null;
+  return state.annotations.polygon_layers?.[poly.polygon_id] || poly.semantic?.layer || null;
+}
+
+function addLayerAlignPoint(world, poly) {
+  if (!state.layerAlign.active) return;
+  if (!poly) {
+    updateLayerAlignStatus("Click inside a polygon.");
+    return;
+  }
+  const layer = polygonLayerValue(poly);
+  if (!layer) {
+    updateLayerAlignStatus(`Set layer first: ${poly.polygon_id}`);
+    return;
+  }
+  const point = [Number(world.x.toFixed(2)), Number(world.y.toFixed(2))];
+  if (!state.layerAlign.fromPoint) {
+    state.layerAlign.fromPoint = point;
+    state.layerAlign.fromLayer = layer;
+    state.layerAlign.fromPolygonId = poly.polygon_id;
+    updateLayerAlignStatus();
+    draw();
+    return;
+  }
+  if (poly.polygon_id === state.layerAlign.fromPolygonId) {
+    updateLayerAlignStatus("Click the matching point on another polygon/layer.");
+    return;
+  }
+  state.layerAlign.toPoint = point;
+  state.layerAlign.toLayer = layer;
+  state.layerAlign.toPolygonId = poly.polygon_id;
+  state.annotations.layer_alignment_pairs = state.annotations.layer_alignment_pairs || [];
+  state.annotations.layer_alignment_pairs.push({
+    from_layer: state.layerAlign.fromLayer,
+    to_layer: state.layerAlign.toLayer,
+    label: state.layerAlign.label,
+    from_polygon_id: state.layerAlign.fromPolygonId,
+    to_polygon_id: state.layerAlign.toPolygonId,
+    from_point_source: state.layerAlign.fromPoint,
+    to_point_source: state.layerAlign.toPoint,
+    mode: "xy",
+  });
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    resetLayerAlign();
+    updateLayerAlignStatus("Alignment pair saved.");
+  });
+}
+
+function undoLastLayerAlignPair() {
+  state.annotations.layer_alignment_pairs = state.annotations.layer_alignment_pairs || [];
+  const removed = state.annotations.layer_alignment_pairs.pop();
+  if (!removed) {
+    updateLayerAlignStatus("No alignment pair to undo.");
+    return;
+  }
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateLayerAlignStatus(`Removed ${removed.from_layer}->${removed.to_layer}.`);
     draw();
   });
 }
@@ -2187,6 +2371,7 @@ function resetToInitialPolygons() {
   state.annotations.manual_edits = [];
   state.annotations.manual_merges = [];
   state.annotations.manual_walls = [];
+  state.annotations.layer_alignment_pairs = [];
   state.manualPolygons = [];
   state.loadedFinalWorkingSet = false;
   state.selectedId = null;
@@ -2198,6 +2383,7 @@ function resetToInitialPolygons() {
   resetAutoMerge();
   resetAddPolygon();
   resetCutHole();
+  resetLayerAlign();
   resetSharedEdge();
   updateSelectedInfo();
   saveAnnotations().then((result) => {
@@ -2464,6 +2650,7 @@ function togglePreviewFinal() {
     resetMoveVertex();
     resetInsertVertex();
     resetSimpleKeep();
+    resetLayerAlign();
   }
   const visibleCount = allPolygons().length;
   if (!state.previewFinal) {
@@ -2497,6 +2684,7 @@ function loadExportedFinal() {
         manual_merges: [],
         manual_connections: [],
         manual_walls: data.walls || [],
+        layer_alignment_pairs: state.annotations.layer_alignment_pairs || [],
       };
       state.tool = "select";
       state.selectedId = null;
@@ -2508,6 +2696,7 @@ function loadExportedFinal() {
       resetSimpleKeep();
       resetAddPolygon();
       resetCutHole();
+      resetLayerAlign();
       resetSharedEdge();
       updateSelectedInfo();
       statusEl.textContent = `Working Set: ${state.polygons.length} exported polygons`;
@@ -2713,6 +2902,10 @@ canvas.addEventListener("click", (event) => {
     addCutHolePoint(world, poly);
     return;
   }
+  if (state.tool === "layerAlign") {
+    addLayerAlignPoint(world, poly);
+    return;
+  }
   if (state.tool === "sharedEdge") {
     addSharedEdgeVertex(world, poly);
     return;
@@ -2749,8 +2942,15 @@ document.getElementById("showHiddenToggle").addEventListener("change", (event) =
 document.getElementById("setLayerBtn").addEventListener("click", () => {
   if (!state.selectedId) return;
   state.annotations.polygon_layers = state.annotations.polygon_layers || {};
-  state.annotations.polygon_layers[state.selectedId] = layerInput.value.trim();
+  const layer = layerInput.value.trim();
+  state.annotations.polygon_layers[state.selectedId] = layer;
+  const poly = selectedPolygon();
+  if (poly) {
+    poly.semantic = poly.semantic || {};
+    poly.semantic.layer = layer || null;
+  }
   updateSelectedInfo();
+  draw();
 });
 document.getElementById("toggleHideBtn").addEventListener("click", () => {
   if (!state.selectedId) return;
@@ -2800,6 +3000,9 @@ document.getElementById("applyCutHoleBtn").addEventListener("click", applyCutHol
 document.getElementById("undoHolePointBtn").addEventListener("click", undoCutHolePoint);
 document.getElementById("undoCutHoleBtn").addEventListener("click", undoLastCutHole);
 document.getElementById("resetCutHoleBtn").addEventListener("click", resetCutHole);
+document.getElementById("startLayerAlignBtn").addEventListener("click", startLayerAlign);
+document.getElementById("undoLayerAlignBtn").addEventListener("click", undoLastLayerAlignPair);
+document.getElementById("resetLayerAlignBtn").addEventListener("click", resetLayerAlign);
 document.getElementById("resetAllBtn").addEventListener("click", resetToInitialPolygons);
 document.getElementById("saveBtn").addEventListener("click", () => {
   saveAnnotations().then((result) => {
@@ -2824,7 +3027,13 @@ document.getElementById("exportFinalBtn").addEventListener("click", () => {
 });
 document.getElementById("exportPlanesBtn").addEventListener("click", () => {
   saveAnnotations()
-    .then(() => fetch("/api/export/planes", {method: "POST"}))
+    .then(() => fetch("/api/export/planes", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        working_polygons: workingPolygonsPayload(),
+      }),
+    }))
     .then((response) => response.json())
     .then((result) => {
       saveResult.textContent = JSON.stringify(result, null, 2);
@@ -2867,6 +3076,9 @@ document.addEventListener("keydown", (event) => {
   } else if (key === "t") {
     event.preventDefault();
     startSharedEdge();
+  } else if (key === "y") {
+    event.preventDefault();
+    startLayerAlign();
   } else if (key === "g") {
     event.preventDefault();
     toggleSharedEdgeDirection("polygon_a");
@@ -2909,6 +3121,7 @@ document.addEventListener("keydown", (event) => {
     if (state.tool === "keep") resetSimpleKeep();
     else if (state.tool === "addPolygon") resetAddPolygon();
     else if (state.tool === "cutHole") resetCutHole();
+    else if (state.tool === "layerAlign") resetLayerAlign();
     else if (state.tool === "sharedEdge") resetSharedEdge();
     else if (state.tool === "autoMerge") resetAutoMerge();
     else if (state.tool === "merge") resetMerge();
@@ -2929,5 +3142,6 @@ updateDeleteStatus();
 updateSharedEdgeStatus();
 updateAddPolygonStatus();
 updateCutHoleStatus();
+updateLayerAlignStatus();
 updateKeepStatus();
 loadProject();

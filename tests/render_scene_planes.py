@@ -56,8 +56,16 @@ def draw_scene_planes(data, image_size=(1600, 1000), margin=40):
         if len(points) < 3:
             continue
         poly = project_points(points, bounds, image_size, margin)
-        color = plane.get("color_rgb") or [180, 180, 180]
-        bgr = (int(color[2]), int(color[1]), int(color[0]))
+        color = plane.get("color")
+        if color:
+            bgr = (
+                int(max(0.0, min(1.0, color[2])) * 255),
+                int(max(0.0, min(1.0, color[1])) * 255),
+                int(max(0.0, min(1.0, color[0])) * 255),
+            )
+        else:
+            color_rgb = plane.get("color_rgb") or [180, 180, 180]
+            bgr = (int(color_rgb[2]), int(color_rgb[1]), int(color_rgb[0]))
         cv2.fillPoly(canvas, [poly], bgr)
         for hole in plane.get("holes", []):
             hole_points = [[float(vertex[0]), float(vertex[1])] for vertex in hole]
@@ -93,11 +101,39 @@ def draw_scene_planes(data, image_size=(1600, 1000), margin=40):
     return canvas
 
 
+def layer_name(plane):
+    """Return a stable layer name for output files."""
+    return str(plane.get("layer") or "unassigned")
+
+
+def render_layers(data, output_dir, image_size=(1600, 1000), margin=40):
+    """Render one XY debug image per scene layer."""
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+    layers = sorted({layer_name(plane) for plane in data.get("planes", [])})
+    written = []
+    for layer in layers:
+        layer_data = {
+            "metadata": data.get("metadata", {}),
+            "planes": [plane for plane in data.get("planes", []) if layer_name(plane) == layer],
+            "walls": [
+                wall for wall in data.get("walls", [])
+                if str((wall.get("semantic") or {}).get("layer") or wall.get("layer") or "unassigned") == layer
+            ],
+        }
+        image = draw_scene_planes(layer_data, image_size=image_size, margin=margin)
+        file_path = output_path / f"scene_planes_{layer}.png"
+        cv2.imwrite(str(file_path), image)
+        written.append(file_path)
+    return written
+
+
 def parse_args():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description="Render scene_planes.json to a PNG debug image.")
     parser.add_argument("--input", required=True, help="Path to scene_planes.json.")
     parser.add_argument("--output", required=True, help="Output PNG path.")
+    parser.add_argument("--layer-output-dir", help="Optional directory for one PNG per layer.")
     parser.add_argument("--width", type=int, default=1600)
     parser.add_argument("--height", type=int, default=1000)
     parser.add_argument("--margin", type=int, default=40)
@@ -113,6 +149,9 @@ def main():
     output_path.parent.mkdir(parents=True, exist_ok=True)
     cv2.imwrite(str(output_path), image)
     print(f"rendered={output_path}")
+    if args.layer_output_dir:
+        for file_path in render_layers(data, args.layer_output_dir, image_size=(args.width, args.height), margin=args.margin):
+            print(f"rendered_layer={file_path}")
 
 
 if __name__ == "__main__":
