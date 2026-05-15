@@ -1,0 +1,7 @@
+{
+  "assets": [
+    { "blend": "Escalator.blend", "location": [0, 0, 0], "rotation_z": 90, "scale": [1, 1, 1] },
+    { "blend": "Escalator.blend", "location": [10, 0, 0], "rotation_z": 0, "scale": [1, 1, 1] },
+    { "blend": "MovingWalkway.blend", "location": [20, 0, 0], "rotation_z": 0, "scale": [1, 2, 1] }
+  ]
+}
