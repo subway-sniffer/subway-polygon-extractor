@@ -37,6 +37,17 @@ pipeline/
   visualization.py        디버그 이미지 생성, 저장, 선택적 화면 표시
   export_json.py          JSON 저장 및 numpy 타입 변환
 
+editor/
+  app.py                  Flask route와 에디터 서버 실행
+  model.py                JSON 저장/로드, annotation 기본 구조, ID 생성
+  geometry.py             merge, move vertex, cut hole, shared edge 등 편집 계산
+  export_payload.py       final_polygons, scene_planes, transform export
+  project_store.py        웹에서 선택한 active image/output project 관리
+  marker_editor.py        웹 manual marker 4점 저장
+  pipeline_runner.py      웹에서 pipeline/main.py 실행 연결
+  static/editor.js        캔버스 에디터와 웹 파이프라인 UI
+  templates/index.html    에디터 화면
+
 tests/
   test_replay_color_clusters.py   저장된 color_clusters.json 재실행 시험
   test_epsilon_sweep.py           epsilon_ratio 비교 시험
@@ -60,6 +71,68 @@ pip install -r requirements.txt
 ```bash
 python3 pipeline/main.py --image test_marker.png
 ```
+
+## 웹 에디터 실행
+
+로컬 웹 에디터는 폴리곤 보정, manual marker 지정, 웹 파이프라인 실행, 최종 JSON export를 한 화면에서 처리합니다.
+
+현재 테스트 이미지 기준 실행:
+
+```bash
+../venv/bin/python editor/app.py \
+  --image test1.png \
+  --polygons ../test_image_output/test1/inpaint_polygon_check/output/intermediate_polygons.json \
+  --output ../test_image_output/test1/inpaint_polygon_check/output/manual_annotations.json \
+  --final-output ../test_image_output/test1/inpaint_polygon_check/output/final_polygons.json \
+  --plane-output ../test_image_output/test1/inpaint_polygon_check/output/scene_planes.json \
+  --marker-config config/test1_marker_config.json \
+  --image-root . \
+  --project-output-root ../test_image_output/web_projects \
+  --port 5050
+```
+
+브라우저에서 접속:
+
+```text
+http://127.0.0.1:5050
+```
+
+수백 장 이미지 폴더를 대상으로 작업할 때는 `--image-root`만 역 안내도 이미지 폴더로 바꿉니다.
+
+```bash
+--image-root ../my_station_maps
+```
+
+웹에서 새 이미지 처리 흐름:
+
+```text
+1. Refresh Images
+2. 이미지 선택 후 Load Selected Image
+3. Start Manual Marker (M)로 transform 기준 4점 클릭
+4. Save Marker
+5. K-Means K와 Include clusters 입력
+6. Run Pipeline
+7. Load Clusters로 cluster debug 확인
+8. 필요한 cluster를 클릭해서 include_clusters 값 보정
+9. 다시 Run Pipeline
+10. 폴리곤 편집 후 Export Final Polygons / Export Scene Planes
+```
+
+웹 파이프라인 산출물은 이미지별로 parent output 폴더에 저장됩니다.
+
+```text
+../test_image_output/web_projects/<image_name>/
+  marker_config.json
+  color_clusters.json
+  intermediate_polygons.json
+  floor_polygons.json
+  manual_annotations.json
+  final_polygons.json
+  scene_planes.json
+  debug/
+```
+
+`Load Exported Final`은 현재 active project의 `final_polygons.json`을 다시 불러와 편집 대상으로 사용합니다. 다른 컴퓨터로 옮길 때는 해당 이미지의 `web_projects/<image_name>/` 폴더를 통째로 옮기는 것이 가장 안전합니다.
 
 ## 기본 실행
 
@@ -183,6 +256,20 @@ magenta
 ```
 
 마젠타 권장 색상은 `#FF00FF`입니다. 우분투에서는 GIMP, Krita, Pinta 같은 도구로 순색 마젠타 마커를 칠할 수 있습니다.
+
+웹 에디터에서는 이미지에 마커를 직접 칠하지 않고, 원본 이미지 위에서 4점을 클릭해 `marker_config.json`을 만들 수 있습니다. 이 방식은 원본 이미지를 수정하지 않고 좌표만 저장하므로 여러 장을 처리할 때 더 안전합니다.
+
+웹 manual marker 저장 정보:
+
+```text
+marker_color=manual
+marker_points
+ordered_marker_points
+target_width
+target_height
+perspective_matrix
+source=manual_editor
+```
 
 ## 새 이미지 처리 흐름
 
@@ -508,6 +595,93 @@ cluster 3: polygons=2
 x -> 3D X
 y -> 3D Z
 층/높이 값 -> 3D Y
+```
+
+## 웹 에디터 보정과 3D Export
+
+자동 추출 결과는 웹 에디터에서 직접 보정할 수 있습니다.
+
+주요 편집 기능:
+
+```text
+Layer 지정
+Move Vertex
+Insert Vertex
+Add Polygon
+Delete Polygon
+Cut Hole
+Manual Merge
+Auto Merge
+Simple Keep
+Shared Edge
+Layer Align XY
+Stair Connection
+```
+
+최종 편집 결과:
+
+```text
+final_polygons.json
+```
+
+3D 엔진용 plane export:
+
+```text
+scene_planes.json
+```
+
+`scene_planes.json`에는 다음 정보가 포함됩니다.
+
+```text
+planes[].vertices        transform + auto-centering + scale 적용 좌표
+planes[].holes           cut hole 반영
+planes[].color_rgb       polygon 색상
+planes[].color           0~1 RGBA 색상
+planes[].layer           B1/B2/B3/B4 등 layer
+planes[].alignment_offset_xy
+walls[]                  shared edge로 만든 벽 후보
+connections[]            계단/연결부 endpoint
+```
+
+층별 z 기본값:
+
+```text
+B1 = 0
+B2 = -1
+B3 = -2
+B4 = -3
+```
+
+엘리베이터처럼 같은 위치라고 볼 수 있는 점을 `Layer Align XY`로 찍으면, `scene_planes.json` export 시 layer별 x/y offset 보정이 적용됩니다.
+
+계단은 `Stair Connection`에서 시작점과 도착점을 클릭해 저장합니다. 저장된 connection은 3D 에셋 배치와 최단 경로 계산에 사용할 수 있습니다.
+
+예시 구조:
+
+```json
+{
+  "connection_id": "stair_001",
+  "type": "stair",
+  "from": {
+    "polygon_id": "edited_001",
+    "layer": "B1",
+    "position": [10.2, 4.5, 0.0]
+  },
+  "to": {
+    "polygon_id": "edited_002",
+    "layer": "B2",
+    "position": [10.4, 4.8, -1.0]
+  }
+}
+```
+
+`scene_planes.json`을 2D debug 이미지로 확인:
+
+```bash
+python3 tests/render_scene_planes.py \
+  --input ../test_image_output/web_projects/test1/scene_planes.json \
+  --output ../test_image_output/web_projects/test1/scene_planes_preview.png \
+  --layer-output-dir ../test_image_output/web_projects/test1/scene_planes_layers
 ```
 
 ## 3D 개발용 예시 JSON

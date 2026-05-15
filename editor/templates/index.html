@@ -14,6 +14,36 @@
       </header>
 
       <section>
+        <h2>Batch Pipeline</h2>
+        <button id="refreshImagesBtn">Refresh Images</button>
+        <select id="imageSelect"></select>
+        <button id="loadImageBtn">Load Selected Image</button>
+        <button id="startMarkerBtn">Start Manual Marker (M)</button>
+        <button id="undoMarkerBtn">Undo Marker Point</button>
+        <button id="saveMarkerBtn">Save Marker</button>
+        <label>
+          K-Means K
+          <input id="pipelineKInput" type="number" value="6" min="2" max="16">
+        </label>
+        <label>
+          Include clusters
+          <input id="pipelineClustersInput" placeholder="1,2,3">
+        </label>
+        <label>
+          Bridge clusters
+          <input id="pipelineBridgeClustersInput" placeholder="4,5,6">
+        </label>
+        <label class="row">
+          <input id="pipelineGroupingToggle" type="checkbox">
+          run grouping
+        </label>
+        <button id="runPipelineBtn">Run Pipeline</button>
+        <button id="loadClustersBtn">Load Clusters</button>
+        <div id="pipelineStatus">inactive</div>
+        <div id="clusterList"></div>
+      </section>
+
+      <section>
         <h2>View</h2>
         <button id="fitViewBtn">Fit</button>
         <button id="resetViewBtn">Reset</button>

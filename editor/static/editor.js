@@ -26,6 +26,10 @@ const state = {
   exportedFinalPolygons: null,
   loadedFinalWorkingSet: false,
   tool: "select",
+  marker: {
+    active: false,
+    points: [],
+  },
   merge: {
     active: false,
     sourcePolygonIds: [],
@@ -139,6 +143,13 @@ const alignLabelInput = document.getElementById("alignLabelInput");
 const stairStatus = document.getElementById("stairStatus");
 const stairLabelInput = document.getElementById("stairLabelInput");
 const keepStatus = document.getElementById("keepStatus");
+const imageSelect = document.getElementById("imageSelect");
+const pipelineStatus = document.getElementById("pipelineStatus");
+const clusterList = document.getElementById("clusterList");
+const pipelineKInput = document.getElementById("pipelineKInput");
+const pipelineClustersInput = document.getElementById("pipelineClustersInput");
+const pipelineBridgeClustersInput = document.getElementById("pipelineBridgeClustersInput");
+const pipelineGroupingToggle = document.getElementById("pipelineGroupingToggle");
 
 function resizeCanvas() {
   const rect = canvas.getBoundingClientRect();
@@ -295,6 +306,25 @@ function drawStairConnections() {
       drawCanvasLabel(state.stair.toPoint, `${state.stair.toLayer} ${state.stair.toPolygonId}`, "#ff8400", 8, 18);
     }
   }
+  ctx.restore();
+}
+
+function drawManualMarkerPreview() {
+  if (!state.marker.active && state.marker.points.length === 0) return;
+  ctx.save();
+  const labels = ["1", "2", "3", "4"];
+  if (state.marker.points.length > 1) drawPath(state.marker.points, "rgba(255, 0, 180, 0.9)", 3);
+  state.marker.points.forEach((point, index) => {
+    const screen = worldToScreen(point);
+    ctx.beginPath();
+    ctx.arc(screen.x, screen.y, 8, 0, Math.PI * 2);
+    ctx.fillStyle = "#ff00b4";
+    ctx.strokeStyle = "#111111";
+    ctx.lineWidth = 2;
+    ctx.fill();
+    ctx.stroke();
+    drawCanvasLabel(point, `marker ${labels[index]}`, "#ff00b4", 10, -10);
+  });
   ctx.restore();
 }
 
@@ -842,6 +872,7 @@ function draw() {
   }
   drawConnections();
   drawStairConnections();
+  drawManualMarkerPreview();
   drawMergePreview();
   drawStraightenPreview();
   drawMovePreview();
@@ -2822,10 +2853,183 @@ function loadProject() {
         statusEl.textContent = `${state.polygons.length} polygons`;
         fitView();
       };
-      image.src = project.image.url;
+      image.src = `${project.image.url}?t=${Date.now()}`;
     })
     .catch((error) => {
       statusEl.textContent = String(error);
+    });
+}
+
+function refreshImages() {
+  return fetch("/api/images")
+    .then((response) => response.json())
+    .then((data) => {
+      imageSelect.innerHTML = "";
+      for (const image of data.images || []) {
+        const option = document.createElement("option");
+        option.value = image.path;
+        const status = image.status || {};
+        const flags = [
+          status.marker ? "M" : "-",
+          status.extracted ? "P" : "-",
+          status.final ? "F" : "-",
+        ].join("");
+        option.textContent = `${image.relative_path} [${flags}]`;
+        if (image.active) option.selected = true;
+        imageSelect.appendChild(option);
+      }
+      pipelineStatus.textContent = `images: ${(data.images || []).length}`;
+      return data;
+    });
+}
+
+function loadSelectedImage() {
+  const imagePath = imageSelect.value;
+  if (!imagePath) return;
+  fetch("/api/project/select", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({image_path: imagePath}),
+  })
+    .then((response) => response.json().then((data) => ({ok: response.ok, data})))
+    .then(({ok, data}) => {
+      if (!ok) throw new Error(data.error || "failed to select image");
+      state.polygons = [];
+      state.manualPolygons = [];
+      state.annotations = {
+        polygon_layers: {},
+        hidden_polygon_ids: [],
+        manual_polygons: [],
+        manual_edits: [],
+        manual_merges: [],
+        manual_connections: [],
+        manual_walls: [],
+        layer_alignment_pairs: [],
+      };
+      state.marker.points = [];
+      state.loadedFinalWorkingSet = false;
+      pipelineStatus.textContent = `selected: ${data.image}\noutput: ${data.output_dir}`;
+      loadProject();
+      refreshImages();
+    })
+    .catch((error) => {
+      pipelineStatus.textContent = String(error);
+    });
+}
+
+function startManualMarker() {
+  state.tool = "marker";
+  state.marker = {
+    active: true,
+    points: [],
+  };
+  pipelineStatus.textContent = "manual marker: click 4 transform points";
+  draw();
+}
+
+function addManualMarkerPoint(world) {
+  if (!state.marker.active) return;
+  if (state.marker.points.length >= 4) return;
+  state.marker.points.push([Number(world.x.toFixed(2)), Number(world.y.toFixed(2))]);
+  pipelineStatus.textContent = `manual marker: ${state.marker.points.length}/4`;
+  if (state.marker.points.length === 4) {
+    pipelineStatus.textContent = "manual marker ready: Save Marker";
+  }
+  draw();
+}
+
+function undoManualMarkerPoint() {
+  if (state.marker.points.length > 0) {
+    state.marker.points.pop();
+    pipelineStatus.textContent = `manual marker: ${state.marker.points.length}/4`;
+    draw();
+  }
+}
+
+function saveManualMarker() {
+  fetch("/api/marker/manual", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({points: state.marker.points}),
+  })
+    .then((response) => response.json().then((data) => ({ok: response.ok, data})))
+    .then(({ok, data}) => {
+      if (!ok) throw new Error(data.error || "failed to save marker");
+      state.marker.active = false;
+      state.tool = "select";
+      pipelineStatus.textContent = JSON.stringify(data, null, 2);
+      refreshImages();
+      draw();
+    })
+    .catch((error) => {
+      pipelineStatus.textContent = String(error);
+    });
+}
+
+function runPipelineFromUi() {
+  const options = {
+    mode: "kmeans",
+    kmeans_k: pipelineKInput.value,
+    include_clusters: pipelineClustersInput.value.trim(),
+    bridge_clusters: pipelineBridgeClustersInput.value.trim(),
+    run_grouping: pipelineGroupingToggle.checked,
+    refresh_markers: false,
+  };
+  pipelineStatus.textContent = "pipeline running...";
+  fetch("/api/pipeline/run", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(options),
+  })
+    .then((response) => response.json().then((data) => ({ok: response.ok, data})))
+    .then(({ok, data}) => {
+      if (!ok) throw new Error(data.error || "pipeline failed");
+      pipelineStatus.textContent = JSON.stringify(data, null, 2);
+      loadProject();
+      refreshImages();
+      loadClusters();
+    })
+    .catch((error) => {
+      pipelineStatus.textContent = String(error);
+    });
+}
+
+function loadClusters() {
+  fetch("/api/clusters")
+    .then((response) => response.json())
+    .then((data) => {
+      clusterList.innerHTML = "";
+      for (const cluster of data.clusters || []) {
+        const item = document.createElement("div");
+        item.className = "cluster-item";
+        const title = document.createElement("div");
+        title.textContent = `cluster ${cluster.id} pixels=${cluster.pixel_count} selected=${cluster.selected}`;
+        item.appendChild(title);
+        const imageUrl = cluster.selected_polygon_url || cluster.mask_url;
+        if (imageUrl) {
+          const img = document.createElement("img");
+          img.src = imageUrl;
+          img.alt = `cluster ${cluster.id}`;
+          item.appendChild(img);
+        }
+        item.addEventListener("click", () => {
+          const selected = new Set(
+            pipelineClustersInput.value
+              .split(",")
+              .map((value) => value.trim())
+              .filter(Boolean),
+          );
+          const id = String(cluster.id);
+          if (selected.has(id)) selected.delete(id);
+          else selected.add(id);
+          pipelineClustersInput.value = Array.from(selected)
+            .map(Number)
+            .sort((a, b) => a - b)
+            .join(",");
+        });
+        clusterList.appendChild(item);
+      }
+      pipelineStatus.textContent = `clusters: ${(data.clusters || []).length}`;
     });
 }
 
@@ -3064,6 +3268,10 @@ canvas.addEventListener("click", (event) => {
   if (event.shiftKey || event.altKey) return;
   const rect = canvas.getBoundingClientRect();
   const world = screenToWorld(event.clientX - rect.left, event.clientY - rect.top);
+  if (state.tool === "marker") {
+    addManualMarkerPoint(world);
+    return;
+  }
   const poly = findPolygonAt(world);
   if (state.tool === "merge") {
     addMergeVertex(world, poly);
@@ -3202,6 +3410,13 @@ document.getElementById("resetLayerAlignBtn").addEventListener("click", resetLay
 document.getElementById("startStairBtn").addEventListener("click", startStairConnection);
 document.getElementById("undoStairBtn").addEventListener("click", undoLastStairConnection);
 document.getElementById("resetStairBtn").addEventListener("click", resetStairConnection);
+document.getElementById("refreshImagesBtn").addEventListener("click", refreshImages);
+document.getElementById("loadImageBtn").addEventListener("click", loadSelectedImage);
+document.getElementById("startMarkerBtn").addEventListener("click", startManualMarker);
+document.getElementById("undoMarkerBtn").addEventListener("click", undoManualMarkerPoint);
+document.getElementById("saveMarkerBtn").addEventListener("click", saveManualMarker);
+document.getElementById("runPipelineBtn").addEventListener("click", runPipelineFromUi);
+document.getElementById("loadClustersBtn").addEventListener("click", loadClusters);
 document.getElementById("resetAllBtn").addEventListener("click", resetToInitialPolygons);
 document.getElementById("saveBtn").addEventListener("click", () => {
   saveAnnotations().then((result) => {
@@ -3281,6 +3496,9 @@ document.addEventListener("keydown", (event) => {
   } else if (key === "u") {
     event.preventDefault();
     startStairConnection();
+  } else if (key === "m") {
+    event.preventDefault();
+    startManualMarker();
   } else if (key === "g") {
     event.preventDefault();
     toggleSharedEdgeDirection("polygon_a");
@@ -3307,7 +3525,8 @@ document.addEventListener("keydown", (event) => {
     deleteSelectedPolygon();
   } else if (event.key === "Backspace") {
     event.preventDefault();
-    if (state.tool === "cutHole") undoCutHolePoint();
+    if (state.tool === "marker") undoManualMarkerPoint();
+    else if (state.tool === "cutHole") undoCutHolePoint();
     else undoAddPolygonPoint();
   } else if (event.key === "Shift") {
     event.preventDefault();
@@ -3324,6 +3543,11 @@ document.addEventListener("keydown", (event) => {
     else if (state.tool === "addPolygon") resetAddPolygon();
     else if (state.tool === "cutHole") resetCutHole();
     else if (state.tool === "layerAlign") resetLayerAlign();
+    else if (state.tool === "marker") {
+      state.tool = "select";
+      state.marker.active = false;
+      draw();
+    }
     else if (state.tool === "stair") resetStairConnection();
     else if (state.tool === "sharedEdge") resetSharedEdge();
     else if (state.tool === "autoMerge") resetAutoMerge();
@@ -3336,6 +3560,7 @@ document.addEventListener("keydown", (event) => {
 
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
+refreshImages();
 updateMergeStatus();
 updateAutoMergeStatus();
 updateStraightenStatus();

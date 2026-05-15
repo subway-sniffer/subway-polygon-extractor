@@ -117,6 +117,7 @@ dd {
 #addPolygonStatus,
 #cutHoleStatus,
 #layerAlignStatus,
+#pipelineStatus,
 #keepStatus {
   min-height: 44px;
   padding: 8px;
@@ -126,6 +127,34 @@ dd {
   font-size: 12px;
   line-height: 1.35;
   white-space: pre-wrap;
+}
+
+select {
+  width: 100%;
+  margin: 4px 0;
+  padding: 8px;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  background: #fff;
+  font: inherit;
+}
+
+.cluster-item {
+  margin: 8px 0;
+  padding: 6px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fafafa;
+  font-size: 12px;
+}
+
+.cluster-item img {
+  display: block;
+  width: 100%;
+  max-height: 130px;
+  object-fit: contain;
+  margin-top: 4px;
+  background: #eee;
 }
 
 #saveResult {
