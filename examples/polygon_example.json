@@ -706,7 +706,12 @@
           [0, 0.798251, -26.88015],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Stair.blend",
+      "location": [87.981007, 29.104841, -2.5],
+      "rotation_z": -2.8439216400806493,
+      "scale": [5.315676, 1, 5],
+      "same_layer": false
     },
     {
       "connection_id": "stair_002",
@@ -735,7 +740,12 @@
           [0, 0.798251, -26.88015],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Stair.blend",
+      "location": [112.887872, 29.906694, -2.5],
+      "rotation_z": -0.09058414059973348,
+      "scale": [19.50976, 1, 5],
+      "same_layer": false
     },
     {
       "connection_id": "stair_003",
@@ -764,7 +774,12 @@
           [0, 0.798251, -26.88015],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Stair.blend",
+      "location": [112.309143, 53.509361, -2.5],
+      "rotation_z": 0.014198891943892534,
+      "scale": [17.770054, 1, 5],
+      "same_layer": false
     },
     {
       "connection_id": "stair_004",
@@ -793,7 +808,12 @@
           [0, 0.798251, -26.88015],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Stair.blend",
+      "location": [179.522926, 29.513522, -2.5],
+      "rotation_z": 3.0679844305884516,
+      "scale": [12.855912, 1, 5],
+      "same_layer": false
     },
     {
       "connection_id": "stair_005",
@@ -822,7 +842,12 @@
           [0, 0.798251, -26.88015],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Stair.blend",
+      "location": [202.524626, 28.827248, -2.5],
+      "rotation_z": 0.015897834694245695,
+      "scale": [15.436456, 1, 5],
+      "same_layer": false
     },
     {
       "connection_id": "stair_006",
@@ -851,7 +876,12 @@
           [0, 0.798251, -26.88015],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Stair.blend",
+      "location": [178.024466, 54.494594, -2.5],
+      "rotation_z": -3.048767969348451,
+      "scale": [16.24288, 1, 5],
+      "same_layer": false
     },
     {
       "connection_id": "stair_007",
@@ -880,7 +910,12 @@
           [0, 0.798251, -26.88015],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Stair.blend",
+      "location": [200.284723, 54.121232, -2.5],
+      "rotation_z": -0.09362169353288792,
+      "scale": [11.644932, 1, 5],
+      "same_layer": false
     },
     {
       "connection_id": "stair_010",
@@ -909,7 +944,12 @@
           [0, 1.327804, -159.770971],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Stair.blend",
+      "location": [352.937267, 37.70135, -12.5],
+      "rotation_z": -1.261420491600871,
+      "scale": [2.326028, 1, 5],
+      "same_layer": false
     },
     {
       "connection_id": "stair_011",
@@ -938,7 +978,12 @@
           [0, 1.327804, -159.770971],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Stair.blend",
+      "location": [353.939831, 52.911092, -12.5],
+      "rotation_z": 0.7780453720032909,
+      "scale": [1.495441, 1, 5],
+      "same_layer": false
     },
     {
       "connection_id": "stair_012",
@@ -967,7 +1012,12 @@
           [0, 1.327804, -159.770971],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Stair.blend",
+      "location": [354.131528, 89.002827, -12.5],
+      "rotation_z": 1.5686283580936855,
+      "scale": [13.305278, 1, 5],
+      "same_layer": false
     },
     {
       "connection_id": "stair_013",
@@ -996,7 +1046,12 @@
           [0, 1.327804, -159.770971],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Stair.blend",
+      "location": [376.27494, 36.919388, -12.5],
+      "rotation_z": -1.7579050000480654,
+      "scale": [5.330945, 1, 5],
+      "same_layer": false
     },
     {
       "connection_id": "stair_014",
@@ -1025,7 +1080,12 @@
           [0, 1.327804, -159.770971],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Stair.blend",
+      "location": [377.514018, 50.871066, -12.5],
+      "rotation_z": -1.3652387994240731,
+      "scale": [5.151723, 1, 5],
+      "same_layer": false
     },
     {
       "connection_id": "stair_015",
@@ -1054,7 +1114,12 @@
           [0, 1.327804, -159.770971],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Stair.blend",
+      "location": [379.02955, 85.613167, -12.5],
+      "rotation_z": 1.1522032062230354,
+      "scale": [5.019412, 1, 5],
+      "same_layer": false
     },
     {
       "connection_id": "stair_016",
@@ -1083,7 +1148,12 @@
           [0, 1.327804, -159.770971],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Stair.blend",
+      "location": [358.175, 137.159063, -12.5],
+      "rotation_z": 2.750436230423574,
+      "scale": [5.974531, 1, 5],
+      "same_layer": false
     },
     {
       "connection_id": "stair_017",
@@ -1112,7 +1182,12 @@
           [0, 1.327804, -159.770971],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Stair.blend",
+      "location": [375.611964, 135.479428, -12.5],
+      "rotation_z": -0.1618799261705635,
+      "scale": [3.167595, 1, 5],
+      "same_layer": false
     },
     {
       "connection_id": "stair_018",
@@ -1141,7 +1216,12 @@
           [0, 1, -58.433531],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Stair.blend",
+      "location": [366.831076, 79.342879, -5],
+      "rotation_z": 1.9911059441960097,
+      "scale": [26.901976, 1, 10],
+      "same_layer": false
     },
     {
       "connection_id": "stair_019",
@@ -1170,7 +1250,12 @@
           [0, 1, -58.433531],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Stair.blend",
+      "location": [384.581846, 79.238088, -5],
+      "rotation_z": 2.006432073202109,
+      "scale": [26.069198, 1, 10],
+      "same_layer": false
     },
     {
       "connection_id": "stair_020",
@@ -1199,7 +1284,12 @@
           [0, 1, -58.433531],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Stair.blend",
+      "location": [365.734803, 133.651363, -5],
+      "rotation_z": -1.9271464344859033,
+      "scale": [31.254682, 1, 10],
+      "same_layer": false
     },
     {
       "connection_id": "stair_021",
@@ -1228,7 +1318,12 @@
           [0, 1, -58.433531],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Stair.blend",
+      "location": [380.72814, 132.823001, -5],
+      "rotation_z": -2.0182254887551285,
+      "scale": [29.523502, 1, 10],
+      "same_layer": false
     },
     {
       "connection_id": "escalator_001",
@@ -1257,7 +1352,12 @@
           [0, 1.327804, -159.770971],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Escalator.blend",
+      "location": [277.235688, 13.664065, -10],
+      "rotation_z": -0.2593532299888234,
+      "scale": [59.993265, 1, 10],
+      "same_layer": false
     },
     {
       "connection_id": "escalator_002",
@@ -1286,7 +1386,12 @@
           [0, 0.798251, -26.88015],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Escalator.blend",
+      "location": [278.541151, 50.237805, -10],
+      "rotation_z": 2.999268440811077,
+      "scale": [59.534738, 1, 10],
+      "same_layer": false
     },
     {
       "connection_id": "escalator_003",
@@ -1315,7 +1420,12 @@
           [0, 1, -58.433531],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Escalator.blend",
+      "location": [347.333345, 26.10878, -12.5],
+      "rotation_z": 1.2132108506066674,
+      "scale": [19.109164, 1, 5],
+      "same_layer": false
     },
     {
       "connection_id": "escalator_004",
@@ -1344,7 +1454,12 @@
           [0, 1, -58.433531],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Escalator.blend",
+      "location": [351.49424, 53.159214, -12.5],
+      "rotation_z": -2.4446111067551284,
+      "scale": [0.616264, 1, 5],
+      "same_layer": false
     },
     {
       "connection_id": "escalator_005",
@@ -1373,7 +1488,12 @@
           [0, 1, 0],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Escalator.blend",
+      "location": [365.347427, 79.356362, -5],
+      "rotation_z": -1.1490827264838408,
+      "scale": [27.801803, 1, 10],
+      "same_layer": false
     },
     {
       "connection_id": "escalator_006",
@@ -1402,7 +1522,12 @@
           [0, 1, 0],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Escalator.blend",
+      "location": [383.456821, 78.824297, -5],
+      "rotation_z": -1.1542436697940994,
+      "scale": [24.705413, 1, 10],
+      "same_layer": false
     },
     {
       "connection_id": "escalator_007",
@@ -1431,7 +1556,12 @@
           [0, 1, 0],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Escalator.blend",
+      "location": [366.290774, 132.756137, -5],
+      "rotation_z": 1.2123385550425811,
+      "scale": [33.664218, 1, 10],
+      "same_layer": false
     },
     {
       "connection_id": "escalator_008",
@@ -1460,7 +1590,12 @@
           [0, 1, 0],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Escalator.blend",
+      "location": [379.474566, 133.007477, -5],
+      "rotation_z": 1.1164470362698193,
+      "scale": [29.64332, 1, 10],
+      "same_layer": false
     },
     {
       "connection_id": "stair_022",
@@ -1489,7 +1624,12 @@
           [0, 1, 0],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Stair.blend",
+      "location": [379.174592, 75.584298, 2.5],
+      "rotation_z": 1.8297351846429049,
+      "scale": [12.408005, 1, 5],
+      "same_layer": true
     },
     {
       "connection_id": "stair_023",
@@ -1518,7 +1658,12 @@
           [0, 1, 0],
           [0, 0, 1]
         ]
-      }
+      },
+      "blend": "Stair.blend",
+      "location": [346.184695, 25.969871, 1.5],
+      "rotation_z": 2.719745757608456,
+      "scale": [4.190811, 1, 7],
+      "same_layer": true
     }
   ],
   "icons": [
