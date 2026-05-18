@@ -13,6 +13,7 @@ class ProjectStore:
         self.image_root = Path(args.image_root or Path(args.image).parent).resolve()
         self.output_root = Path(args.project_output_root or "../test_image_output/web_projects").resolve()
         self.default_marker_config = args.marker_config
+        self.default_icons = args.icons
         self.layer_z = args.layer_z
         self.active = self.build_project(
             Path(args.image).resolve(),
@@ -20,6 +21,8 @@ class ProjectStore:
             annotations_path=Path(args.output).resolve(),
             final_output_path=Path(args.final_output).resolve() if args.final_output else None,
             plane_output_path=Path(args.plane_output).resolve() if args.plane_output else None,
+            asset_output_path=None,
+            icon_matches_path=self.resolve_icon_matches_path(Path(args.output).resolve().parent, Path(args.image).resolve()),
             marker_config_path=resolve_marker_config_path(args.marker_config, Path(args.image).resolve()),
             connections_path=Path(args.connections).resolve() if args.connections else None,
         )
@@ -71,9 +74,25 @@ class ProjectStore:
             annotations_path=output_dir / "manual_annotations.json",
             final_output_path=output_dir / "final_polygons.json",
             plane_output_path=output_dir / "scene_planes.json",
+            asset_output_path=output_dir / "assets.json",
+            icon_matches_path=self.resolve_icon_matches_path(output_dir, image_path),
             marker_config_path=marker_config_path,
             connections_path=output_dir / "connections.json",
         )
+
+    def resolve_icon_matches_path(self, output_dir, image_path):
+        """Return a likely icon_matches.json path for an image project."""
+        if self.default_icons:
+            return Path(self.default_icons).resolve()
+        candidates = [
+            Path(output_dir) / "icon_matches.json",
+            Path(output_dir) / "icons" / "icon_matches.json",
+            Path("../test_image_output/tests/output_icon_matching/icon_matches.json"),
+        ]
+        for candidate in candidates:
+            if candidate.exists():
+                return candidate.resolve()
+        return (Path(output_dir) / "icon_matches.json").resolve()
 
     def build_project(
         self,
@@ -82,6 +101,8 @@ class ProjectStore:
         annotations_path,
         final_output_path,
         plane_output_path,
+        asset_output_path,
+        icon_matches_path,
         marker_config_path,
         connections_path=None,
     ):
@@ -91,6 +112,8 @@ class ProjectStore:
         annotations_path = Path(annotations_path).resolve()
         final_output_path = Path(final_output_path or annotations_path.with_name("final_polygons.json")).resolve()
         plane_output_path = Path(plane_output_path or annotations_path.with_name("scene_planes.json")).resolve()
+        asset_output_path = Path(asset_output_path or annotations_path.with_name("assets.json")).resolve()
+        icon_matches_path = Path(icon_matches_path or annotations_path.with_name("icon_matches.json")).resolve()
         marker_config_path = Path(marker_config_path).resolve() if marker_config_path else None
         connections_path = Path(connections_path).resolve() if connections_path else None
         return {
@@ -99,6 +122,8 @@ class ProjectStore:
             "annotations_path": annotations_path,
             "final_output_path": final_output_path,
             "plane_output_path": plane_output_path,
+            "asset_output_path": asset_output_path,
+            "icon_matches_path": icon_matches_path,
             "marker_config_path": marker_config_path,
             "connections_path": connections_path,
             "output_dir": polygons_path.parent,
@@ -121,6 +146,8 @@ class ProjectStore:
             annotations_path=output_dir / "manual_annotations.json",
             final_output_path=output_dir / "final_polygons.json",
             plane_output_path=output_dir / "scene_planes.json",
+            asset_output_path=output_dir / "assets.json",
+            icon_matches_path=self.resolve_icon_matches_path(output_dir, image_path),
             marker_config_path=output_dir / "marker_config.json",
             connections_path=output_dir / "connections.json",
         )

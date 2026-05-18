@@ -3,14 +3,18 @@ const state = {
   polygons: [],
   manualPolygons: [],
   connections: [],
+  icons: [],
   annotations: {
     polygon_layers: {},
+    polygon_z_offsets: {},
+    polygon_z_values: {},
     hidden_polygon_ids: [],
     manual_edits: [],
     manual_merges: [],
     manual_connections: [],
     manual_walls: [],
     layer_alignment_pairs: [],
+    scale_calibration: null,
   },
   scale: 1,
   offsetX: 0,
@@ -19,8 +23,10 @@ const state = {
   lastMouse: null,
   hoveredId: null,
   selectedId: null,
+  selectedStairId: null,
   showIds: false,
   showConnections: false,
+  showIcons: true,
   showHidden: false,
   previewFinal: false,
   exportedFinalPolygons: null,
@@ -93,6 +99,11 @@ const state = {
     toPoint: null,
     toLayer: null,
     toPolygonId: null,
+    hoverPoint: null,
+  },
+  scaleCalibration: {
+    active: false,
+    points: [],
   },
   stair: {
     active: false,
@@ -128,6 +139,8 @@ const ctx = canvas.getContext("2d");
 const statusEl = document.getElementById("status");
 const selectedInfo = document.getElementById("selectedInfo");
 const layerInput = document.getElementById("layerInput");
+const zOverrideInput = document.getElementById("zOverrideInput");
+const showIconsToggle = document.getElementById("showIconsToggle");
 const saveResult = document.getElementById("saveResult");
 const mergeStatus = document.getElementById("mergeStatus");
 const autoMergeStatus = document.getElementById("autoMergeStatus");
@@ -140,8 +153,11 @@ const addPolygonStatus = document.getElementById("addPolygonStatus");
 const cutHoleStatus = document.getElementById("cutHoleStatus");
 const layerAlignStatus = document.getElementById("layerAlignStatus");
 const alignLabelInput = document.getElementById("alignLabelInput");
+const scaleLengthInput = document.getElementById("scaleLengthInput");
+const scaleStatus = document.getElementById("scaleStatus");
 const stairStatus = document.getElementById("stairStatus");
 const stairLabelInput = document.getElementById("stairLabelInput");
+const connectionTypeInput = document.getElementById("connectionTypeInput");
 const keepStatus = document.getElementById("keepStatus");
 const imageSelect = document.getElementById("imageSelect");
 const pipelineStatus = document.getElementById("pipelineStatus");
@@ -264,14 +280,52 @@ function drawConnections() {
   ctx.restore();
 }
 
+function drawIcons() {
+  if (!state.showIcons) return;
+  ctx.save();
+  const typeColors = new Map();
+  const palette = ["#00c2ff", "#ff4db8", "#ffcc00", "#56d364", "#b083ff", "#ff7b00"];
+  for (const icon of state.icons || []) {
+    const bbox = icon.bbox;
+    const center = icon.center || icon.center_source;
+    if (!bbox && !center) continue;
+    const type = icon.type || "icon";
+    if (!typeColors.has(type)) typeColors.set(type, palette[typeColors.size % palette.length]);
+    const color = typeColors.get(type);
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = 2;
+    if (bbox) {
+      const topLeft = worldToScreen([bbox[0], bbox[1]]);
+      const bottomRight = worldToScreen([bbox[0] + bbox[2], bbox[1] + bbox[3]]);
+      ctx.strokeRect(topLeft.x, topLeft.y, bottomRight.x - topLeft.x, bottomRight.y - topLeft.y);
+    }
+    if (center) {
+      const screen = worldToScreen(center);
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+      drawCanvasLabel(center, `${icon.icon_id || ""} ${type}`.trim(), color, 6, -6);
+    }
+  }
+  ctx.restore();
+}
+
 function drawStairConnections() {
   ctx.save();
   for (const conn of state.annotations.manual_connections || []) {
-    if (conn.type !== "stair" || !conn.from_point_source || !conn.to_point_source) continue;
-    drawPath([conn.from_point_source, conn.to_point_source], "rgba(255, 132, 0, 0.95)", 4);
+    if (!["stair", "escalator"].includes(conn.type) || !conn.from_point_source || !conn.to_point_source) continue;
+    const isSelected = (conn.connection_id || conn.label) === state.selectedStairId;
+    const baseColor = conn.type === "escalator" ? "rgba(0, 180, 120, 0.95)" : "rgba(255, 132, 0, 0.95)";
+    const pointColor = conn.type === "escalator" ? "#00b878" : "#ff8400";
+    drawPath(
+      [conn.from_point_source, conn.to_point_source],
+      isSelected ? "rgba(0, 92, 255, 0.95)" : baseColor,
+      isSelected ? 7 : 4,
+    );
     const fromScreen = worldToScreen(conn.from_point_source);
     const toScreen = worldToScreen(conn.to_point_source);
-    ctx.fillStyle = "#ff8400";
+    ctx.fillStyle = isSelected ? "#005cff" : pointColor;
     ctx.strokeStyle = "#111111";
     ctx.lineWidth = 1;
     for (const screen of [fromScreen, toScreen]) {
@@ -284,7 +338,7 @@ function drawStairConnections() {
       (conn.from_point_source[0] + conn.to_point_source[0]) / 2,
       (conn.from_point_source[1] + conn.to_point_source[1]) / 2,
     ];
-    drawCanvasLabel(labelPoint, conn.connection_id || conn.label || "stair", "#ff8400", 8, -8);
+    drawCanvasLabel(labelPoint, conn.connection_id || conn.label || conn.type, isSelected ? "#005cff" : pointColor, 8, -8);
   }
   if (state.stair.active) {
     const points = [state.stair.fromPoint, state.stair.toPoint].filter(Boolean);
@@ -831,7 +885,8 @@ function drawLayerAlignPreview() {
     drawCanvasLabel(pair.to_point_source, `${pair.to_layer} ${pair.label || ""}`, "#7b2cff", 8, 18);
   }
   if (state.layerAlign.active) {
-    const points = [state.layerAlign.fromPoint, state.layerAlign.toPoint].filter(Boolean);
+    const previewToPoint = state.layerAlign.toPoint || state.layerAlign.hoverPoint;
+    const points = [state.layerAlign.fromPoint, previewToPoint].filter(Boolean);
     if (points.length === 2) drawPath(points, "rgba(0, 180, 255, 0.95)", 4);
     points.forEach((point, index) => {
       const screen = worldToScreen(point);
@@ -849,6 +904,45 @@ function drawLayerAlignPreview() {
     if (state.layerAlign.toPoint && state.layerAlign.toLayer) {
       drawCanvasLabel(state.layerAlign.toPoint, `${state.layerAlign.toLayer} ${state.layerAlign.toPolygonId}`, "#7b2cff", 8, 18);
     }
+  }
+  ctx.restore();
+}
+
+function drawScaleCalibrationPreview() {
+  ctx.save();
+  const calibration = state.annotations.scale_calibration;
+  if (calibration?.points_source?.length === 2) {
+    drawPath(calibration.points_source, "rgba(0, 180, 120, 0.95)", 4);
+    calibration.points_source.forEach((point) => {
+      const screen = worldToScreen(point);
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = "#00b878";
+      ctx.strokeStyle = "#111111";
+      ctx.lineWidth = 1;
+      ctx.fill();
+      ctx.stroke();
+    });
+    const labelPoint = [
+      (calibration.points_source[0][0] + calibration.points_source[1][0]) / 2,
+      (calibration.points_source[0][1] + calibration.points_source[1][1]) / 2,
+    ];
+    drawCanvasLabel(labelPoint, `${calibration.real_length} ${calibration.unit || ""}`.trim(), "#00b878", 8, -8);
+  }
+  if (state.scaleCalibration.active && state.scaleCalibration.points.length > 0) {
+    if (state.scaleCalibration.points.length === 2) {
+      drawPath(state.scaleCalibration.points, "rgba(0, 92, 255, 0.95)", 4);
+    }
+    state.scaleCalibration.points.forEach((point, index) => {
+      const screen = worldToScreen(point);
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, 7, 0, Math.PI * 2);
+      ctx.fillStyle = index === 0 ? "#005cff" : "#00b878";
+      ctx.strokeStyle = "#111111";
+      ctx.lineWidth = 1;
+      ctx.fill();
+      ctx.stroke();
+    });
   }
   ctx.restore();
 }
@@ -871,6 +965,7 @@ function draw() {
     drawPolygon(poly);
   }
   drawConnections();
+  drawIcons();
   drawStairConnections();
   drawManualMarkerPreview();
   drawMergePreview();
@@ -881,6 +976,7 @@ function draw() {
   drawAddPolygonPreview();
   drawCutHolePreview();
   drawLayerAlignPreview();
+  drawScaleCalibrationPreview();
   drawSharedEdgePreview();
 }
 
@@ -936,16 +1032,22 @@ function updateSelectedInfo() {
   if (!poly) {
     selectedInfo.innerHTML = "<dt>polygon</dt><dd>-</dd><dt>cluster</dt><dd>-</dd><dt>area</dt><dd>-</dd>";
     layerInput.value = "";
+    zOverrideInput.value = "";
     updateDeleteStatus();
     return;
   }
   const layer = state.annotations.polygon_layers?.[poly.polygon_id] || poly.semantic?.layer || "";
+  const zOffset = state.annotations.polygon_z_offsets?.[poly.polygon_id];
+  const zOverride = state.annotations.polygon_z_values?.[poly.polygon_id];
   layerInput.value = layer;
+  zOverrideInput.value = zOffset ?? "";
   selectedInfo.innerHTML = `
     <dt>polygon</dt><dd>${poly.polygon_id}</dd>
     <dt>cluster</dt><dd>${poly.color_cluster ?? "-"}</dd>
     <dt>area</dt><dd>${Math.round(poly.area_source || 0)}</dd>
     <dt>layer</dt><dd>${layer || "-"}</dd>
+    <dt>z offset</dt><dd>${zOffset ?? "-"}</dd>
+    <dt>absolute z</dt><dd>${zOverride ?? "-"}</dd>
   `;
   updateDeleteStatus();
 }
@@ -1617,11 +1719,11 @@ function updateLayerAlignStatus(message = null) {
   const next = !state.layerAlign.fromPoint
     ? "Click first elevator point on a layered polygon"
     : !state.layerAlign.toPoint
-      ? "Click matching elevator point on another layered polygon"
+      ? "Click matching elevator y-position on another layered polygon"
       : "Pair ready";
   layerAlignStatus.textContent = [
     message,
-    "mode: layer align xy",
+    "mode: layer align xy vertical",
     `from: ${state.layerAlign.fromLayer || "-"} (${state.layerAlign.fromPolygonId || "-"})`,
     `to: ${state.layerAlign.toLayer || "-"} (${state.layerAlign.toPolygonId || "-"})`,
     `label: ${state.layerAlign.label}`,
@@ -1642,6 +1744,7 @@ function startLayerAlign() {
     toPoint: null,
     toLayer: null,
     toPolygonId: null,
+    hoverPoint: null,
   };
   updateLayerAlignStatus();
   draw();
@@ -1658,6 +1761,7 @@ function resetLayerAlign() {
     toPoint: null,
     toLayer: null,
     toPolygonId: null,
+    hoverPoint: null,
   };
   updateLayerAlignStatus();
   draw();
@@ -1666,6 +1770,14 @@ function resetLayerAlign() {
 function polygonLayerValue(poly) {
   if (!poly) return null;
   return state.annotations.polygon_layers?.[poly.polygon_id] || poly.semantic?.layer || null;
+}
+
+function verticalLayerAlignPoint(world) {
+  const point = [Number(world.x.toFixed(2)), Number(world.y.toFixed(2))];
+  if (state.layerAlign.fromPoint) {
+    point[0] = state.layerAlign.fromPoint[0];
+  }
+  return point;
 }
 
 function addLayerAlignPoint(world, poly) {
@@ -1679,7 +1791,7 @@ function addLayerAlignPoint(world, poly) {
     updateLayerAlignStatus(`Set layer first: ${poly.polygon_id}`);
     return;
   }
-  const point = [Number(world.x.toFixed(2)), Number(world.y.toFixed(2))];
+  const point = verticalLayerAlignPoint(world);
   if (!state.layerAlign.fromPoint) {
     state.layerAlign.fromPoint = point;
     state.layerAlign.fromLayer = layer;
@@ -1704,7 +1816,7 @@ function addLayerAlignPoint(world, poly) {
     to_polygon_id: state.layerAlign.toPolygonId,
     from_point_source: state.layerAlign.fromPoint,
     to_point_source: state.layerAlign.toPoint,
-    mode: "xy",
+    mode: "xy_vertical",
   });
   saveAnnotations().then((result) => {
     saveResult.textContent = JSON.stringify(result, null, 2);
@@ -1727,38 +1839,133 @@ function undoLastLayerAlignPair() {
   });
 }
 
-function nextStairConnectionId() {
+function updateScaleCalibrationStatus(message = null) {
+  const calibration = state.annotations.scale_calibration;
+  if (!state.scaleCalibration.active) {
+    scaleStatus.textContent = [
+      message,
+      calibration?.real_length ? `saved: ${calibration.real_length} ${calibration.unit || ""}`.trim() : "saved: -",
+    ].filter(Boolean).join("\n") || "inactive";
+    return;
+  }
+  scaleStatus.textContent = [
+    message,
+    "mode: scale calibration",
+    `points: ${state.scaleCalibration.points.length}/2`,
+    `real length: ${scaleLengthInput.value || "-"}`,
+    state.scaleCalibration.points.length < 2 ? "Click two endpoints of a known length" : "Ready to apply",
+  ].filter(Boolean).join("\n");
+}
+
+function startScaleCalibration() {
+  if (!canEdit()) return;
+  state.tool = "scaleCalibration";
+  state.scaleCalibration = {
+    active: true,
+    points: [],
+  };
+  updateScaleCalibrationStatus();
+  draw();
+}
+
+function resetScaleCalibration() {
+  state.tool = "select";
+  state.scaleCalibration = {
+    active: false,
+    points: [],
+  };
+  updateScaleCalibrationStatus();
+  draw();
+}
+
+function addScaleCalibrationPoint(world) {
+  if (!state.scaleCalibration.active || state.scaleCalibration.points.length >= 2) return;
+  state.scaleCalibration.points.push([Number(world.x.toFixed(2)), Number(world.y.toFixed(2))]);
+  updateScaleCalibrationStatus();
+  draw();
+}
+
+function undoScaleCalibrationPoint() {
+  if (!state.scaleCalibration.active || state.scaleCalibration.points.length === 0) return;
+  state.scaleCalibration.points.pop();
+  updateScaleCalibrationStatus();
+  draw();
+}
+
+function applyScaleCalibration() {
+  if (!state.scaleCalibration.active || state.scaleCalibration.points.length !== 2) {
+    updateScaleCalibrationStatus("Need two points first.");
+    return;
+  }
+  const realLength = Number(scaleLengthInput.value);
+  if (!Number.isFinite(realLength) || realLength <= 0) {
+    updateScaleCalibrationStatus("Enter a positive real length.");
+    return;
+  }
+  state.annotations.scale_calibration = {
+    mode: "line_length",
+    points_source: state.scaleCalibration.points,
+    real_length: realLength,
+    unit: "m",
+  };
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    resetScaleCalibration();
+    updateScaleCalibrationStatus("Scale calibration saved.");
+  });
+}
+
+function clearScaleCalibration() {
+  state.annotations.scale_calibration = null;
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateScaleCalibrationStatus("Scale calibration cleared.");
+    draw();
+  });
+}
+
+function selectedConnectionType() {
+  return connectionTypeInput?.value || "stair";
+}
+
+function nextTypedConnectionId(type) {
+  const prefix = type || "stair";
   const numbers = (state.annotations.manual_connections || [])
-    .filter((conn) => conn.type === "stair")
+    .filter((conn) => conn.type === prefix)
     .map((conn) => {
-      const match = String(conn.connection_id || "").match(/^stair_(\d+)$/);
+      const match = String(conn.connection_id || "").match(new RegExp(`^${prefix}_(\\d+)$`));
       return match ? Number(match[1]) : 0;
     });
   const next = Math.max(0, ...numbers) + 1;
-  return `stair_${String(next).padStart(3, "0")}`;
+  return `${prefix}_${String(next).padStart(3, "0")}`;
 }
 
 function updateStairStatus(message = null) {
-  const count = (state.annotations.manual_connections || []).filter((conn) => conn.type === "stair").length;
+  const stairCount = (state.annotations.manual_connections || []).filter((conn) => conn.type === "stair").length;
+  const escalatorCount = (state.annotations.manual_connections || []).filter((conn) => conn.type === "escalator").length;
+  const currentType = state.stair.active ? state.stair.connectionType : selectedConnectionType();
   if (!state.stair.active) {
     stairStatus.textContent = [
       message,
-      `stairs: ${count}`,
+      `stairs: ${stairCount}`,
+      `escalators: ${escalatorCount}`,
+      state.selectedStairId ? `selected: ${state.selectedStairId}` : null,
     ].filter(Boolean).join("\n") || "inactive";
     return;
   }
   const next = !state.stair.fromPoint
-    ? "Click stair start point on a layered polygon"
+    ? `Click ${currentType} start point on a layered polygon`
     : !state.stair.toPoint
-      ? "Click stair destination point"
-      : "Stair ready";
+      ? `Click ${currentType} destination point, same layer allowed`
+      : "Connection ready";
   stairStatus.textContent = [
     message,
-    "mode: stair connection",
+    `mode: ${currentType} connection`,
     `from: ${state.stair.fromLayer || "-"} (${state.stair.fromPolygonId || "-"})`,
     `to: ${state.stair.toLayer || "-"} (${state.stair.toPolygonId || "-"})`,
     `label: ${state.stair.label || "auto"}`,
-    `stairs: ${count}`,
+    `stairs: ${stairCount}`,
+    `escalators: ${escalatorCount}`,
     next,
   ].filter(Boolean).join("\n");
 }
@@ -1769,6 +1976,7 @@ function startStairConnection() {
   state.stair = {
     active: true,
     label: stairLabelInput.value.trim(),
+    connectionType: selectedConnectionType(),
     fromPoint: null,
     fromLayer: null,
     fromPolygonId: null,
@@ -1785,6 +1993,7 @@ function resetStairConnection() {
   state.stair = {
     active: false,
     label: stairLabelInput.value.trim(),
+    connectionType: selectedConnectionType(),
     fromPoint: null,
     fromLayer: null,
     fromPolygonId: null,
@@ -1816,15 +2025,16 @@ function addStairPoint(world, poly) {
     draw();
     return;
   }
-  const connectionId = nextStairConnectionId();
+  const connectionType = state.stair.connectionType || selectedConnectionType();
+  const connectionId = nextTypedConnectionId(connectionType);
   state.stair.toPoint = point;
   state.stair.toLayer = layer;
   state.stair.toPolygonId = poly.polygon_id;
   state.annotations.manual_connections = state.annotations.manual_connections || [];
   state.annotations.manual_connections.push({
     connection_id: connectionId,
-    type: "stair",
-    asset_type: "stair",
+    type: connectionType,
+    asset_type: connectionType,
     label: state.stair.label || connectionId,
     from_polygon_id: state.stair.fromPolygonId,
     to_polygon_id: state.stair.toPolygonId,
@@ -1841,10 +2051,77 @@ function addStairPoint(world, poly) {
   });
 }
 
+function nearestStairConnection(world, maxScreenDistance = 12) {
+  const mouseScreen = worldToScreen([world.x, world.y]);
+  let best = null;
+  (state.annotations.manual_connections || []).forEach((conn, index) => {
+    if (!["stair", "escalator"].includes(conn.type) || !conn.from_point_source || !conn.to_point_source) return;
+    const projected = projectPointToSegment(world, conn.from_point_source, conn.to_point_source);
+    const projectedScreen = worldToScreen(projected);
+    const lineDistance = Math.hypot(projectedScreen.x - mouseScreen.x, projectedScreen.y - mouseScreen.y);
+    const fromScreen = worldToScreen(conn.from_point_source);
+    const toScreen = worldToScreen(conn.to_point_source);
+    const endpointDistance = Math.min(
+      Math.hypot(fromScreen.x - mouseScreen.x, fromScreen.y - mouseScreen.y),
+      Math.hypot(toScreen.x - mouseScreen.x, toScreen.y - mouseScreen.y),
+    );
+    const distance = Math.min(lineDistance, endpointDistance);
+    if (distance <= maxScreenDistance && (!best || distance < best.distance)) {
+      best = {
+        index,
+        connectionId: conn.connection_id || conn.label || `stair_${index + 1}`,
+        distance,
+      };
+    }
+  });
+  return best;
+}
+
+function selectStairConnection(world) {
+  const hit = nearestStairConnection(world);
+  if (!hit) {
+    state.selectedStairId = null;
+    updateStairStatus();
+    draw();
+    return false;
+  }
+  state.selectedStairId = hit.connectionId;
+  state.selectedId = null;
+  updateSelectedInfo();
+  updateStairStatus(`Selected ${hit.connectionId}.`);
+  draw();
+  return true;
+}
+
+function deleteSelectedStairConnection() {
+  if (!state.selectedStairId) {
+    updateStairStatus("Select a stair connection first.");
+    return;
+  }
+  state.annotations.manual_connections = state.annotations.manual_connections || [];
+  const index = state.annotations.manual_connections.findIndex(
+    (conn) => ["stair", "escalator"].includes(conn.type) && (conn.connection_id || conn.label) === state.selectedStairId,
+  );
+  if (index < 0) {
+    const missingId = state.selectedStairId;
+    state.selectedStairId = null;
+    updateStairStatus(`Missing stair: ${missingId}`);
+    draw();
+    return;
+  }
+  const removed = state.annotations.manual_connections.splice(index, 1)[0];
+  state.selectedStairId = null;
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateStairStatus(`Deleted ${removed.connection_id || removed.label}.`);
+    draw();
+  });
+}
+
 function undoLastStairConnection() {
   state.annotations.manual_connections = state.annotations.manual_connections || [];
   for (let index = state.annotations.manual_connections.length - 1; index >= 0; index -= 1) {
-    if (state.annotations.manual_connections[index].type !== "stair") continue;
+    if (!["stair", "escalator"].includes(state.annotations.manual_connections[index].type)) continue;
     const removed = state.annotations.manual_connections.splice(index, 1)[0];
     saveAnnotations().then((result) => {
       saveResult.textContent = JSON.stringify(result, null, 2);
@@ -2585,12 +2862,15 @@ function undoLastStraighten() {
 
 function resetToInitialPolygons() {
   state.annotations.hidden_polygon_ids = [];
+  state.annotations.polygon_z_offsets = {};
+  state.annotations.polygon_z_values = {};
   state.annotations.manual_polygons = [];
   state.annotations.manual_edits = [];
   state.annotations.manual_merges = [];
   state.annotations.manual_connections = [];
   state.annotations.manual_walls = [];
   state.annotations.layer_alignment_pairs = [];
+  state.annotations.scale_calibration = null;
   state.manualPolygons = [];
   state.loadedFinalWorkingSet = false;
   state.selectedId = null;
@@ -2604,6 +2884,7 @@ function resetToInitialPolygons() {
   resetCutHole();
   resetStairConnection();
   resetLayerAlign();
+  resetScaleCalibration();
   resetSharedEdge();
   updateSelectedInfo();
   saveAnnotations().then((result) => {
@@ -2844,13 +3125,17 @@ function loadProject() {
       state.loadedFinalWorkingSet = false;
       state.polygons = project.polygon_data.polygons || [];
       state.connections = project.connections?.connections || [];
+      state.icons = project.icons?.icons || [];
       state.annotations = project.annotations || state.annotations;
       state.annotations.manual_connections = state.annotations.manual_connections || [];
+      state.annotations.scale_calibration = state.annotations.scale_calibration || null;
+      state.annotations.polygon_z_offsets = state.annotations.polygon_z_offsets || {};
+      state.annotations.polygon_z_values = state.annotations.polygon_z_values || {};
       state.manualPolygons = state.annotations.manual_polygons || [];
       const image = new Image();
       image.onload = () => {
         state.image = image;
-        statusEl.textContent = `${state.polygons.length} polygons`;
+        statusEl.textContent = `${state.polygons.length} polygons, ${state.icons.length} icons`;
         fitView();
       };
       image.src = `${project.image.url}?t=${Date.now()}`;
@@ -2898,6 +3183,8 @@ function loadSelectedImage() {
       state.manualPolygons = [];
       state.annotations = {
         polygon_layers: {},
+        polygon_z_offsets: {},
+        polygon_z_values: {},
         hidden_polygon_ids: [],
         manual_polygons: [],
         manual_edits: [],
@@ -2905,10 +3192,12 @@ function loadSelectedImage() {
         manual_connections: [],
         manual_walls: [],
         layer_alignment_pairs: [],
+        scale_calibration: null,
       };
       state.marker.points = [];
       state.loadedFinalWorkingSet = false;
       pipelineStatus.textContent = `selected: ${data.image}\noutput: ${data.output_dir}`;
+      updateScaleCalibrationStatus();
       loadProject();
       refreshImages();
     })
@@ -3046,6 +3335,7 @@ function togglePreviewFinal() {
     resetSimpleKeep();
     resetStairConnection();
     resetLayerAlign();
+    resetScaleCalibration();
   }
   const visibleCount = allPolygons().length;
   if (!state.previewFinal) {
@@ -3067,12 +3357,15 @@ function loadExportedFinal() {
       if (!ok) throw new Error(data.error || "failed to load exported final");
       const polygons = data.polygons || [];
       state.polygons = polygons;
+      state.icons = data.icons || state.icons || [];
       state.manualPolygons = [];
       state.previewFinal = false;
       state.exportedFinalPolygons = null;
       state.loadedFinalWorkingSet = true;
       state.annotations = {
         polygon_layers: {},
+        polygon_z_offsets: state.annotations.polygon_z_offsets || {},
+        polygon_z_values: state.annotations.polygon_z_values || {},
         hidden_polygon_ids: [],
         manual_polygons: [],
         manual_edits: [],
@@ -3080,6 +3373,7 @@ function loadExportedFinal() {
         manual_connections: data.connections || [],
         manual_walls: data.walls || [],
         layer_alignment_pairs: state.annotations.layer_alignment_pairs || [],
+        scale_calibration: state.annotations.scale_calibration || null,
       };
       state.tool = "select";
       state.selectedId = null;
@@ -3093,6 +3387,7 @@ function loadExportedFinal() {
       resetCutHole();
       resetStairConnection();
       resetLayerAlign();
+      resetScaleCalibration();
       resetSharedEdge();
       updateSelectedInfo();
       statusEl.textContent = `Working Set: ${state.polygons.length} exported polygons`;
@@ -3234,6 +3529,15 @@ canvas.addEventListener("mousemove", (event) => {
     }
     return;
   }
+  if (state.tool === "layerAlign" && state.layerAlign.active && state.layerAlign.fromPoint && !state.layerAlign.toPoint) {
+    const nextPoint = verticalLayerAlignPoint(world);
+    const changed = JSON.stringify(nextPoint) !== JSON.stringify(state.layerAlign.hoverPoint);
+    if (changed) {
+      state.layerAlign.hoverPoint = nextPoint;
+      draw();
+    }
+    return;
+  }
 
   const poly = findPolygonAt(world);
   const nextHover = poly?.polygon_id || null;
@@ -3306,6 +3610,10 @@ canvas.addEventListener("click", (event) => {
     addLayerAlignPoint(world, poly);
     return;
   }
+  if (state.tool === "scaleCalibration") {
+    addScaleCalibrationPoint(world);
+    return;
+  }
   if (state.tool === "stair") {
     addStairPoint(world, poly);
     return;
@@ -3318,8 +3626,11 @@ canvas.addEventListener("click", (event) => {
     toggleKeepVertex(world, poly);
     return;
   }
+  if (selectStairConnection(world)) return;
   state.selectedId = poly?.polygon_id || null;
+  state.selectedStairId = null;
   updateSelectedInfo();
+  updateStairStatus();
   updateDeleteStatus();
   draw();
 });
@@ -3339,6 +3650,10 @@ document.getElementById("showConnectionsToggle").addEventListener("change", (eve
   state.showConnections = event.target.checked;
   draw();
 });
+showIconsToggle.addEventListener("change", (event) => {
+  state.showIcons = event.target.checked;
+  draw();
+});
 document.getElementById("showHiddenToggle").addEventListener("change", (event) => {
   state.showHidden = event.target.checked;
   draw();
@@ -3353,6 +3668,25 @@ document.getElementById("setLayerBtn").addEventListener("click", () => {
     poly.semantic = poly.semantic || {};
     poly.semantic.layer = layer || null;
   }
+  updateSelectedInfo();
+  draw();
+});
+document.getElementById("setZOverrideBtn").addEventListener("click", () => {
+  if (!state.selectedId) return;
+  const zOffset = Number(zOverrideInput.value);
+  if (!Number.isFinite(zOffset)) {
+    delete (state.annotations.polygon_z_offsets || {})[state.selectedId];
+  } else {
+    state.annotations.polygon_z_offsets = state.annotations.polygon_z_offsets || {};
+    state.annotations.polygon_z_offsets[state.selectedId] = zOffset;
+  }
+  updateSelectedInfo();
+  draw();
+});
+document.getElementById("clearZOverrideBtn").addEventListener("click", () => {
+  if (!state.selectedId) return;
+  state.annotations.polygon_z_offsets = state.annotations.polygon_z_offsets || {};
+  delete state.annotations.polygon_z_offsets[state.selectedId];
   updateSelectedInfo();
   draw();
 });
@@ -3407,7 +3741,12 @@ document.getElementById("resetCutHoleBtn").addEventListener("click", resetCutHol
 document.getElementById("startLayerAlignBtn").addEventListener("click", startLayerAlign);
 document.getElementById("undoLayerAlignBtn").addEventListener("click", undoLastLayerAlignPair);
 document.getElementById("resetLayerAlignBtn").addEventListener("click", resetLayerAlign);
+document.getElementById("startScaleBtn").addEventListener("click", startScaleCalibration);
+document.getElementById("applyScaleBtn").addEventListener("click", applyScaleCalibration);
+document.getElementById("clearScaleBtn").addEventListener("click", clearScaleCalibration);
+document.getElementById("resetScaleBtn").addEventListener("click", resetScaleCalibration);
 document.getElementById("startStairBtn").addEventListener("click", startStairConnection);
+document.getElementById("deleteStairBtn").addEventListener("click", deleteSelectedStairConnection);
 document.getElementById("undoStairBtn").addEventListener("click", undoLastStairConnection);
 document.getElementById("resetStairBtn").addEventListener("click", resetStairConnection);
 document.getElementById("refreshImagesBtn").addEventListener("click", refreshImages);
@@ -3442,6 +3781,20 @@ document.getElementById("exportFinalBtn").addEventListener("click", () => {
 document.getElementById("exportPlanesBtn").addEventListener("click", () => {
   saveAnnotations()
     .then(() => fetch("/api/export/planes", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        working_polygons: workingPolygonsPayload(),
+      }),
+    }))
+    .then((response) => response.json())
+    .then((result) => {
+      saveResult.textContent = JSON.stringify(result, null, 2);
+    });
+});
+document.getElementById("exportAssetsBtn").addEventListener("click", () => {
+  saveAnnotations()
+    .then(() => fetch("/api/export/assets", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
@@ -3493,6 +3846,9 @@ document.addEventListener("keydown", (event) => {
   } else if (key === "y") {
     event.preventDefault();
     startLayerAlign();
+  } else if (key === "i") {
+    event.preventDefault();
+    startScaleCalibration();
   } else if (key === "u") {
     event.preventDefault();
     startStairConnection();
@@ -3522,11 +3878,13 @@ document.addEventListener("keydown", (event) => {
     undoLastMerge();
   } else if (event.key === "Delete") {
     event.preventDefault();
-    deleteSelectedPolygon();
+    if (state.selectedStairId) deleteSelectedStairConnection();
+    else deleteSelectedPolygon();
   } else if (event.key === "Backspace") {
     event.preventDefault();
     if (state.tool === "marker") undoManualMarkerPoint();
     else if (state.tool === "cutHole") undoCutHolePoint();
+    else if (state.tool === "scaleCalibration") undoScaleCalibrationPoint();
     else undoAddPolygonPoint();
   } else if (event.key === "Shift") {
     event.preventDefault();
@@ -3535,6 +3893,7 @@ document.addEventListener("keydown", (event) => {
     else if (state.tool === "cutHole") applyCutHole();
     else if (state.tool === "sharedEdge") applySharedEdge();
     else if (state.tool === "autoMerge") applyAutoMerge();
+    else if (state.tool === "scaleCalibration") applyScaleCalibration();
     else if (state.tool === "merge") applyMerge();
     else if (state.tool === "straighten") applyStraighten();
   } else if (event.key === "Escape") {
@@ -3543,6 +3902,7 @@ document.addEventListener("keydown", (event) => {
     else if (state.tool === "addPolygon") resetAddPolygon();
     else if (state.tool === "cutHole") resetCutHole();
     else if (state.tool === "layerAlign") resetLayerAlign();
+    else if (state.tool === "scaleCalibration") resetScaleCalibration();
     else if (state.tool === "marker") {
       state.tool = "select";
       state.marker.active = false;
@@ -3571,5 +3931,6 @@ updateSharedEdgeStatus();
 updateAddPolygonStatus();
 updateCutHoleStatus();
 updateLayerAlignStatus();
+updateScaleCalibrationStatus();
 updateKeepStatus();
 loadProject();

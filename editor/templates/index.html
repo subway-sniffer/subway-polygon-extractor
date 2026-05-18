@@ -56,6 +56,10 @@
           auto connection candidates
         </label>
         <label class="row">
+          <input id="showIconsToggle" type="checkbox" checked>
+          detected icons
+        </label>
+        <label class="row">
           <input id="showHiddenToggle" type="checkbox">
           hidden polygons
         </label>
@@ -79,6 +83,12 @@
           </datalist>
         </label>
         <button id="setLayerBtn">Set Layer</button>
+        <label>
+          Z offset from floor
+          <input id="zOverrideInput" type="number" step="0.01" placeholder="0">
+        </label>
+        <button id="setZOverrideBtn">Set Z Offset</button>
+        <button id="clearZOverrideBtn">Clear Z Offset</button>
         <button id="toggleHideBtn">Hide / Show</button>
         <button id="deletePolygonBtn">Delete Polygon (Delete)</button>
         <button id="undoDeletePolygonBtn">Undo Last Delete</button>
@@ -176,14 +186,35 @@
       </section>
 
       <section>
-        <h2>Stair Connection</h2>
+        <h2>Scale Calibration</h2>
+        <label>
+          Real length
+          <input id="scaleLengthInput" type="number" min="0" step="0.01" placeholder="meters">
+        </label>
+        <button id="startScaleBtn">Start Scale Line</button>
+        <button id="applyScaleBtn">Apply Scale</button>
+        <button id="clearScaleBtn">Clear Scale</button>
+        <button id="resetScaleBtn">Reset Scale Line (Esc)</button>
+        <div id="scaleStatus">inactive</div>
+      </section>
+
+      <section>
+        <h2>Vertical Connection</h2>
+        <label>
+          Type
+          <select id="connectionTypeInput">
+            <option value="stair">stair</option>
+            <option value="escalator">escalator</option>
+          </select>
+        </label>
         <label>
           Label
           <input id="stairLabelInput" placeholder="auto">
         </label>
-        <button id="startStairBtn">Start Stair (U)</button>
-        <button id="undoStairBtn">Undo Last Stair</button>
-        <button id="resetStairBtn">Reset Stair (Esc)</button>
+        <button id="startStairBtn">Start Connection (U)</button>
+        <button id="deleteStairBtn">Delete Selected Connection</button>
+        <button id="undoStairBtn">Undo Last Connection</button>
+        <button id="resetStairBtn">Reset Connection (Esc)</button>
         <div id="stairStatus">inactive</div>
       </section>
 
@@ -195,6 +226,7 @@
         <button id="loadExportedFinalBtn">Load Exported Final</button>
         <button id="exportFinalBtn">Export Final Polygons</button>
         <button id="exportPlanesBtn">Export Scene Planes</button>
+        <button id="exportAssetsBtn">Export Assets</button>
         <pre id="saveResult"></pre>
       </section>
     </aside>

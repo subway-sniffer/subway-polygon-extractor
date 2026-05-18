@@ -10,6 +10,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from editor.export_payload import (
+    build_assets_payload,
     build_final_polygons_payload,
     build_plane_payload,
     build_plane_payload_from_records,
@@ -40,6 +41,7 @@ from editor.model import (
     next_manual_polygon_id,
     next_wall_id,
     save_json,
+    save_json_compact_vectors,
 )
 from editor.marker_editor import save_manual_marker_config
 from editor.pipeline_runner import run_pipeline_for_project
@@ -54,6 +56,13 @@ def create_app(args):
     source_image = cv2.imread(str(store.active["image_path"]))
     if source_image is None:
         raise FileNotFoundError(f"이미지를 불러올 수 없습니다: {store.active['image_path']}")
+
+    def load_active_icons():
+        """Load icon matching output for the active project when available."""
+        icon_path = store.active.get("icon_matches_path")
+        if icon_path and icon_path.exists():
+            return load_json(icon_path)
+        return None
 
     @app.route("/")
     def index():
@@ -167,6 +176,7 @@ def create_app(args):
         connections = None
         if store.active["connections_path"] and store.active["connections_path"].exists():
             connections = load_json(store.active["connections_path"])
+        icons = load_active_icons()
         return jsonify(
             {
                 "image": {
@@ -178,9 +188,11 @@ def create_app(args):
                 "output_file": str(store.active["annotations_path"]),
                 "final_output_file": str(store.active["final_output_path"]),
                 "plane_output_file": str(store.active["plane_output_path"]),
+                "icon_matches_file": str(store.active["icon_matches_path"]) if store.active["icon_matches_path"] else None,
                 "marker_config_file": str(store.active["marker_config_path"]) if store.active["marker_config_path"] else None,
                 "polygon_data": polygon_data,
                 "connections": connections,
+                "icons": icons,
                 "annotations": load_annotations(store.active["annotations_path"]),
             }
         )
@@ -212,6 +224,13 @@ def create_app(args):
             payload = build_working_final_payload(store.active["polygons_path"], working_polygons, annotations, store.active["transform_metadata"])
         else:
             payload = build_final_polygons_payload(store.active["polygons_path"], annotations, store.active["transform_metadata"])
+        icons = load_active_icons()
+        if icons:
+            payload["icons"] = icons.get("icons", [])
+            payload["icon_matches"] = {
+                "source": str(store.active["icon_matches_path"]),
+                "match_count": len(icons.get("icons", [])),
+            }
         saved_path = save_json(payload, store.active["final_output_path"])
         return jsonify(
             {
@@ -236,6 +255,7 @@ def create_app(args):
         """Export final polygons to examples/plane1.json-style plane records."""
         data = request.get_json(silent=True) or {}
         annotations = load_annotations(store.active["annotations_path"])
+        icon_matches = load_active_icons()
         working_polygons = data.get("working_polygons")
         if working_polygons:
             final_payload = build_working_final_payload(store.active["polygons_path"], working_polygons, annotations, store.active["transform_metadata"])
@@ -248,7 +268,9 @@ def create_app(args):
                 scale=args.plane_scale,
                 default_z=args.default_z,
                 layer_z=layer_z,
+                floor_height=args.floor_height,
                 invert_y=args.invert_y,
+                icon_matches=icon_matches,
             )
         else:
             payload = build_plane_payload(
@@ -258,15 +280,67 @@ def create_app(args):
                 scale=args.plane_scale,
                 default_z=args.default_z,
                 layer_z=layer_z,
+                floor_height=args.floor_height,
                 invert_y=args.invert_y,
+                icon_matches=icon_matches,
             )
-        saved_path = save_json(payload, store.active["plane_output_path"])
+        saved_path = save_json_compact_vectors(payload, store.active["plane_output_path"])
+        assets_payload = build_assets_payload(payload)
+        assets_path = save_json_compact_vectors(assets_payload, store.active["asset_output_path"])
         return jsonify(
             {
                 "saved": True,
                 "output": str(saved_path),
+                "assets_output": str(assets_path),
                 "plane_count": len(payload["planes"]),
                 "connection_count": len(payload.get("connections", [])),
+                "asset_count": len(assets_payload.get("assets", [])),
+                "icon_count": len(payload.get("icons", [])),
+                "format": payload.get("metadata", {}).get("format"),
+            }
+        )
+
+    @app.route("/api/export/assets", methods=["POST"])
+    def export_assets():
+        """Export stair/escalator assets from scene connection records."""
+        data = request.get_json(silent=True) or {}
+        annotations = load_annotations(store.active["annotations_path"])
+        icon_matches = load_active_icons()
+        working_polygons = data.get("working_polygons")
+        if working_polygons:
+            final_payload = build_working_final_payload(store.active["polygons_path"], working_polygons, annotations, store.active["transform_metadata"])
+            scene_payload = build_plane_payload_from_records(
+                final_payload["polygons"],
+                final_payload.get("walls", []),
+                annotations=annotations,
+                transform_metadata=store.active["transform_metadata"],
+                transform_info=final_payload.get("manual_export", {}).get("transform"),
+                scale=args.plane_scale,
+                default_z=args.default_z,
+                layer_z=layer_z,
+                floor_height=args.floor_height,
+                invert_y=args.invert_y,
+                icon_matches=icon_matches,
+            )
+        else:
+            scene_payload = build_plane_payload(
+                store.active["polygons_path"],
+                annotations,
+                store.active["transform_metadata"],
+                scale=args.plane_scale,
+                default_z=args.default_z,
+                layer_z=layer_z,
+                floor_height=args.floor_height,
+                invert_y=args.invert_y,
+                icon_matches=icon_matches,
+            )
+        payload = build_assets_payload(scene_payload)
+        saved_path = save_json_compact_vectors(payload, store.active["asset_output_path"])
+        return jsonify(
+            {
+                "saved": True,
+                "output": str(saved_path),
+                "asset_count": len(payload.get("assets", [])),
                 "format": payload.get("metadata", {}).get("format"),
             }
         )
@@ -758,6 +832,7 @@ def parse_args():
     parser.add_argument("--image", required=True, help="Source image shown behind polygon overlays.")
     parser.add_argument("--polygons", required=True, help="intermediate_polygons.json with points_source.")
     parser.add_argument("--connections", help="Optional connections.json.")
+    parser.add_argument("--icons", help="Optional icon_matches.json.")
     parser.add_argument("--output", required=True, help="manual_annotations.json output path.")
     parser.add_argument("--final-output", help="Output path for final_polygons.json.")
     parser.add_argument("--plane-output", help="Output path for plane1-compatible scene_planes.json.")
@@ -766,7 +841,8 @@ def parse_args():
     parser.add_argument("--project-output-root", help="Directory for web-created per-image outputs.")
     parser.add_argument("--plane-scale", type=float, default=0.01)
     parser.add_argument("--default-z", type=float, default=0.0)
-    parser.add_argument("--layer-z", help="Layer z mapping. Defaults to 'B1=0,B2=-1,B3=-2,B4=-3'.")
+    parser.add_argument("--floor-height", type=float, default=5.0, help="Default floor height multiplier for layer indices.")
+    parser.add_argument("--layer-z", help="Optional explicit layer z override, for example 'B1=0,B2=-5,B3=-10'.")
     parser.add_argument("--invert-y", action="store_true")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=5050)
