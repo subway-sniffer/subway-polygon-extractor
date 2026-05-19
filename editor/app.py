@@ -269,6 +269,7 @@ def create_app(args):
                 default_z=args.default_z,
                 layer_z=layer_z,
                 floor_height=args.floor_height,
+                invert_x=args.invert_x,
                 invert_y=args.invert_y,
                 icon_matches=icon_matches,
             )
@@ -281,6 +282,7 @@ def create_app(args):
                 default_z=args.default_z,
                 layer_z=layer_z,
                 floor_height=args.floor_height,
+                invert_x=args.invert_x,
                 invert_y=args.invert_y,
                 icon_matches=icon_matches,
             )
@@ -319,6 +321,7 @@ def create_app(args):
                 default_z=args.default_z,
                 layer_z=layer_z,
                 floor_height=args.floor_height,
+                invert_x=args.invert_x,
                 invert_y=args.invert_y,
                 icon_matches=icon_matches,
             )
@@ -331,6 +334,7 @@ def create_app(args):
                 default_z=args.default_z,
                 layer_z=layer_z,
                 floor_height=args.floor_height,
+                invert_x=args.invert_x,
                 invert_y=args.invert_y,
                 icon_matches=icon_matches,
             )
@@ -843,6 +847,7 @@ def parse_args():
     parser.add_argument("--default-z", type=float, default=0.0)
     parser.add_argument("--floor-height", type=float, default=5.0, help="Default floor height multiplier for layer indices.")
     parser.add_argument("--layer-z", help="Optional explicit layer z override, for example 'B1=0,B2=-5,B3=-10'.")
+    parser.add_argument("--invert-x", action="store_true")
     parser.add_argument("--invert-y", action="store_true")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=5050)

@@ -430,17 +430,17 @@ def icon_polygon_context(icon, polygons, annotations=None, layer_z=None, default
     return None, None, default_z, "default", None
 
 
-def source_bbox_to_scene_size(bbox, transform_metadata=None, transform_info=None, scale=0.01, invert_y=False):
+def source_bbox_to_scene_size(bbox, transform_metadata=None, transform_info=None, scale=0.01, invert_x=False, invert_y=False):
     """Convert a source bbox to approximate scene XY size."""
     if not bbox or len(bbox) < 4:
         return [1.0, 1.0]
     x, y, w, h = [float(value) for value in bbox[:4]]
-    p1 = scene_xy_from_point([x, y], transform_metadata, transform_info, scale=scale, invert_y=invert_y)
-    p2 = scene_xy_from_point([x + w, y + h], transform_metadata, transform_info, scale=scale, invert_y=invert_y)
+    p1 = scene_xy_from_point([x, y], transform_metadata, transform_info, scale=scale, invert_x=invert_x, invert_y=invert_y)
+    p2 = scene_xy_from_point([x + w, y + h], transform_metadata, transform_info, scale=scale, invert_x=invert_x, invert_y=invert_y)
     return [abs(float(p2[0]) - float(p1[0])), abs(float(p2[1]) - float(p1[1]))]
 
 
-def build_scene_icon_records(icon_matches, polygons, annotations=None, transform_metadata=None, transform_info=None, scale=0.01, layer_z=None, floor_height=5.0, default_z=0.0, invert_y=False, alignment_transforms=None):
+def build_scene_icon_records(icon_matches, polygons, annotations=None, transform_metadata=None, transform_info=None, scale=0.01, layer_z=None, floor_height=5.0, default_z=0.0, invert_x=False, invert_y=False, alignment_transforms=None):
     """Build exportable icon records from icon matching results."""
     if not icon_matches:
         return []
@@ -462,6 +462,7 @@ def build_scene_icon_records(icon_matches, polygons, annotations=None, transform
             transform_metadata=transform_metadata,
             transform_info=transform_info,
             scale=scale,
+            invert_x=invert_x,
             invert_y=invert_y,
         )
         layer_transform = (alignment_transforms or {}).get(layer)
@@ -472,6 +473,7 @@ def build_scene_icon_records(icon_matches, polygons, annotations=None, transform
             transform_metadata=transform_metadata,
             transform_info=transform_info,
             scale=scale,
+            invert_x=invert_x,
             invert_y=invert_y,
         )
         record = dict(icon)
@@ -499,7 +501,7 @@ def color_rgba(color_rgb, alpha=1.0):
     return [float(rgb[0]) / 255.0, float(rgb[1]) / 255.0, float(rgb[2]) / 255.0, float(alpha)]
 
 
-def scene_xy_from_point(point, transform_metadata=None, transform_info=None, scale=0.01, invert_y=False):
+def scene_xy_from_point(point, transform_metadata=None, transform_info=None, scale=0.01, invert_x=False, invert_y=False):
     """Convert a source-space point into scene export XY coordinates."""
     x, y = point
     if transform_metadata and transform_info:
@@ -509,19 +511,20 @@ def scene_xy_from_point(point, transform_metadata=None, transform_info=None, sca
             shift=transform_info["auto_center_shift"],
         )[0]
         x, y = transformed
+    out_x = -float(x) if invert_x else float(x)
     out_y = -float(y) if invert_y else float(y)
-    return [float(x) * scale, out_y * scale]
+    return [out_x * scale, out_y * scale]
 
 
-def calibrated_scene_scale(annotations, transform_metadata=None, transform_info=None, base_scale=0.01, invert_y=False):
+def calibrated_scene_scale(annotations, transform_metadata=None, transform_info=None, base_scale=0.01, invert_x=False, invert_y=False):
     """Return the scene scale adjusted by an optional measured line calibration."""
     calibration = (annotations or {}).get("scale_calibration") or {}
     points = calibration.get("points_source") or []
     real_length = calibration.get("real_length")
     if len(points) != 2 or not real_length:
         return float(base_scale), None
-    p1 = scene_xy_from_point(points[0], transform_metadata, transform_info, scale=1.0, invert_y=invert_y)
-    p2 = scene_xy_from_point(points[1], transform_metadata, transform_info, scale=1.0, invert_y=invert_y)
+    p1 = scene_xy_from_point(points[0], transform_metadata, transform_info, scale=1.0, invert_x=invert_x, invert_y=invert_y)
+    p2 = scene_xy_from_point(points[1], transform_metadata, transform_info, scale=1.0, invert_x=invert_x, invert_y=invert_y)
     pixel_length = float(np.hypot(p2[0] - p1[0], p2[1] - p1[1]))
     if pixel_length <= 1e-9:
         return float(base_scale), None
@@ -616,7 +619,7 @@ def estimate_xy_transform(source_points, target_points):
     ), "scale_translate_xy", count
 
 
-def grouped_alignment_pairs(alignment_pairs, transform_metadata=None, transform_info=None, scale=0.01, invert_y=False):
+def grouped_alignment_pairs(alignment_pairs, transform_metadata=None, transform_info=None, scale=0.01, invert_x=False, invert_y=False):
     """Group alignment point correspondences by unordered layer pair."""
     groups = {}
     for pair in alignment_pairs or []:
@@ -628,12 +631,12 @@ def grouped_alignment_pairs(alignment_pairs, transform_metadata=None, transform_
             continue
         key = tuple(sorted([from_layer, to_layer]))
         item = groups.setdefault(key, {key[0]: [], key[1]: []})
-        item[from_layer].append(scene_xy_from_point(from_point, transform_metadata, transform_info, scale=scale, invert_y=invert_y))
-        item[to_layer].append(scene_xy_from_point(to_point, transform_metadata, transform_info, scale=scale, invert_y=invert_y))
+        item[from_layer].append(scene_xy_from_point(from_point, transform_metadata, transform_info, scale=scale, invert_x=invert_x, invert_y=invert_y))
+        item[to_layer].append(scene_xy_from_point(to_point, transform_metadata, transform_info, scale=scale, invert_x=invert_x, invert_y=invert_y))
     return groups
 
 
-def build_layer_alignment_transforms(alignment_pairs, transform_metadata=None, transform_info=None, scale=0.01, invert_y=False, reference_layer=None):
+def build_layer_alignment_transforms(alignment_pairs, transform_metadata=None, transform_info=None, scale=0.01, invert_x=False, invert_y=False, reference_layer=None):
     """Build cumulative layer XY transforms from alignment point pairs."""
     pairs = alignment_pairs or []
     if not pairs:
@@ -647,6 +650,7 @@ def build_layer_alignment_transforms(alignment_pairs, transform_metadata=None, t
         transform_metadata=transform_metadata,
         transform_info=transform_info,
         scale=scale,
+        invert_x=invert_x,
         invert_y=invert_y,
     ).items():
         points_a = points_by_layer[layer_a]
@@ -690,7 +694,7 @@ def apply_xy_offset_to_vertices(vertices, offset):
     return [[float(x) + offset[0], float(y) + offset[1], float(z)] for x, y, z in vertices]
 
 
-def build_plane_payload_from_records(polygons, walls, annotations=None, transform_metadata=None, transform_info=None, scale=0.01, default_z=0.0, layer_z=None, floor_height=5.0, invert_y=False, icon_matches=None):
+def build_plane_payload_from_records(polygons, walls, annotations=None, transform_metadata=None, transform_info=None, scale=0.01, default_z=0.0, layer_z=None, floor_height=5.0, invert_x=False, invert_y=False, icon_matches=None):
     """Build examples/plane_with_color.json-style planes from polygon records."""
     annotations = annotations or {}
     layer_z = layer_z or {}
@@ -699,6 +703,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         transform_metadata=transform_metadata,
         transform_info=transform_info,
         base_scale=scale,
+        invert_x=invert_x,
         invert_y=invert_y,
     )
     alignment_transforms, reference_layer, alignment_pair_metadata = build_layer_alignment_transforms(
@@ -706,6 +711,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         transform_metadata=transform_metadata,
         transform_info=transform_info,
         scale=effective_scale,
+        invert_x=invert_x,
         invert_y=invert_y,
         reference_layer=annotations.get("layer_alignment_reference"),
     )
@@ -725,8 +731,9 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         z_value = polygon_z_value(poly, annotations=annotations, layer_z=layer_z, default_z=default_z, floor_height=floor_height)
         vertices = []
         for x, y in points:
+            out_x = -float(x) if invert_x else float(x)
             out_y = -float(y) if invert_y else float(y)
-            vertices.append([float(x) * effective_scale, out_y * effective_scale, float(z_value)])
+            vertices.append([out_x * effective_scale, out_y * effective_scale, float(z_value)])
         layer_transform = alignment_transforms.get(layer)
         vertices = apply_layer_transform_to_vertices(vertices, layer_transform)
         if transform_metadata and transform_info and poly.get("holes_source"):
@@ -756,7 +763,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
                 "holes": [
                     apply_layer_transform_to_vertices(
                         [
-                            [float(x) * effective_scale, (-float(y) if invert_y else float(y)) * effective_scale, float(z_value)]
+                            [(-float(x) if invert_x else float(x)) * effective_scale, (-float(y) if invert_y else float(y)) * effective_scale, float(z_value)]
                             for x, y in hole
                         ],
                         layer_transform,
@@ -785,8 +792,8 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         p1, p2 = wall_points[:2]
         y1 = -float(p1[1]) if invert_y else float(p1[1])
         y2 = -float(p2[1]) if invert_y else float(p2[1])
-        x1 = float(p1[0])
-        x2 = float(p2[0])
+        x1 = -float(p1[0]) if invert_x else float(p1[0])
+        x2 = -float(p2[0]) if invert_x else float(p2[0])
         layer_transform = alignment_transforms.get(layer)
         wall_records.append(
             {
@@ -821,6 +828,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
             transform_metadata=transform_metadata,
             transform_info=transform_info,
             scale=effective_scale,
+            invert_x=invert_x,
             invert_y=invert_y,
         )
         to_xy = scene_xy_from_point(
@@ -828,6 +836,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
             transform_metadata=transform_metadata,
             transform_info=transform_info,
             scale=effective_scale,
+            invert_x=invert_x,
             invert_y=invert_y,
         )
         from_transform = alignment_transforms.get(from_layer)
@@ -877,9 +886,26 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         layer_z=layer_z,
         floor_height=floor_height,
         default_z=default_z,
+        invert_x=invert_x,
         invert_y=invert_y,
         alignment_transforms=alignment_transforms,
     )
+    assets = build_assets_from_connections(connection_records)
+    assets_by_connection_id = {
+        asset.get("connection_id"): asset
+        for asset in assets
+        if asset.get("connection_id")
+    }
+    for connection in connection_records:
+        asset = assets_by_connection_id.get(connection.get("connection_id"))
+        if not asset:
+            continue
+        connection["blend"] = asset.get("blend")
+        connection["location"] = asset.get("location")
+        connection["rotation_z"] = asset.get("rotation_z")
+        connection["scale"] = asset.get("scale")
+        connection["same_layer"] = asset.get("same_layer")
+
     payload = {
         "metadata": {
             "format": "plane1-compatible",
@@ -898,6 +924,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
                 "match_count": len(icon_records),
             },
             "invert_y": invert_y,
+            "invert_x": invert_x,
             "transform": transform_info,
             "layer_alignment": {
                 "reference_layer": reference_layer,
@@ -915,7 +942,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         "connections": connection_records,
         "icons": icon_records,
     }
-    payload["assets"] = build_assets_from_connections(connection_records)
+    payload["assets"] = assets
     return payload
 
 
@@ -986,7 +1013,7 @@ def build_assets_payload(scene_payload):
     }
 
 
-def build_plane_payload(polygons_path, annotations, transform_metadata=None, scale=0.01, default_z=0.0, layer_z=None, floor_height=5.0, invert_y=False, icon_matches=None):
+def build_plane_payload(polygons_path, annotations, transform_metadata=None, scale=0.01, default_z=0.0, layer_z=None, floor_height=5.0, invert_x=False, invert_y=False, icon_matches=None):
     """Build examples/plane_with_color.json-style planes from final polygons."""
     _, polygons, transform_info = final_polygon_records(polygons_path, annotations, transform_metadata)
     walls = [dict(wall) for wall in annotations.get("manual_walls", [])]
@@ -1006,6 +1033,7 @@ def build_plane_payload(polygons_path, annotations, transform_metadata=None, sca
         default_z=default_z,
         layer_z=layer_z,
         floor_height=floor_height,
+        invert_x=invert_x,
         invert_y=invert_y,
         icon_matches=icon_matches,
     )

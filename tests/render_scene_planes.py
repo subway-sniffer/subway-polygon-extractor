@@ -17,6 +17,36 @@ def plane_xy_points(plane):
     return [[float(vertex[0]), float(vertex[1])] for vertex in plane.get("vertices", [])]
 
 
+def plane_z_value(plane):
+    """Return a representative z value for render ordering."""
+    if plane.get("z_value") is not None:
+        return float(plane["z_value"])
+    vertices = plane.get("vertices", [])
+    if not vertices:
+        return 0.0
+    return float(np.mean([float(vertex[2]) for vertex in vertices if len(vertex) >= 3]))
+
+
+def connection_z_value(connection):
+    """Return average endpoint z for render ordering."""
+    positions = []
+    for key in ("from", "to"):
+        position = (connection.get(key) or {}).get("position")
+        if position and len(position) >= 3:
+            positions.append(float(position[2]))
+    return float(np.mean(positions)) if positions else 0.0
+
+
+def sorted_planes_by_z(planes):
+    """Sort planes from lower z to higher z so upper floors draw last."""
+    return sorted(planes, key=lambda plane: (plane_z_value(plane), str(plane.get("polygon_id") or "")))
+
+
+def sorted_connections_by_z(connections):
+    """Sort connections from lower z to higher z for deterministic overlay."""
+    return sorted(connections, key=lambda connection: (connection_z_value(connection), str(connection.get("connection_id") or "")))
+
+
 def collect_bounds(planes):
     """Collect min/max XY bounds for all plane vertices."""
     points = []
@@ -67,7 +97,7 @@ def project_points(points, bounds, image_size, margin):
 
 def draw_scene_planes(data, image_size=(1600, 1000), margin=40):
     """Render scene planes to a flat debug image."""
-    planes = data.get("planes", [])
+    planes = sorted_planes_by_z(data.get("planes", []))
     bounds = collect_scene_bounds(data)
     canvas = np.full((image_size[1], image_size[0], 3), 245, dtype=np.uint8)
 
@@ -118,7 +148,7 @@ def draw_scene_planes(data, image_size=(1600, 1000), margin=40):
         line = project_points(wall_points, bounds, image_size, margin)
         cv2.line(canvas, tuple(line[0]), tuple(line[1]), (30, 30, 220), 3, lineType=cv2.LINE_AA)
 
-    for connection in data.get("connections", []):
+    for connection in sorted_connections_by_z(data.get("connections", [])):
         from_pos = (connection.get("from") or {}).get("position")
         to_pos = (connection.get("to") or {}).get("position")
         if not from_pos or not to_pos:
