@@ -909,6 +909,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
     payload = {
         "metadata": {
             "format": "plane1-compatible",
+            "rotation_unit": "degree",
             "coordinate_source": "points_transformed" if transform_info else "points_source",
             "scale": effective_scale,
             "base_scale": scale,
@@ -982,7 +983,7 @@ def build_assets_from_connections(connections):
                     (float(from_pos[1]) + float(to_pos[1])) / 2.0,
                     (float(from_pos[2]) + float(to_pos[2])) / 2.0,
                 ],
-                "rotation_z": float(np.arctan2(dy, dx)),
+                "rotation_z": float(np.degrees(np.arctan2(dy, dx))),
                 "scale": [
                     xy_length,
                     1.0,
@@ -1001,7 +1002,7 @@ def build_assets_payload(scene_payload):
     return {
         "metadata": {
             "format": "assets",
-            "rotation_unit": "radian",
+            "rotation_unit": "degree",
             "location_source": "connection_midpoint",
             "scale": {
                 "x": "connection_xy_length",

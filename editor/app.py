@@ -287,6 +287,7 @@ def create_app(args):
                 icon_matches=icon_matches,
             )
         saved_path = save_json_compact_vectors(payload, store.active["plane_output_path"])
+        example_path = save_json_compact_vectors(payload, ROOT_DIR / "examples" / "polygon_example.json")
         assets_payload = build_assets_payload(payload)
         assets_path = save_json_compact_vectors(assets_payload, store.active["asset_output_path"])
         return jsonify(
@@ -294,6 +295,7 @@ def create_app(args):
                 "saved": True,
                 "output": str(saved_path),
                 "assets_output": str(assets_path),
+                "example_output": str(example_path),
                 "plane_count": len(payload["planes"]),
                 "connection_count": len(payload.get("connections", [])),
                 "asset_count": len(assets_payload.get("assets", [])),

@@ -1,6 +1,7 @@
 {
   "metadata": {
     "format": "plane1-compatible",
+    "rotation_unit": "degree",
     "coordinate_source": "points_transformed",
     "scale": 0.24382460061844338,
     "base_scale": 0.01,
@@ -710,7 +711,7 @@
       },
       "blend": "Stair.blend",
       "location": [-87.981007, 29.104841, -2.5],
-      "rotation_z": -0.2976710135091441,
+      "rotation_z": -17.05529275745567,
       "scale": [5.315676, 1, 5],
       "same_layer": false
     },
@@ -744,7 +745,7 @@
       },
       "blend": "Stair.blend",
       "location": [-112.887872, 29.906694, -2.5],
-      "rotation_z": -3.0510085129900597,
+      "rotation_z": -174.80991105281564,
       "scale": [19.50976, 1, 5],
       "same_layer": false
     },
@@ -778,7 +779,7 @@
       },
       "blend": "Stair.blend",
       "location": [-112.309143, 53.509361, -2.5],
-      "rotation_z": 3.1273937616459007,
+      "rotation_z": 179.18646341785265,
       "scale": [17.770054, 1, 5],
       "same_layer": false
     },
@@ -812,7 +813,7 @@
       },
       "blend": "Stair.blend",
       "location": [-179.522926, 29.513522, -2.5],
-      "rotation_z": 0.07360822300134147,
+      "rotation_z": 4.217440515434656,
       "scale": [12.855912, 1, 5],
       "same_layer": false
     },
@@ -846,7 +847,7 @@
       },
       "blend": "Stair.blend",
       "location": [-202.524626, 28.827248, -2.5],
-      "rotation_z": 3.1256948188955476,
+      "rotation_z": 179.08912116862308,
       "scale": [15.436456, 1, 5],
       "same_layer": false
     },
@@ -880,7 +881,7 @@
       },
       "blend": "Stair.blend",
       "location": [-178.024466, 54.494594, -2.5],
-      "rotation_z": -0.09282468424134221,
+      "rotation_z": -5.318462641663431,
       "scale": [16.24288, 1, 5],
       "same_layer": false
     },
@@ -914,7 +915,7 @@
       },
       "blend": "Stair.blend",
       "location": [-200.284723, 54.121232, -2.5],
-      "rotation_z": -3.0479709600569054,
+      "rotation_z": -174.6358720896983,
       "scale": [11.644932, 1, 5],
       "same_layer": false
     },
@@ -948,7 +949,7 @@
       },
       "blend": "Stair.blend",
       "location": [-352.937267, 37.70135, -12.5],
-      "rotation_z": -1.8801721619889222,
+      "rotation_z": -107.72592963995258,
       "scale": [2.326028, 1, 5],
       "same_layer": false
     },
@@ -982,7 +983,7 @@
       },
       "blend": "Stair.blend",
       "location": [-353.939831, 52.911092, -12.5],
-      "rotation_z": 2.363547281586502,
+      "rotation_z": 135.42128391452533,
       "scale": [1.495441, 1, 5],
       "same_layer": false
     },
@@ -1016,7 +1017,7 @@
       },
       "blend": "Stair.blend",
       "location": [-354.131528, 89.002827, -12.5],
-      "rotation_z": 1.5729642954961078,
+      "rotation_z": 90.12421545669586,
       "scale": [13.305278, 1, 5],
       "same_layer": false
     },
@@ -1050,7 +1051,7 @@
       },
       "blend": "Stair.blend",
       "location": [-376.27494, 36.919388, -12.5],
-      "rotation_z": -1.3836876535417277,
+      "rotation_z": -79.27946271230107,
       "scale": [5.330945, 1, 5],
       "same_layer": false
     },
@@ -1084,7 +1085,7 @@
       },
       "blend": "Stair.blend",
       "location": [-377.514018, 50.871066, -12.5],
-      "rotation_z": -1.7763538541657202,
+      "rotation_z": -101.7775787654931,
       "scale": [5.151723, 1, 5],
       "same_layer": false
     },
@@ -1118,7 +1119,7 @@
       },
       "blend": "Stair.blend",
       "location": [-379.02955, 85.613167, -12.5],
-      "rotation_z": 1.989389447366758,
+      "rotation_z": 113.98361914197845,
       "scale": [5.019412, 1, 5],
       "same_layer": false
     },
@@ -1152,7 +1153,7 @@
       },
       "blend": "Stair.blend",
       "location": [-358.175, 137.159063, -12.5],
-      "rotation_z": 0.39115642316621907,
+      "rotation_z": 22.411612176857613,
       "scale": [5.974531, 1, 5],
       "same_layer": false
     },
@@ -1186,7 +1187,7 @@
       },
       "blend": "Stair.blend",
       "location": [-375.611964, 135.479428, -12.5],
-      "rotation_z": -2.97971272741923,
+      "rotation_z": -170.72496344253736,
       "scale": [3.167595, 1, 5],
       "same_layer": false
     },
@@ -1220,7 +1221,7 @@
       },
       "blend": "Stair.blend",
       "location": [-366.831076, 79.342879, -5],
-      "rotation_z": 1.1504867093937836,
+      "rotation_z": 65.91803283415784,
       "scale": [26.901976, 1, 10],
       "same_layer": false
     },
@@ -1254,7 +1255,7 @@
       },
       "blend": "Stair.blend",
       "location": [-384.581846, 79.238088, -5],
-      "rotation_z": 1.135160580387684,
+      "rotation_z": 65.03991032583531,
       "scale": [26.069198, 1, 10],
       "same_layer": false
     },
@@ -1288,7 +1289,7 @@
       },
       "blend": "Stair.blend",
       "location": [-365.734803, 133.651363, -5],
-      "rotation_z": -1.2144462191038898,
+      "rotation_z": -69.58264280027294,
       "scale": [31.254682, 1, 10],
       "same_layer": false
     },
@@ -1322,7 +1323,7 @@
       },
       "blend": "Stair.blend",
       "location": [-380.72814, 132.823001, -5],
-      "rotation_z": -1.1233671648346648,
+      "rotation_z": -64.36419738860336,
       "scale": [29.523502, 1, 10],
       "same_layer": false
     },
@@ -1356,7 +1357,7 @@
       },
       "blend": "Escalator.blend",
       "location": [-277.235688, 13.664065, -10],
-      "rotation_z": -2.88223942360097,
+      "rotation_z": -165.14015451855465,
       "scale": [59.993265, 1, 10],
       "same_layer": false
     },
@@ -1390,7 +1391,7 @@
       },
       "blend": "Escalator.blend",
       "location": [-278.541151, 50.237805, -10],
-      "rotation_z": 0.14232421277871643,
+      "rotation_z": 8.15457671474235,
       "scale": [59.534738, 1, 10],
       "same_layer": false
     },
@@ -1424,7 +1425,7 @@
       },
       "blend": "Escalator.blend",
       "location": [-347.333345, 26.10878, -12.5],
-      "rotation_z": 1.9283818029831257,
+      "rotation_z": 110.48813860076132,
       "scale": [19.109164, 1, 5],
       "same_layer": false
     },
@@ -1458,7 +1459,7 @@
       },
       "blend": "Escalator.blend",
       "location": [-351.49424, 53.159214, -12.5],
-      "rotation_z": -0.6969815468346651,
+      "rotation_z": -39.93410103212603,
       "scale": [0.616264, 1, 5],
       "same_layer": false
     },
@@ -1492,7 +1493,7 @@
       },
       "blend": "Escalator.blend",
       "location": [-365.347427, 79.356362, -5],
-      "rotation_z": -1.9925099271059525,
+      "rotation_z": -114.16240946109039,
       "scale": [27.801803, 1, 10],
       "same_layer": false
     },
@@ -1526,7 +1527,7 @@
       },
       "blend": "Escalator.blend",
       "location": [-383.456821, 78.824297, -5],
-      "rotation_z": -1.9873489837956937,
+      "rotation_z": -113.86670919110628,
       "scale": [24.705413, 1, 10],
       "same_layer": false
     },
@@ -1560,7 +1561,7 @@
       },
       "blend": "Escalator.blend",
       "location": [-366.290774, 132.756137, -5],
-      "rotation_z": 1.929254098547212,
+      "rotation_z": 110.53811745507146,
       "scale": [33.664218, 1, 10],
       "same_layer": false
     },
@@ -1594,7 +1595,7 @@
       },
       "blend": "Escalator.blend",
       "location": [-379.474566, 133.007477, -5],
-      "rotation_z": 2.025145617319974,
+      "rotation_z": 116.03229677185023,
       "scale": [29.64332, 1, 10],
       "same_layer": false
     },
@@ -1628,7 +1629,7 @@
       },
       "blend": "Stair.blend",
       "location": [-379.174592, 75.584298, 2.5],
-      "rotation_z": 1.3118574689468883,
+      "rotation_z": 75.16389629337115,
       "scale": [12.408005, 1, 5],
       "same_layer": true
     },
@@ -1662,7 +1663,7 @@
       },
       "blend": "Stair.blend",
       "location": [-346.184695, 25.969871, 1.5],
-      "rotation_z": 0.4218468959813373,
+      "rotation_z": 24.170046740424876,
       "scale": [4.190811, 1, 7],
       "same_layer": true
     }
@@ -3419,7 +3420,7 @@
       "type": "stair",
       "blend": "Stair.blend",
       "location": [-87.981007, 29.104841, -2.5],
-      "rotation_z": -0.2976710135091441,
+      "rotation_z": -17.05529275745567,
       "scale": [5.315676, 1, 5],
       "same_layer": false,
       "from": {
@@ -3451,7 +3452,7 @@
       "type": "stair",
       "blend": "Stair.blend",
       "location": [-112.887872, 29.906694, -2.5],
-      "rotation_z": -3.0510085129900597,
+      "rotation_z": -174.80991105281564,
       "scale": [19.50976, 1, 5],
       "same_layer": false,
       "from": {
@@ -3483,7 +3484,7 @@
       "type": "stair",
       "blend": "Stair.blend",
       "location": [-112.309143, 53.509361, -2.5],
-      "rotation_z": 3.1273937616459007,
+      "rotation_z": 179.18646341785265,
       "scale": [17.770054, 1, 5],
       "same_layer": false,
       "from": {
@@ -3515,7 +3516,7 @@
       "type": "stair",
       "blend": "Stair.blend",
       "location": [-179.522926, 29.513522, -2.5],
-      "rotation_z": 0.07360822300134147,
+      "rotation_z": 4.217440515434656,
       "scale": [12.855912, 1, 5],
       "same_layer": false,
       "from": {
@@ -3547,7 +3548,7 @@
       "type": "stair",
       "blend": "Stair.blend",
       "location": [-202.524626, 28.827248, -2.5],
-      "rotation_z": 3.1256948188955476,
+      "rotation_z": 179.08912116862308,
       "scale": [15.436456, 1, 5],
       "same_layer": false,
       "from": {
@@ -3579,7 +3580,7 @@
       "type": "stair",
       "blend": "Stair.blend",
       "location": [-178.024466, 54.494594, -2.5],
-      "rotation_z": -0.09282468424134221,
+      "rotation_z": -5.318462641663431,
       "scale": [16.24288, 1, 5],
       "same_layer": false,
       "from": {
@@ -3611,7 +3612,7 @@
       "type": "stair",
       "blend": "Stair.blend",
       "location": [-200.284723, 54.121232, -2.5],
-      "rotation_z": -3.0479709600569054,
+      "rotation_z": -174.6358720896983,
       "scale": [11.644932, 1, 5],
       "same_layer": false,
       "from": {
@@ -3643,7 +3644,7 @@
       "type": "stair",
       "blend": "Stair.blend",
       "location": [-352.937267, 37.70135, -12.5],
-      "rotation_z": -1.8801721619889222,
+      "rotation_z": -107.72592963995258,
       "scale": [2.326028, 1, 5],
       "same_layer": false,
       "from": {
@@ -3675,7 +3676,7 @@
       "type": "stair",
       "blend": "Stair.blend",
       "location": [-353.939831, 52.911092, -12.5],
-      "rotation_z": 2.363547281586502,
+      "rotation_z": 135.42128391452533,
       "scale": [1.495441, 1, 5],
       "same_layer": false,
       "from": {
@@ -3707,7 +3708,7 @@
       "type": "stair",
       "blend": "Stair.blend",
       "location": [-354.131528, 89.002827, -12.5],
-      "rotation_z": 1.5729642954961078,
+      "rotation_z": 90.12421545669586,
       "scale": [13.305278, 1, 5],
       "same_layer": false,
       "from": {
@@ -3739,7 +3740,7 @@
       "type": "stair",
       "blend": "Stair.blend",
       "location": [-376.27494, 36.919388, -12.5],
-      "rotation_z": -1.3836876535417277,
+      "rotation_z": -79.27946271230107,
       "scale": [5.330945, 1, 5],
       "same_layer": false,
       "from": {
@@ -3771,7 +3772,7 @@
       "type": "stair",
       "blend": "Stair.blend",
       "location": [-377.514018, 50.871066, -12.5],
-      "rotation_z": -1.7763538541657202,
+      "rotation_z": -101.7775787654931,
       "scale": [5.151723, 1, 5],
       "same_layer": false,
       "from": {
@@ -3803,7 +3804,7 @@
       "type": "stair",
       "blend": "Stair.blend",
       "location": [-379.02955, 85.613167, -12.5],
-      "rotation_z": 1.989389447366758,
+      "rotation_z": 113.98361914197845,
       "scale": [5.019412, 1, 5],
       "same_layer": false,
       "from": {
@@ -3835,7 +3836,7 @@
       "type": "stair",
       "blend": "Stair.blend",
       "location": [-358.175, 137.159063, -12.5],
-      "rotation_z": 0.39115642316621907,
+      "rotation_z": 22.411612176857613,
       "scale": [5.974531, 1, 5],
       "same_layer": false,
       "from": {
@@ -3867,7 +3868,7 @@
       "type": "stair",
       "blend": "Stair.blend",
       "location": [-375.611964, 135.479428, -12.5],
-      "rotation_z": -2.97971272741923,
+      "rotation_z": -170.72496344253736,
       "scale": [3.167595, 1, 5],
       "same_layer": false,
       "from": {
@@ -3899,7 +3900,7 @@
       "type": "stair",
       "blend": "Stair.blend",
       "location": [-366.831076, 79.342879, -5],
-      "rotation_z": 1.1504867093937836,
+      "rotation_z": 65.91803283415784,
       "scale": [26.901976, 1, 10],
       "same_layer": false,
       "from": {
@@ -3931,7 +3932,7 @@
       "type": "stair",
       "blend": "Stair.blend",
       "location": [-384.581846, 79.238088, -5],
-      "rotation_z": 1.135160580387684,
+      "rotation_z": 65.03991032583531,
       "scale": [26.069198, 1, 10],
       "same_layer": false,
       "from": {
@@ -3963,7 +3964,7 @@
       "type": "stair",
       "blend": "Stair.blend",
       "location": [-365.734803, 133.651363, -5],
-      "rotation_z": -1.2144462191038898,
+      "rotation_z": -69.58264280027294,
       "scale": [31.254682, 1, 10],
       "same_layer": false,
       "from": {
@@ -3995,7 +3996,7 @@
       "type": "stair",
       "blend": "Stair.blend",
       "location": [-380.72814, 132.823001, -5],
-      "rotation_z": -1.1233671648346648,
+      "rotation_z": -64.36419738860336,
       "scale": [29.523502, 1, 10],
       "same_layer": false,
       "from": {
@@ -4027,7 +4028,7 @@
       "type": "escalator",
       "blend": "Escalator.blend",
       "location": [-277.235688, 13.664065, -10],
-      "rotation_z": -2.88223942360097,
+      "rotation_z": -165.14015451855465,
       "scale": [59.993265, 1, 10],
       "same_layer": false,
       "from": {
@@ -4059,7 +4060,7 @@
       "type": "escalator",
       "blend": "Escalator.blend",
       "location": [-278.541151, 50.237805, -10],
-      "rotation_z": 0.14232421277871643,
+      "rotation_z": 8.15457671474235,
       "scale": [59.534738, 1, 10],
       "same_layer": false,
       "from": {
@@ -4091,7 +4092,7 @@
       "type": "escalator",
       "blend": "Escalator.blend",
       "location": [-347.333345, 26.10878, -12.5],
-      "rotation_z": 1.9283818029831257,
+      "rotation_z": 110.48813860076132,
       "scale": [19.109164, 1, 5],
       "same_layer": false,
       "from": {
@@ -4123,7 +4124,7 @@
       "type": "escalator",
       "blend": "Escalator.blend",
       "location": [-351.49424, 53.159214, -12.5],
-      "rotation_z": -0.6969815468346651,
+      "rotation_z": -39.93410103212603,
       "scale": [0.616264, 1, 5],
       "same_layer": false,
       "from": {
@@ -4155,7 +4156,7 @@
       "type": "escalator",
       "blend": "Escalator.blend",
       "location": [-365.347427, 79.356362, -5],
-      "rotation_z": -1.9925099271059525,
+      "rotation_z": -114.16240946109039,
       "scale": [27.801803, 1, 10],
       "same_layer": false,
       "from": {
@@ -4187,7 +4188,7 @@
       "type": "escalator",
       "blend": "Escalator.blend",
       "location": [-383.456821, 78.824297, -5],
-      "rotation_z": -1.9873489837956937,
+      "rotation_z": -113.86670919110628,
       "scale": [24.705413, 1, 10],
       "same_layer": false,
       "from": {
@@ -4219,7 +4220,7 @@
       "type": "escalator",
       "blend": "Escalator.blend",
       "location": [-366.290774, 132.756137, -5],
-      "rotation_z": 1.929254098547212,
+      "rotation_z": 110.53811745507146,
       "scale": [33.664218, 1, 10],
       "same_layer": false,
       "from": {
@@ -4251,7 +4252,7 @@
       "type": "escalator",
       "blend": "Escalator.blend",
       "location": [-379.474566, 133.007477, -5],
-      "rotation_z": 2.025145617319974,
+      "rotation_z": 116.03229677185023,
       "scale": [29.64332, 1, 10],
       "same_layer": false,
       "from": {
@@ -4283,7 +4284,7 @@
       "type": "stair",
       "blend": "Stair.blend",
       "location": [-379.174592, 75.584298, 2.5],
-      "rotation_z": 1.3118574689468883,
+      "rotation_z": 75.16389629337115,
       "scale": [12.408005, 1, 5],
       "same_layer": true,
       "from": {
@@ -4315,7 +4316,7 @@
       "type": "stair",
       "blend": "Stair.blend",
       "location": [-346.184695, 25.969871, 1.5],
-      "rotation_z": 0.4218468959813373,
+      "rotation_z": 24.170046740424876,
       "scale": [4.190811, 1, 7],
       "same_layer": true,
       "from": {
