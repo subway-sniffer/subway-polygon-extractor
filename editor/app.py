@@ -44,8 +44,16 @@ from editor.model import (
     save_json_compact_vectors,
 )
 from editor.marker_editor import save_manual_marker_config
-from editor.pipeline_runner import run_pipeline_for_project
+from editor.pipeline_runner import (
+    detect_icons_for_project,
+    extract_polygons_for_project,
+    prepare_icon_image_for_project,
+    prepare_marker_image_for_project,
+    run_kmeans_for_project,
+    run_pipeline_for_project,
+)
 from editor.project_store import ProjectStore
+from tests.render_scene_planes import draw_scene_planes, render_layers
 
 
 def create_app(args):
@@ -123,12 +131,111 @@ def create_app(args):
             }
         )
 
+    @app.route("/api/image/crop", methods=["POST"])
+    def crop_active_image():
+        """Crop the active source image and switch the editor to the cropped project."""
+        data = request.get_json(force=True)
+        image = cv2.imread(str(store.active["image_path"]))
+        if image is None:
+            return jsonify({"error": f"이미지를 불러올 수 없습니다: {store.active['image_path']}"}), 400
+
+        height, width = image.shape[:2]
+        try:
+            x = int(round(float(data.get("x", 0))))
+            y = int(round(float(data.get("y", 0))))
+            crop_w = int(round(float(data.get("width", 0))))
+            crop_h = int(round(float(data.get("height", 0))))
+        except (TypeError, ValueError):
+            return jsonify({"error": "crop 좌표는 숫자여야 합니다."}), 400
+
+        x1 = max(0, min(width, x))
+        y1 = max(0, min(height, y))
+        x2 = max(0, min(width, x + crop_w))
+        y2 = max(0, min(height, y + crop_h))
+        if x2 < x1:
+            x1, x2 = x2, x1
+        if y2 < y1:
+            y1, y2 = y2, y1
+        if x2 - x1 < 10 or y2 - y1 < 10:
+            return jsonify({"error": "crop 영역이 너무 작습니다."}), 400
+
+        source_path = store.active["image_path"]
+        cropped = image[y1:y2, x1:x2]
+        crop_path = store.crop_image_path(source_path, data.get("name"))
+        if not cv2.imwrite(str(crop_path), cropped):
+            return jsonify({"error": f"crop 이미지를 저장하지 못했습니다: {crop_path}"}), 500
+
+        project_data = store.activate_image(crop_path)
+        return jsonify(
+            {
+                "cropped": True,
+                "source_image": str(source_path),
+                "crop_image": str(crop_path),
+                "crop_rect": [x1, y1, x2 - x1, y2 - y1],
+                "image": str(project_data["image_path"]),
+                "output_dir": str(project_data["output_dir"]),
+                "polygons_file": str(project_data["polygons_path"]),
+                "marker_config_file": str(project_data["marker_config_path"]),
+            }
+        )
+
     @app.route("/api/pipeline/run", methods=["POST"])
     def run_active_pipeline():
         """Run the extraction pipeline for the active image and output directory."""
         data = request.get_json(silent=True) or {}
         try:
             result = run_pipeline_for_project(store.active, data)
+        except Exception as exc:
+            return jsonify({"error": str(exc)}), 400
+        store.activate_output(store.active["image_path"], result["output_dir"])
+        return jsonify({"ran": True, **result})
+
+    @app.route("/api/pipeline/marker-image", methods=["POST"])
+    def prepare_active_marker_image():
+        """Create the marker-filled image used by the staged color extraction flow."""
+        data = request.get_json(silent=True) or {}
+        try:
+            result = prepare_marker_image_for_project(store.active, data)
+        except Exception as exc:
+            return jsonify({"error": str(exc)}), 400
+        return jsonify({"prepared": True, **result})
+
+    @app.route("/api/pipeline/kmeans", methods=["POST"])
+    def run_active_kmeans():
+        """Run only the K-Means color clustering stage."""
+        data = request.get_json(silent=True) or {}
+        try:
+            result = run_kmeans_for_project(store.active, data)
+        except Exception as exc:
+            return jsonify({"error": str(exc)}), 400
+        return jsonify({"ran": True, **result})
+
+    @app.route("/api/pipeline/icons", methods=["POST"])
+    def detect_active_icons():
+        """Run icon template matching for the active project."""
+        data = request.get_json(silent=True) or {}
+        try:
+            result = detect_icons_for_project(store.active, data)
+        except Exception as exc:
+            return jsonify({"error": str(exc)}), 400
+        return jsonify({"ran": True, **result})
+
+    @app.route("/api/pipeline/icon-image", methods=["POST"])
+    def prepare_active_icon_image():
+        """Create the icon-filled image used by color extraction and polygon extraction."""
+        data = request.get_json(silent=True) or {}
+        try:
+            result = prepare_icon_image_for_project(store.active, data)
+        except Exception as exc:
+            return jsonify({"error": str(exc)}), 400
+        return jsonify({"prepared": True, **result})
+
+    @app.route("/api/pipeline/polygons", methods=["POST"])
+    def extract_active_polygons():
+        """Run polygon extraction after cluster ids have been selected."""
+        data = request.get_json(silent=True) or {}
+        try:
+            result = extract_polygons_for_project(store.active, data)
         except Exception as exc:
             return jsonify({"error": str(exc)}), 400
         store.activate_output(store.active["image_path"], result["output_dir"])
@@ -292,6 +399,14 @@ def create_app(args):
         assets_path = save_json_compact_vectors(assets_payload, store.active["asset_output_path"])
         navigation_path = save_json_compact_vectors(payload.get("navigation", {}), store.active["output_dir"] / "navigation_graph.json")
         navigation_example_path = save_json_compact_vectors(payload.get("navigation", {}), ROOT_DIR / "examples" / "navigation_graph_example.json")
+        preview_path = None
+        layer_preview_dir = None
+        if data.get("render_preview"):
+            preview_path = store.active["output_dir"] / "scene_planes_preview.png"
+            layer_preview_dir = store.active["output_dir"] / "scene_planes_layers"
+            preview = draw_scene_planes(payload)
+            cv2.imwrite(str(preview_path), preview)
+            render_layers(payload, layer_preview_dir)
         return jsonify(
             {
                 "saved": True,
@@ -300,6 +415,8 @@ def create_app(args):
                 "navigation_output": str(navigation_path),
                 "navigation_example_output": str(navigation_example_path),
                 "example_output": str(example_path),
+                "preview_output": str(preview_path) if preview_path else None,
+                "layer_preview_dir": str(layer_preview_dir) if layer_preview_dir else None,
                 "plane_count": len(payload["planes"]),
                 "connection_count": len(payload.get("connections", [])),
                 "asset_count": len(assets_payload.get("assets", [])),

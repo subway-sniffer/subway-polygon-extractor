@@ -64,9 +64,11 @@ def build_clustering_valid_mask(img):
     black_mask = cv2.inRange(hsv, np.array([0, 0, 0]), np.array([179, 255, 55]))
     red_mask = cv2.inRange(hsv, np.array([0, 100, 100]), np.array([10, 255, 255]))
     red_mask += cv2.inRange(hsv, np.array([160, 100, 100]), np.array([179, 255, 255]))
+    magenta_mask = cv2.inRange(hsv, np.array([140, 80, 80]), np.array([170, 255, 255]))
 
     excluded_mask = cv2.bitwise_or(white_mask, black_mask)
     excluded_mask = cv2.bitwise_or(excluded_mask, red_mask)
+    excluded_mask = cv2.bitwise_or(excluded_mask, magenta_mask)
 
     valid_mask = cv2.bitwise_not(excluded_mask)
     valid_mask = cv2.morphologyEx(valid_mask, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))

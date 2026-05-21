@@ -18,16 +18,36 @@
         <button id="refreshImagesBtn">Refresh Images</button>
         <select id="imageSelect"></select>
         <button id="loadImageBtn">Load Selected Image</button>
+        <button id="startCropBtn">Start Crop</button>
+        <button id="applyCropBtn">Apply Crop</button>
+        <button id="resetCropBtn">Reset Crop</button>
         <button id="startMarkerBtn">Start Manual Marker (M)</button>
         <button id="undoMarkerBtn">Undo Marker Point</button>
         <button id="saveMarkerBtn">Save Marker</button>
+        <button id="prepareMarkerImageBtn">1. Prepare Marker Image</button>
+        <label>
+          Icon threshold
+          <input id="iconThresholdInput" type="number" value="0.83" min="0.1" max="1" step="0.01">
+        </label>
+        <button id="detectIconsBtn">2. Detect Icons</button>
+        <button id="prepareIconImageBtn">3. Prepare Icon Image</button>
         <label>
           K-Means K
           <input id="pipelineKInput" type="number" value="6" min="2" max="16">
         </label>
+        <button id="runKmeansBtn">4. Run K-Means</button>
+        <button id="loadClustersBtn">Load Clusters</button>
         <label>
           Include clusters
           <input id="pipelineClustersInput" placeholder="1,2,3">
+        </label>
+        <label>
+          Min area
+          <input id="pipelineMinAreaInput" type="number" value="2000" min="0" step="100">
+        </label>
+        <label>
+          Epsilon ratio
+          <input id="pipelineEpsilonInput" type="number" value="0.001" min="0" max="0.05" step="0.0005">
         </label>
         <label>
           Bridge clusters
@@ -37,8 +57,8 @@
           <input id="pipelineGroupingToggle" type="checkbox">
           run grouping
         </label>
-        <button id="runPipelineBtn">Run Pipeline</button>
-        <button id="loadClustersBtn">Load Clusters</button>
+        <button id="extractPolygonsBtn">5. Extract Polygons</button>
+        <button id="runPipelineBtn">Run Full Pipeline</button>
         <div id="pipelineStatus">inactive</div>
         <div id="clusterList"></div>
       </section>
@@ -62,6 +82,10 @@
         <label class="row">
           <input id="showCorrectionsToggle" type="checkbox" checked>
           xy corrections
+        </label>
+        <label class="row">
+          <input id="showMarkersToggle" type="checkbox" checked>
+          manual markers
         </label>
         <label class="row">
           <input id="showHiddenToggle" type="checkbox">
@@ -253,6 +277,10 @@
         <button id="previewFinalBtn">Preview Final</button>
         <button id="loadExportedFinalBtn">Load Exported Final</button>
         <button id="exportFinalBtn">Export Final Polygons</button>
+        <label class="row">
+          <input id="renderScenePreviewToggle" type="checkbox">
+          render scene preview
+        </label>
         <button id="exportPlanesBtn">Export Scene Planes</button>
         <button id="exportAssetsBtn">Export Assets</button>
         <pre id="saveResult"></pre>

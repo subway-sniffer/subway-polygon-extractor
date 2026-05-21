@@ -30,6 +30,7 @@ const state = {
   showConnections: false,
   showIcons: false,
   showCorrections: true,
+  showMarkers: true,
   showHidden: false,
   previewFinal: false,
   exportedFinalPolygons: null,
@@ -38,6 +39,12 @@ const state = {
   marker: {
     active: false,
     points: [],
+  },
+  crop: {
+    active: false,
+    start: null,
+    current: null,
+    rect: null,
   },
   merge: {
     active: false,
@@ -182,8 +189,11 @@ const pipelineStatus = document.getElementById("pipelineStatus");
 const clusterList = document.getElementById("clusterList");
 const pipelineKInput = document.getElementById("pipelineKInput");
 const pipelineClustersInput = document.getElementById("pipelineClustersInput");
+const pipelineMinAreaInput = document.getElementById("pipelineMinAreaInput");
+const pipelineEpsilonInput = document.getElementById("pipelineEpsilonInput");
 const pipelineBridgeClustersInput = document.getElementById("pipelineBridgeClustersInput");
 const pipelineGroupingToggle = document.getElementById("pipelineGroupingToggle");
+const iconThresholdInput = document.getElementById("iconThresholdInput");
 
 function resizeCanvas() {
   const rect = canvas.getBoundingClientRect();
@@ -442,6 +452,7 @@ function drawManualAssets() {
 }
 
 function drawManualMarkerPreview() {
+  if (!state.showMarkers) return;
   if (!state.marker.active && state.marker.points.length === 0) return;
   ctx.save();
   const labels = ["1", "2", "3", "4"];
@@ -457,6 +468,58 @@ function drawManualMarkerPreview() {
     ctx.stroke();
     drawCanvasLabel(point, `marker ${labels[index]}`, "#ff00b4", 10, -10);
   });
+  ctx.restore();
+}
+
+function normalizedCropRect() {
+  if (state.crop.rect) return state.crop.rect;
+  const start = state.crop.start;
+  const end = state.crop.current;
+  if (!start || !end) return null;
+  const x1 = Math.max(0, Math.min(start.x, end.x));
+  const y1 = Math.max(0, Math.min(start.y, end.y));
+  const x2 = Math.min(state.image?.width || Infinity, Math.max(start.x, end.x));
+  const y2 = Math.min(state.image?.height || Infinity, Math.max(start.y, end.y));
+  return {
+    x: x1,
+    y: y1,
+    width: Math.max(0, x2 - x1),
+    height: Math.max(0, y2 - y1),
+  };
+}
+
+function drawCropPreview() {
+  if (!state.crop.active && !state.crop.rect) return;
+  const rect = normalizedCropRect();
+  if (!rect || rect.width <= 0 || rect.height <= 0) return;
+  const topLeft = worldToScreen([rect.x, rect.y]);
+  const bottomRight = worldToScreen([rect.x + rect.width, rect.y + rect.height]);
+  ctx.save();
+  ctx.fillStyle = "rgba(0, 0, 0, 0.14)";
+  ctx.fillRect(state.offsetX, state.offsetY, state.image.width * state.scale, state.image.height * state.scale);
+  ctx.drawImage(
+    state.image,
+    rect.x,
+    rect.y,
+    rect.width,
+    rect.height,
+    topLeft.x,
+    topLeft.y,
+    bottomRight.x - topLeft.x,
+    bottomRight.y - topLeft.y,
+  );
+  ctx.strokeStyle = "#00d4ff";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([8, 5]);
+  ctx.strokeRect(topLeft.x, topLeft.y, bottomRight.x - topLeft.x, bottomRight.y - topLeft.y);
+  ctx.setLineDash([]);
+  ctx.fillStyle = "#00d4ff";
+  ctx.font = "12px system-ui, sans-serif";
+  ctx.fillText(
+    `${Math.round(rect.width)} x ${Math.round(rect.height)}`,
+    topLeft.x + 8,
+    Math.max(16, topLeft.y - 8),
+  );
   ctx.restore();
 }
 
@@ -1052,6 +1115,7 @@ function draw() {
   drawStairConnections();
   drawManualAssets();
   drawManualMarkerPreview();
+  drawCropPreview();
   drawMergePreview();
   drawStraightenPreview();
   drawMovePreview();
@@ -3647,9 +3711,64 @@ function loadSelectedImage() {
         scale_calibration: null,
       };
       state.marker.points = [];
+      state.crop = {active: false, start: null, current: null, rect: null};
       state.loadedFinalWorkingSet = false;
       pipelineStatus.textContent = `selected: ${data.image}\noutput: ${data.output_dir}`;
       updateScaleCalibrationStatus();
+      loadProject();
+      refreshImages();
+    })
+    .catch((error) => {
+      pipelineStatus.textContent = String(error);
+    });
+}
+
+function startCrop() {
+  state.tool = "crop";
+  state.crop = {
+    active: true,
+    start: null,
+    current: null,
+    rect: null,
+  };
+  pipelineStatus.textContent = "crop: drag a rectangle on the image";
+  draw();
+}
+
+function resetCrop() {
+  if (state.tool === "crop") state.tool = "select";
+  state.crop = {
+    active: false,
+    start: null,
+    current: null,
+    rect: null,
+  };
+  pipelineStatus.textContent = "crop reset";
+  draw();
+}
+
+function applyCrop() {
+  const rect = normalizedCropRect();
+  if (!rect || rect.width < 10 || rect.height < 10) {
+    pipelineStatus.textContent = "crop: drag a larger rectangle first";
+    return;
+  }
+  pipelineStatus.textContent = "cropping image...";
+  fetch("/api/image/crop", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      x: rect.x,
+      y: rect.y,
+      width: rect.width,
+      height: rect.height,
+    }),
+  })
+    .then((response) => response.json().then((data) => ({ok: response.ok, data})))
+    .then(({ok, data}) => {
+      if (!ok) throw new Error(data.error || "crop failed");
+      resetCrop();
+      pipelineStatus.textContent = JSON.stringify(data, null, 2);
       loadProject();
       refreshImages();
     })
@@ -3707,11 +3826,132 @@ function saveManualMarker() {
     });
 }
 
+function prepareMarkerImageFromUi() {
+  pipelineStatus.textContent = "preparing marker-filled image...";
+  fetch("/api/pipeline/marker-image", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      marker_color: "magenta",
+      marker_radius: 10,
+    }),
+  })
+    .then((response) => response.json().then((data) => ({ok: response.ok, data})))
+    .then(({ok, data}) => {
+      if (!ok) throw new Error(data.error || "marker image failed");
+      pipelineStatus.textContent = JSON.stringify(data, null, 2);
+    })
+    .catch((error) => {
+      pipelineStatus.textContent = String(error);
+    });
+}
+
+function runKmeansFromUi() {
+  const options = {
+    kmeans_k: pipelineKInput.value,
+  };
+  pipelineStatus.textContent = "k-means running...";
+  fetch("/api/pipeline/kmeans", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(options),
+  })
+    .then((response) => response.json().then((data) => ({ok: response.ok, data})))
+    .then(({ok, data}) => {
+      if (!ok) throw new Error(data.error || "k-means failed");
+      pipelineStatus.textContent = JSON.stringify(data, null, 2);
+      refreshImages();
+      loadClusters();
+    })
+    .catch((error) => {
+      pipelineStatus.textContent = String(error);
+    });
+}
+
+function detectIconsFromUi() {
+  const options = {
+    threshold: iconThresholdInput.value,
+    include_flipped: true,
+    use_edges: false,
+  };
+  pipelineStatus.textContent = "icon detection running...";
+  fetch("/api/pipeline/icons", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(options),
+  })
+    .then((response) => response.json().then((data) => ({ok: response.ok, data})))
+    .then(({ok, data}) => {
+      if (!ok) throw new Error(data.error || "icon detection failed");
+      pipelineStatus.textContent = JSON.stringify(data, null, 2);
+      loadProject();
+    })
+    .catch((error) => {
+      pipelineStatus.textContent = String(error);
+    });
+}
+
+function prepareIconImageFromUi() {
+  const options = {
+    padding: 0,
+    dilate_kernel: 5,
+    radius: 5,
+    method: "directional",
+    roi_padding: 15,
+    min_score: iconThresholdInput.value,
+  };
+  pipelineStatus.textContent = "preparing icon-filled image...";
+  fetch("/api/pipeline/icon-image", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(options),
+  })
+    .then((response) => response.json().then((data) => ({ok: response.ok, data})))
+    .then(({ok, data}) => {
+      if (!ok) throw new Error(data.error || "icon image failed");
+      pipelineStatus.textContent = JSON.stringify(data, null, 2);
+    })
+    .catch((error) => {
+      pipelineStatus.textContent = String(error);
+    });
+}
+
+function extractPolygonsFromUi() {
+  const options = {
+    kmeans_k: pipelineKInput.value,
+    include_clusters: pipelineClustersInput.value.trim(),
+    min_area: pipelineMinAreaInput.value,
+    epsilon_ratio: pipelineEpsilonInput.value,
+    bridge_clusters: pipelineBridgeClustersInput.value.trim(),
+    run_grouping: pipelineGroupingToggle.checked,
+    refresh_markers: false,
+  };
+  pipelineStatus.textContent = "polygon extraction running...";
+  fetch("/api/pipeline/polygons", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(options),
+  })
+    .then((response) => response.json().then((data) => ({ok: response.ok, data})))
+    .then(({ok, data}) => {
+      if (!ok) throw new Error(data.error || "polygon extraction failed");
+      pipelineStatus.textContent = JSON.stringify(data, null, 2);
+      loadProject();
+      refreshImages();
+      loadClusters();
+    })
+    .catch((error) => {
+      pipelineStatus.textContent = String(error);
+    });
+}
+
 function runPipelineFromUi() {
   const options = {
     mode: "kmeans",
     kmeans_k: pipelineKInput.value,
     include_clusters: pipelineClustersInput.value.trim(),
+    min_area: pipelineMinAreaInput.value,
+    epsilon_ratio: pipelineEpsilonInput.value,
     bridge_clusters: pipelineBridgeClustersInput.value.trim(),
     run_grouping: pipelineGroupingToggle.checked,
     refresh_markers: false,
@@ -3877,6 +4117,14 @@ canvas.addEventListener("wheel", (event) => {
 canvas.addEventListener("mousedown", (event) => {
   const rect = canvas.getBoundingClientRect();
   const world = screenToWorld(event.clientX - rect.left, event.clientY - rect.top);
+  if (state.tool === "crop" && state.crop.active) {
+    state.crop.start = world;
+    state.crop.current = world;
+    state.crop.rect = null;
+    pipelineStatus.textContent = "crop: dragging...";
+    draw();
+    return;
+  }
   if (state.tool === "move" && state.move.active && state.move.polygonId) {
     const vertex = nearestMoveVertexForPolygon(movePolygon(), world);
     if (vertex) {
@@ -3913,6 +4161,11 @@ canvas.addEventListener("mousemove", (event) => {
   }
 
   const world = screenToWorld(x, y);
+  if (state.tool === "crop" && state.crop.active && state.crop.start) {
+    state.crop.current = world;
+    draw();
+    return;
+  }
   if (state.tool === "sharedEdge" && state.sharedEdge.active && state.sharedEdge.dragStart) {
     state.sharedEdge.dragCurrent = world;
     draw();
@@ -4018,6 +4271,17 @@ canvas.addEventListener("mousemove", (event) => {
 });
 
 canvas.addEventListener("mouseup", () => {
+  if (state.tool === "crop" && state.crop.active && state.crop.start) {
+    const rect = normalizedCropRect();
+    state.crop.rect = rect;
+    state.crop.start = null;
+    state.crop.current = null;
+    pipelineStatus.textContent = rect && rect.width >= 10 && rect.height >= 10
+      ? `crop ready: ${Math.round(rect.width)} x ${Math.round(rect.height)}. Apply Crop to create a new image.`
+      : "crop: selected area is too small";
+    draw();
+    return;
+  }
   if (state.tool === "sharedEdge" && state.sharedEdge.active && state.sharedEdge.dragStart) {
     const start = state.sharedEdge.dragStart;
     const end = state.sharedEdge.dragCurrent || start;
@@ -4042,6 +4306,7 @@ canvas.addEventListener("click", (event) => {
   if (event.shiftKey || event.altKey) return;
   const rect = canvas.getBoundingClientRect();
   const world = screenToWorld(event.clientX - rect.left, event.clientY - rect.top);
+  if (state.tool === "crop") return;
   if (state.tool === "marker") {
     addManualMarkerPoint(world);
     return;
@@ -4136,6 +4401,10 @@ showIconsToggle.addEventListener("change", (event) => {
 });
 showCorrectionsToggle.addEventListener("change", (event) => {
   state.showCorrections = event.target.checked;
+  draw();
+});
+document.getElementById("showMarkersToggle").addEventListener("change", (event) => {
+  state.showMarkers = event.target.checked;
   draw();
 });
 document.getElementById("showHiddenToggle").addEventListener("change", (event) => {
@@ -4243,9 +4512,17 @@ document.getElementById("undoSubwayBtn").addEventListener("click", undoLastSubwa
 document.getElementById("resetSubwayBtn").addEventListener("click", resetSubwayPlacement);
 document.getElementById("refreshImagesBtn").addEventListener("click", refreshImages);
 document.getElementById("loadImageBtn").addEventListener("click", loadSelectedImage);
+document.getElementById("startCropBtn").addEventListener("click", startCrop);
+document.getElementById("applyCropBtn").addEventListener("click", applyCrop);
+document.getElementById("resetCropBtn").addEventListener("click", resetCrop);
 document.getElementById("startMarkerBtn").addEventListener("click", startManualMarker);
 document.getElementById("undoMarkerBtn").addEventListener("click", undoManualMarkerPoint);
 document.getElementById("saveMarkerBtn").addEventListener("click", saveManualMarker);
+document.getElementById("prepareMarkerImageBtn").addEventListener("click", prepareMarkerImageFromUi);
+document.getElementById("detectIconsBtn").addEventListener("click", detectIconsFromUi);
+document.getElementById("prepareIconImageBtn").addEventListener("click", prepareIconImageFromUi);
+document.getElementById("runKmeansBtn").addEventListener("click", runKmeansFromUi);
+document.getElementById("extractPolygonsBtn").addEventListener("click", extractPolygonsFromUi);
 document.getElementById("runPipelineBtn").addEventListener("click", runPipelineFromUi);
 document.getElementById("loadClustersBtn").addEventListener("click", loadClusters);
 document.getElementById("resetAllBtn").addEventListener("click", resetToInitialPolygons);
@@ -4263,6 +4540,7 @@ document.getElementById("exportFinalBtn").addEventListener("click", () => {
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
         working_polygons: workingPolygonsPayload(),
+        render_preview: document.getElementById("renderScenePreviewToggle").checked,
       }),
     }))
     .then((response) => response.json())
@@ -4350,6 +4628,9 @@ document.addEventListener("keydown", (event) => {
   } else if (key === "m") {
     event.preventDefault();
     startManualMarker();
+  } else if (key === "p") {
+    event.preventDefault();
+    startCrop();
   } else if (key === "g") {
     event.preventDefault();
     toggleSharedEdgeDirection("polygon_a");
@@ -4391,6 +4672,7 @@ document.addEventListener("keydown", (event) => {
     else if (state.tool === "sharedEdge") applySharedEdge();
     else if (state.tool === "autoMerge") applyAutoMerge();
     else if (state.tool === "scaleCalibration") applyScaleCalibration();
+    else if (state.tool === "crop") applyCrop();
     else if (state.tool === "merge") applyMerge();
     else if (state.tool === "straighten") applyStraighten();
   } else if (event.key === "Escape") {
@@ -4406,6 +4688,7 @@ document.addEventListener("keydown", (event) => {
       state.marker.active = false;
       draw();
     }
+    else if (state.tool === "crop") resetCrop();
     else if (state.tool === "stair") resetStairConnection();
     else if (state.tool === "sharedEdge") resetSharedEdge();
     else if (state.tool === "autoMerge") resetAutoMerge();

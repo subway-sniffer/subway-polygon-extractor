@@ -30,28 +30,57 @@ class ProjectStore:
     def list_images(self):
         """Return image files under image_root with lightweight processing status."""
         images = []
-        if not self.image_root.exists():
-            return images
-        for path in sorted(self.image_root.rglob("*")):
-            if path.suffix.lower() not in IMAGE_EXTENSIONS:
+        roots = [(self.image_root, "source")]
+        crop_root = self.output_root / "_cropped_images"
+        if crop_root.exists():
+            roots.append((crop_root, "crop"))
+        seen = set()
+        for root, label in roots:
+            if not root.exists():
                 continue
-            project = self.derived_project(path)
-            images.append(
-                {
-                    "name": path.name,
-                    "path": str(path),
-                    "relative_path": str(path.relative_to(self.image_root)),
-                    "active": path.resolve() == self.active["image_path"],
-                    "status": {
-                        "marker": project["marker_config_path"].exists(),
-                        "extracted": project["polygons_path"].exists(),
-                        "edited": project["annotations_path"].exists(),
-                        "final": project["final_output_path"].exists(),
-                        "scene": project["plane_output_path"].exists(),
-                    },
-                }
-            )
+            for path in sorted(root.rglob("*")):
+                if path.suffix.lower() not in IMAGE_EXTENSIONS:
+                    continue
+                resolved = path.resolve()
+                if resolved in seen:
+                    continue
+                seen.add(resolved)
+                project = self.derived_project(path)
+                images.append(
+                    {
+                        "name": path.name,
+                        "path": str(path),
+                        "relative_path": f"{label}:{path.relative_to(root)}",
+                        "active": resolved == self.active["image_path"],
+                        "status": {
+                            "marker": project["marker_config_path"].exists(),
+                            "extracted": project["polygons_path"].exists(),
+                            "edited": project["annotations_path"].exists(),
+                            "final": project["final_output_path"].exists(),
+                            "scene": project["plane_output_path"].exists(),
+                        },
+                    }
+                )
         return images
+
+    def crop_image_path(self, source_path, crop_name=None):
+        """Return a unique output path for a cropped source image."""
+        source_path = Path(source_path).resolve()
+        crop_root = self.output_root / "_cropped_images"
+        try:
+            rel_parent = source_path.relative_to(self.image_root).parent
+        except ValueError:
+            rel_parent = Path(source_path.stem)
+        crop_dir = crop_root / rel_parent
+        crop_dir.mkdir(parents=True, exist_ok=True)
+        base_name = crop_name or f"{source_path.stem}_crop"
+        safe_name = "".join(char if char.isalnum() or char in {"-", "_"} else "_" for char in base_name).strip("_") or f"{source_path.stem}_crop"
+        candidate = crop_dir / f"{safe_name}.png"
+        index = 1
+        while candidate.exists():
+            candidate = crop_dir / f"{safe_name}_{index:03d}.png"
+            index += 1
+        return candidate
 
     def output_dir_for_image(self, image_path):
         """Return a stable output directory for one source image."""
@@ -87,7 +116,6 @@ class ProjectStore:
         candidates = [
             Path(output_dir) / "icon_matches.json",
             Path(output_dir) / "icons" / "icon_matches.json",
-            Path("../test_image_output/tests/output_icon_matching/icon_matches.json"),
         ]
         for candidate in candidates:
             if candidate.exists():
