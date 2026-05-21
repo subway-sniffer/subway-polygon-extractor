@@ -392,7 +392,7 @@
       "type": "connector",
       "layer": "B3",
       "polygon_id": "edited_225",
-      "position": [-351.041398, 16.629232, -10],
+      "position": [-351.527154, 15.948751, -10],
       "connector_id": "escalator_001",
       "connector_type": "escalator",
       "endpoint": "from"
@@ -402,7 +402,7 @@
       "type": "connector",
       "layer": "B4",
       "polygon_id": "edited_236",
-      "position": [-338.978044, 12.538257, -15],
+      "position": [-339.033909, 12.415976, -15],
       "connector_id": "escalator_001",
       "connector_type": "escalator",
       "endpoint": "to"
@@ -422,7 +422,7 @@
       "type": "connector",
       "layer": "B3",
       "polygon_id": "edited_225",
-      "position": [-367.555683, 86.201236, -10],
+      "position": [-368.040213, 86.158244, -10],
       "connector_id": "escalator_002",
       "connector_type": "escalator",
       "endpoint": "to"
@@ -442,7 +442,7 @@
       "type": "connector",
       "layer": "B3",
       "polygon_id": "edited_225",
-      "position": [-395.377234, 86.716792, -10],
+      "position": [-394.538908, 87.755734, -10],
       "connector_id": "escalator_003",
       "connector_type": "escalator",
       "endpoint": "to"
@@ -462,7 +462,7 @@
       "type": "connector",
       "layer": "B3",
       "polygon_id": "edited_225",
-      "position": [-366.713021, 119.281242, -10],
+      "position": [-366.952623, 119.479988, -10],
       "connector_id": "escalator_004",
       "connector_type": "escalator",
       "endpoint": "to"
@@ -482,7 +482,7 @@
       "type": "connector",
       "layer": "B3",
       "polygon_id": "edited_225",
-      "position": [-387.955071, 120.696144, -10],
+      "position": [-388.835389, 120.231669, -10],
       "connector_id": "escalator_005",
       "connector_type": "escalator",
       "endpoint": "to"
@@ -1472,7 +1472,7 @@
       "to": "escalator_001_to",
       "type": "vertical",
       "bidirectional": true,
-      "cost": 13.684318903399998,
+      "cost": 13.91264418642129,
       "connector_id": "escalator_001",
       "connector_type": "escalator"
     },
@@ -1482,7 +1482,7 @@
       "to": "escalator_002_to",
       "type": "vertical",
       "bidirectional": true,
-      "cost": 23.81488311765858,
+      "cost": 23.706656130716098,
       "connector_id": "escalator_002",
       "connector_type": "escalator"
     },
@@ -1492,7 +1492,7 @@
       "to": "escalator_003_to",
       "type": "vertical",
       "bidirectional": true,
-      "cost": 24.39109337927459,
+      "cost": 25.015033445800462,
       "connector_id": "escalator_003",
       "connector_type": "escalator"
     },
@@ -1502,7 +1502,7 @@
       "to": "escalator_004_to",
       "type": "vertical",
       "bidirectional": true,
-      "cost": 30.54200851020318,
+      "cost": 30.3210106111891,
       "connector_id": "escalator_004",
       "connector_type": "escalator"
     },
@@ -1512,7 +1512,7 @@
       "to": "escalator_005_to",
       "type": "vertical",
       "bidirectional": true,
-      "cost": 27.273384219620546,
+      "cost": 27.757543927119734,
       "connector_id": "escalator_005",
       "connector_type": "escalator"
     }
