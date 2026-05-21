@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 import cv2
-from flask import Flask, jsonify, render_template, request, send_file
+from flask import Flask, Response, jsonify, render_template, request, send_file
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
@@ -306,8 +306,14 @@ def create_app(args):
 
     @app.route("/api/image")
     def image():
-        """Serve the source image used as the editor background."""
-        return send_file(store.active["image_path"])
+        """Serve the editor background as OpenCV-normalized PNG."""
+        image_data = cv2.imread(str(store.active["image_path"]))
+        if image_data is None:
+            return jsonify({"error": f"이미지를 불러올 수 없습니다: {store.active['image_path']}"}), 404
+        ok, encoded = cv2.imencode(".png", image_data)
+        if not ok:
+            return jsonify({"error": "이미지를 PNG로 변환하지 못했습니다."}), 500
+        return Response(encoded.tobytes(), mimetype="image/png")
 
     @app.route("/api/annotations", methods=["GET"])
     def get_annotations():

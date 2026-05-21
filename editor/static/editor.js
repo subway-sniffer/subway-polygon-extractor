@@ -4043,61 +4043,77 @@ function togglePreviewFinal() {
   draw();
 }
 
+function applyExportedFinalPayload(data, sourceLabel = null) {
+  const polygons = data.polygons || [];
+  state.polygons = polygons;
+  state.icons = data.icons || state.icons || [];
+  state.manualPolygons = [];
+  state.previewFinal = false;
+  state.exportedFinalPolygons = null;
+  state.loadedFinalWorkingSet = true;
+  state.annotations = {
+    polygon_layers: {},
+    polygon_z_offsets: state.annotations.polygon_z_offsets || {},
+    polygon_z_values: state.annotations.polygon_z_values || {},
+    hidden_polygon_ids: [],
+    manual_polygons: [],
+    manual_edits: [],
+    manual_merges: [],
+    manual_connections: data.connections || [],
+    manual_walls: data.walls || [],
+    manual_assets: state.annotations.manual_assets || [],
+    layer_alignment_pairs: state.annotations.layer_alignment_pairs || [],
+    scale_calibration: state.annotations.scale_calibration || null,
+  };
+  state.tool = "select";
+  state.selectedId = null;
+  resetMerge();
+  resetAutoMerge();
+  resetStraighten();
+  resetMoveVertex();
+  resetInsertVertex();
+  resetSimpleKeep();
+  resetAddPolygon();
+  resetCutHole();
+  resetStairConnection();
+  resetSubwayPlacement();
+  resetLayerAlign();
+  resetScaleCalibration();
+  resetSharedEdge();
+  updateSelectedInfo();
+  statusEl.textContent = `Working Set: ${state.polygons.length} exported polygons`;
+  document.getElementById("previewFinalBtn").textContent = "Preview Final";
+  saveResult.textContent = JSON.stringify({
+    loaded: true,
+    source: sourceLabel || data.source,
+    working_set: true,
+    polygon_count: state.polygons.length,
+    wall_count: (data.walls || []).length,
+  }, null, 2);
+  draw();
+}
+
 function loadExportedFinal() {
   fetch("/api/export/final_file")
     .then((response) => response.json().then((data) => ({ok: response.ok, data})))
     .then(({ok, data}) => {
       if (!ok) throw new Error(data.error || "failed to load exported final");
-      const polygons = data.polygons || [];
-      state.polygons = polygons;
-      state.icons = data.icons || state.icons || [];
-      state.manualPolygons = [];
-      state.previewFinal = false;
-      state.exportedFinalPolygons = null;
-      state.loadedFinalWorkingSet = true;
-      state.annotations = {
-        polygon_layers: {},
-        polygon_z_offsets: state.annotations.polygon_z_offsets || {},
-        polygon_z_values: state.annotations.polygon_z_values || {},
-        hidden_polygon_ids: [],
-        manual_polygons: [],
-        manual_edits: [],
-        manual_merges: [],
-        manual_connections: data.connections || [],
-        manual_walls: data.walls || [],
-        manual_assets: state.annotations.manual_assets || [],
-        layer_alignment_pairs: state.annotations.layer_alignment_pairs || [],
-        scale_calibration: state.annotations.scale_calibration || null,
-      };
-      state.tool = "select";
-      state.selectedId = null;
-      resetMerge();
-      resetAutoMerge();
-      resetStraighten();
-      resetMoveVertex();
-      resetInsertVertex();
-      resetSimpleKeep();
-      resetAddPolygon();
-      resetCutHole();
-      resetStairConnection();
-      resetSubwayPlacement();
-      resetLayerAlign();
-      resetScaleCalibration();
-      resetSharedEdge();
-      updateSelectedInfo();
-      statusEl.textContent = `Working Set: ${state.polygons.length} exported polygons`;
-      document.getElementById("previewFinalBtn").textContent = "Preview Final";
-      saveResult.textContent = JSON.stringify({
-        loaded: true,
-        source: data.source,
-        working_set: true,
-        polygon_count: state.polygons.length,
-        wall_count: (data.walls || []).length,
-      }, null, 2);
-      draw();
+      applyExportedFinalPayload(data);
     })
     .catch((error) => {
       saveResult.textContent = String(error);
+    });
+}
+
+function loadExportedFinalFromFile(file) {
+  if (!file) return;
+  file.text()
+    .then((text) => JSON.parse(text))
+    .then((data) => {
+      applyExportedFinalPayload(data, file.name);
+    })
+    .catch((error) => {
+      saveResult.textContent = `failed to load selected final json: ${error}`;
     });
 }
 
@@ -4533,6 +4549,10 @@ document.getElementById("saveBtn").addEventListener("click", () => {
 });
 document.getElementById("previewFinalBtn").addEventListener("click", togglePreviewFinal);
 document.getElementById("loadExportedFinalBtn").addEventListener("click", loadExportedFinal);
+document.getElementById("loadFinalFileInput").addEventListener("change", (event) => {
+  loadExportedFinalFromFile(event.target.files?.[0]);
+  event.target.value = "";
+});
 document.getElementById("exportFinalBtn").addEventListener("click", () => {
   saveAnnotations()
     .then(() => fetch("/api/export/final", {
