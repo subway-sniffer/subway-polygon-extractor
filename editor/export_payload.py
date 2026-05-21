@@ -85,6 +85,18 @@ def transform_connection_points(connections, transform_metadata=None, transform_
                 matrix,
                 shift=shift,
             )[0]
+        if connection.get("from_points_source"):
+            connection["from_points_transformed"] = transform_source_points(
+                connection["from_points_source"],
+                matrix,
+                shift=shift,
+            )
+        if connection.get("to_points_source"):
+            connection["to_points_transformed"] = transform_source_points(
+                connection["to_points_source"],
+                matrix,
+                shift=shift,
+            )
     return output
 
 
@@ -495,6 +507,80 @@ def build_scene_icon_records(icon_matches, polygons, annotations=None, transform
     return records
 
 
+def build_manual_asset_records(annotations=None, transform_metadata=None, transform_info=None, scale=0.01, layer_z=None, floor_height=5.0, default_z=0.0, invert_x=False, invert_y=False, alignment_transforms=None):
+    """Build Blender assets from manually placed editor asset markers."""
+    assets = []
+    for asset in (annotations or {}).get("manual_assets", []):
+        if asset.get("type") != "subway" or not asset.get("point_source"):
+            continue
+        layer = asset.get("layer")
+        polygon_id = asset.get("polygon_id")
+        z_value = polygon_id_z_value(
+            polygon_id,
+            layer,
+            annotations=annotations,
+            layer_z=layer_z,
+            default_z=default_z,
+            floor_height=floor_height,
+        )
+        xy = scene_xy_for_connection_point(
+            asset.get("point_source"),
+            layer,
+            alignment_transforms=alignment_transforms,
+            transform_metadata=transform_metadata,
+            transform_info=transform_info,
+            scale=scale,
+            invert_x=invert_x,
+            invert_y=invert_y,
+        )
+        rotation_z = float(asset.get("rotation_z", 0.0))
+        scale_value = asset.get("scale") or [8.0, 1.0, 1.0]
+        start_source = asset.get("start_point_source")
+        end_source = asset.get("end_point_source")
+        if start_source and end_source:
+            start_xy = scene_xy_for_connection_point(
+                start_source,
+                layer,
+                alignment_transforms=alignment_transforms,
+                transform_metadata=transform_metadata,
+                transform_info=transform_info,
+                scale=scale,
+                invert_x=invert_x,
+                invert_y=invert_y,
+            )
+            end_xy = scene_xy_for_connection_point(
+                end_source,
+                layer,
+                alignment_transforms=alignment_transforms,
+                transform_metadata=transform_metadata,
+                transform_info=transform_info,
+                scale=scale,
+                invert_x=invert_x,
+                invert_y=invert_y,
+            )
+            dx = float(end_xy[0]) - float(start_xy[0])
+            dy = float(end_xy[1]) - float(start_xy[1])
+            rotation_z = float(np.degrees(np.arctan2(dy, dx)))
+            scale_value = [float(np.hypot(dx, dy)), 1.0, 1.0]
+        assets.append(
+            {
+                "asset_id": asset.get("asset_id"),
+                "type": "subway",
+                "blend": asset.get("blend") or "Subway.blend",
+                "label": asset.get("label"),
+                "polygon_id": polygon_id,
+                "layer": layer,
+                "location": [float(xy[0]), float(xy[1]), float(z_value)],
+                "rotation_z": rotation_z,
+                "scale": [float(value) for value in scale_value],
+                "point_source": asset.get("point_source"),
+                "start_point_source": start_source,
+                "end_point_source": end_source,
+            }
+        )
+    return assets
+
+
 def color_rgba(color_rgb, alpha=1.0):
     """Convert 0-255 RGB into normalized RGBA used by plane_with_color.json."""
     rgb = color_rgb or [180, 180, 180]
@@ -571,6 +657,110 @@ def apply_layer_transform_to_vertices(vertices, matrix):
         out_x, out_y = apply_xy_transform([x, y], matrix)
         transformed.append([out_x, out_y, float(z)])
     return transformed
+
+
+def signed_area_xy(vertices):
+    """Return signed XY area for 2D/3D vertices."""
+    if not vertices or len(vertices) < 3:
+        return 0.0
+    area = 0.0
+    for index, point in enumerate(vertices):
+        next_point = vertices[(index + 1) % len(vertices)]
+        area += float(point[0]) * float(next_point[1]) - float(next_point[0]) * float(point[1])
+    return area / 2.0
+
+
+def ensure_winding(vertices, clockwise=False):
+    """Return vertices ordered clockwise or counter-clockwise in XY."""
+    if not vertices or len(vertices) < 3:
+        return vertices
+    area = signed_area_xy(vertices)
+    if clockwise:
+        return vertices if area < 0 else list(reversed(vertices))
+    return vertices if area > 0 else list(reversed(vertices))
+
+
+def valid_source_line(points):
+    """Return true when a source line has two 2D points."""
+    return isinstance(points, list) and len(points) == 2 and all(isinstance(point, list) and len(point) >= 2 for point in points)
+
+
+def scene_xy_for_connection_point(point, layer, alignment_transforms=None, transform_metadata=None, transform_info=None, scale=0.01, invert_x=False, invert_y=False):
+    """Convert one manual connection point to aligned scene XY."""
+    xy = scene_xy_from_point(
+        point,
+        transform_metadata=transform_metadata,
+        transform_info=transform_info,
+        scale=scale,
+        invert_x=invert_x,
+        invert_y=invert_y,
+    )
+    layer_transform = (alignment_transforms or {}).get(layer)
+    return apply_xy_transform(xy, layer_transform) if layer_transform is not None else xy
+
+
+def scene_line_from_source_points(points, layer, z_value, alignment_transforms=None, transform_metadata=None, transform_info=None, scale=0.01, invert_x=False, invert_y=False):
+    """Convert a two-point source line to scene XYZ coordinates."""
+    if not valid_source_line(points):
+        return None
+    line = []
+    for point in points:
+        xy = scene_xy_for_connection_point(
+            point,
+            layer,
+            alignment_transforms=alignment_transforms,
+            transform_metadata=transform_metadata,
+            transform_info=transform_info,
+            scale=scale,
+            invert_x=invert_x,
+            invert_y=invert_y,
+        )
+        line.append([float(xy[0]), float(xy[1]), float(z_value)])
+    return line
+
+
+def synthesize_connection_line(center, other_center, width=1.0):
+    """Build a small line around a legacy two-point connection endpoint."""
+    dx = float(other_center[0]) - float(center[0])
+    dy = float(other_center[1]) - float(center[1])
+    length = float(np.hypot(dx, dy))
+    if length <= 1e-9:
+        perp_x, perp_y = 0.0, 1.0
+    else:
+        perp_x, perp_y = -dy / length, dx / length
+    half = float(width) / 2.0
+    return [
+        [float(center[0]) - perp_x * half, float(center[1]) - perp_y * half, float(center[2])],
+        [float(center[0]) + perp_x * half, float(center[1]) + perp_y * half, float(center[2])],
+    ]
+
+
+def order_stair_lines_for_blender(start_line, end_line):
+    """Return low-to-high stair lines normalized for the existing Blender stair script."""
+    if not start_line or not end_line:
+        return start_line, end_line
+    start_z = sum(float(point[2]) for point in start_line) / len(start_line)
+    end_z = sum(float(point[2]) for point in end_line) / len(end_line)
+    if start_z > end_z:
+        start_line, end_line = end_line, start_line
+
+    # Layer alignment can scale each floor differently, so a line pair that was
+    # parallel in editor/source space may no longer be parallel in scene space.
+    # The current Blender stair script uses start_line as the stair width and
+    # start_center -> end_center as the run direction, so normalize end_line
+    # to the same width vector after every export transform has been applied.
+    dx = float(start_line[1][0]) - float(start_line[0][0])
+    dy = float(start_line[1][1]) - float(start_line[0][1])
+    end_center = [
+        (float(end_line[0][0]) + float(end_line[1][0])) / 2.0,
+        (float(end_line[0][1]) + float(end_line[1][1])) / 2.0,
+        (float(end_line[0][2]) + float(end_line[1][2])) / 2.0,
+    ]
+    normalized_end_line = [
+        [end_center[0] - dx / 2.0, end_center[1] - dy / 2.0, end_center[2]],
+        [end_center[0] + dx / 2.0, end_center[1] + dy / 2.0, end_center[2]],
+    ]
+    return start_line, normalized_end_line
 
 
 def estimate_xy_transform(source_points, target_points):
@@ -736,6 +926,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
             vertices.append([out_x * effective_scale, out_y * effective_scale, float(z_value)])
         layer_transform = alignment_transforms.get(layer)
         vertices = apply_layer_transform_to_vertices(vertices, layer_transform)
+        vertices = ensure_winding(vertices, clockwise=False)
         if transform_metadata and transform_info and poly.get("holes_source"):
             hole_sets = [
                 transform_source_points(
@@ -748,6 +939,20 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
             ]
         else:
             hole_sets = poly.get("holes_transformed") or poly.get("holes_source") or []
+        holes = [
+            ensure_winding(
+                apply_layer_transform_to_vertices(
+                    [
+                        [(-float(x) if invert_x else float(x)) * effective_scale, (-float(y) if invert_y else float(y)) * effective_scale, float(z_value)]
+                        for x, y in hole
+                    ],
+                    layer_transform,
+                ),
+                clockwise=True,
+            )
+            for hole in hole_sets
+            if len(hole) >= 3
+        ]
         planes.append(
             {
                 "name": f"{layer}_{poly['polygon_id']}" if layer else poly["polygon_id"],
@@ -760,17 +965,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
                 "color_rgb": poly.get("color_rgb"),
                 "color": color_rgba(poly.get("color_rgb")),
                 "vertices": vertices,
-                "holes": [
-                    apply_layer_transform_to_vertices(
-                        [
-                            [(-float(x) if invert_x else float(x)) * effective_scale, (-float(y) if invert_y else float(y)) * effective_scale, float(z_value)]
-                            for x, y in hole
-                        ],
-                        layer_transform,
-                    )
-                    for hole in hole_sets
-                    if len(hole) >= 3
-                ],
+                "holes": holes,
                 "alignment_transform": xy_transform_to_list(layer_transform) if layer_transform is not None else None,
             }
         )
@@ -823,16 +1018,20 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
             continue
         from_layer = connection.get("from_layer")
         to_layer = connection.get("to_layer")
-        from_xy = scene_xy_from_point(
+        from_xy = scene_xy_for_connection_point(
             from_point,
+            from_layer,
+            alignment_transforms=alignment_transforms,
             transform_metadata=transform_metadata,
             transform_info=transform_info,
             scale=effective_scale,
             invert_x=invert_x,
             invert_y=invert_y,
         )
-        to_xy = scene_xy_from_point(
+        to_xy = scene_xy_for_connection_point(
             to_point,
+            to_layer,
+            alignment_transforms=alignment_transforms,
             transform_metadata=transform_metadata,
             transform_info=transform_info,
             scale=effective_scale,
@@ -841,25 +1040,55 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         )
         from_transform = alignment_transforms.get(from_layer)
         to_transform = alignment_transforms.get(to_layer)
-        from_xy = apply_xy_transform(from_xy, from_transform) if from_transform is not None else from_xy
-        to_xy = apply_xy_transform(to_xy, to_transform) if to_transform is not None else to_xy
         from_z = polygon_id_z_value(connection.get("from_polygon_id"), from_layer, annotations=annotations, layer_z=layer_z, default_z=default_z, floor_height=floor_height)
         to_z = polygon_id_z_value(connection.get("to_polygon_id"), to_layer, annotations=annotations, layer_z=layer_z, default_z=default_z, floor_height=floor_height)
+        start_line = scene_line_from_source_points(
+            connection.get("from_points_source"),
+            from_layer,
+            from_z,
+            alignment_transforms=alignment_transforms,
+            transform_metadata=transform_metadata,
+            transform_info=transform_info,
+            scale=effective_scale,
+            invert_x=invert_x,
+            invert_y=invert_y,
+        )
+        end_line = scene_line_from_source_points(
+            connection.get("to_points_source"),
+            to_layer,
+            to_z,
+            alignment_transforms=alignment_transforms,
+            transform_metadata=transform_metadata,
+            transform_info=transform_info,
+            scale=effective_scale,
+            invert_x=invert_x,
+            invert_y=invert_y,
+        )
+        from_position = [float(from_xy[0]), float(from_xy[1]), float(from_z)]
+        to_position = [float(to_xy[0]), float(to_xy[1]), float(to_z)]
+        if not start_line or not end_line:
+            width = float(connection.get("line_width") or connection.get("width") or 1.0)
+            start_line = synthesize_connection_line(from_position, to_position, width=width)
+            end_line = synthesize_connection_line(to_position, from_position, width=width)
         connection_records.append(
             {
                 "connection_id": connection.get("connection_id"),
                 "type": connection.get("type", "connection"),
                 "asset_type": connection.get("asset_type", connection.get("type", "connection")),
+                "connection_schema": connection.get("connection_schema", "edge_pair_v2" if connection.get("from_points_source") and connection.get("to_points_source") else "legacy_center_points"),
                 "label": connection.get("label"),
                 "bidirectional": bool(connection.get("bidirectional", True)),
+                "start_line": start_line,
+                "end_line": end_line,
                 "from": {
                     "polygon_id": connection.get("from_polygon_id"),
                     "layer": from_layer,
                     "point_source": from_point,
+                    "line_source": connection.get("from_points_source"),
                     "position": [
-                        float(from_xy[0]),
-                        float(from_xy[1]),
-                        float(from_z),
+                        from_position[0],
+                        from_position[1],
+                        from_position[2],
                     ],
                     "alignment_transform": xy_transform_to_list(from_transform) if from_transform is not None else None,
                 },
@@ -867,10 +1096,11 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
                     "polygon_id": connection.get("to_polygon_id"),
                     "layer": to_layer,
                     "point_source": to_point,
+                    "line_source": connection.get("to_points_source"),
                     "position": [
-                        float(to_xy[0]),
-                        float(to_xy[1]),
-                        float(to_z),
+                        to_position[0],
+                        to_position[1],
+                        to_position[2],
                     ],
                     "alignment_transform": xy_transform_to_list(to_transform) if to_transform is not None else None,
                 },
@@ -890,10 +1120,23 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         invert_y=invert_y,
         alignment_transforms=alignment_transforms,
     )
-    assets = build_assets_from_connections(connection_records)
+    connection_assets = build_assets_from_connections(connection_records)
+    manual_assets = build_manual_asset_records(
+        annotations=annotations,
+        transform_metadata=transform_metadata,
+        transform_info=transform_info,
+        scale=effective_scale,
+        layer_z=layer_z,
+        floor_height=floor_height,
+        default_z=default_z,
+        invert_x=invert_x,
+        invert_y=invert_y,
+        alignment_transforms=alignment_transforms,
+    )
+    assets = connection_assets + manual_assets
     assets_by_connection_id = {
         asset.get("connection_id"): asset
-        for asset in assets
+        for asset in connection_assets
         if asset.get("connection_id")
     }
     for connection in connection_records:
@@ -904,6 +1147,9 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         connection["location"] = asset.get("location")
         connection["rotation_z"] = asset.get("rotation_z")
         connection["scale"] = asset.get("scale")
+        connection["target_height"] = asset.get("target_height")
+        connection["start_line"] = asset.get("start_line", connection.get("start_line"))
+        connection["end_line"] = asset.get("end_line", connection.get("end_line"))
         connection["same_layer"] = asset.get("same_layer")
 
     payload = {
@@ -942,6 +1188,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         "walls": wall_records,
         "connections": connection_records,
         "icons": icon_records,
+        "manual_assets": manual_assets,
     }
     payload["assets"] = assets
     return payload
@@ -972,28 +1219,46 @@ def build_assets_from_connections(connections):
         dz = float(to_pos[2]) - float(from_pos[2])
         xy_length = float(np.hypot(dx, dy))
         z_length = abs(dz)
-        assets.append(
-            {
-                "asset_id": connection.get("connection_id"),
-                "connection_id": connection.get("connection_id"),
-                "type": connection.get("type", "connection"),
-                "blend": blend_name_for_connection(connection),
-                "location": [
-                    (float(from_pos[0]) + float(to_pos[0])) / 2.0,
-                    (float(from_pos[1]) + float(to_pos[1])) / 2.0,
-                    (float(from_pos[2]) + float(to_pos[2])) / 2.0,
-                ],
-                "rotation_z": float(np.degrees(np.arctan2(dy, dx))),
-                "scale": [
-                    xy_length,
-                    1.0,
-                    z_length,
-                ],
-                "same_layer": (connection.get("from") or {}).get("layer") == (connection.get("to") or {}).get("layer"),
-                "from": connection.get("from"),
-                "to": connection.get("to"),
-            }
-        )
+        asset_type = connection.get("asset_type") or connection.get("type", "connection")
+        asset = {
+            "asset_id": connection.get("connection_id"),
+            "connection_id": connection.get("connection_id"),
+            "type": connection.get("type", "connection"),
+            "blend": blend_name_for_connection(connection),
+            "same_layer": (connection.get("from") or {}).get("layer") == (connection.get("to") or {}).get("layer"),
+            "from": connection.get("from"),
+            "to": connection.get("to"),
+        }
+        if asset_type == "stair" and connection.get("start_line") and connection.get("end_line"):
+            start_line, end_line = order_stair_lines_for_blender(
+                connection.get("start_line"),
+                connection.get("end_line"),
+            )
+            asset.update(
+                {
+                    "target_height": z_length,
+                    "start_line": start_line,
+                    "end_line": end_line,
+                }
+            )
+        else:
+            asset.update(
+                {
+                    "location": [
+                        (float(from_pos[0]) + float(to_pos[0])) / 2.0,
+                        (float(from_pos[1]) + float(to_pos[1])) / 2.0,
+                        (float(from_pos[2]) + float(to_pos[2])) / 2.0,
+                    ],
+                    "rotation_z": float(np.degrees(np.arctan2(dy, dx))),
+                    "target_height": z_length,
+                    "scale": [
+                        xy_length,
+                        1.0,
+                        z_length,
+                    ],
+                }
+            )
+        assets.append(asset)
     return assets
 
 

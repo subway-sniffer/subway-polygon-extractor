@@ -614,7 +614,7 @@ Manual Merge
 Auto Merge
 Simple Keep
 Shared Edge
-Layer Align XY
+XY Correction
 Stair Connection
 ```
 
@@ -652,7 +652,9 @@ B3 = -2
 B4 = -3
 ```
 
-엘리베이터처럼 같은 위치라고 볼 수 있는 점을 `Layer Align XY`로 찍으면, `scene_planes.json` export 시 layer별 x/y offset 보정이 적용됩니다.
+`XY Correction`은 실제 시설물이 아니라 export 좌표를 맞추기 위한 보정용 대응점입니다. 두 층에서 같은 실제 XY 위치라고 볼 수 있는 점을 찍으면, `scene_planes.json` export 시 layer별 x/y scale/offset 보정에 반영됩니다.
+
+엘리베이터는 별도의 실제 이동 시설/에셋으로 다뤄야 하며, `XY Correction`에 찍은 점은 엘리베이터 객체로 export되지 않습니다.
 
 계단은 `Stair Connection`에서 시작점과 도착점을 클릭해 저장합니다. 저장된 connection은 3D 에셋 배치와 최단 경로 계산에 사용할 수 있습니다.
 

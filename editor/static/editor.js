@@ -13,6 +13,7 @@ const state = {
     manual_merges: [],
     manual_connections: [],
     manual_walls: [],
+    manual_assets: [],
     layer_alignment_pairs: [],
     scale_calibration: null,
   },
@@ -24,9 +25,11 @@ const state = {
   hoveredId: null,
   selectedId: null,
   selectedStairId: null,
+  selectedSubwayId: null,
   showIds: false,
   showConnections: false,
-  showIcons: true,
+  showIcons: false,
+  showCorrections: true,
   showHidden: false,
   previewFinal: false,
   exportedFinalPolygons: null,
@@ -92,7 +95,7 @@ const state = {
   },
   layerAlign: {
     active: false,
-    label: "elevator_A",
+    label: "align_A",
     fromPoint: null,
     fromLayer: null,
     fromPolygonId: null,
@@ -101,6 +104,7 @@ const state = {
     toPolygonId: null,
     hoverPoint: null,
   },
+  selectedLayerAlignIndex: null,
   scaleCalibration: {
     active: false,
     points: [],
@@ -108,12 +112,22 @@ const state = {
   stair: {
     active: false,
     label: "",
+    fromPoints: [],
+    toPoints: [],
     fromPoint: null,
     fromLayer: null,
     fromPolygonId: null,
     toPoint: null,
     toLayer: null,
     toPolygonId: null,
+    hoverVertex: null,
+  },
+  subway: {
+    active: false,
+    label: "",
+    points: [],
+    polygonId: null,
+    layer: null,
   },
   sharedEdge: {
     active: false,
@@ -141,6 +155,7 @@ const selectedInfo = document.getElementById("selectedInfo");
 const layerInput = document.getElementById("layerInput");
 const zOverrideInput = document.getElementById("zOverrideInput");
 const showIconsToggle = document.getElementById("showIconsToggle");
+const showCorrectionsToggle = document.getElementById("showCorrectionsToggle");
 const saveResult = document.getElementById("saveResult");
 const mergeStatus = document.getElementById("mergeStatus");
 const autoMergeStatus = document.getElementById("autoMergeStatus");
@@ -153,11 +168,14 @@ const addPolygonStatus = document.getElementById("addPolygonStatus");
 const cutHoleStatus = document.getElementById("cutHoleStatus");
 const layerAlignStatus = document.getElementById("layerAlignStatus");
 const alignLabelInput = document.getElementById("alignLabelInput");
+const alignModeInput = document.getElementById("alignModeInput");
 const scaleLengthInput = document.getElementById("scaleLengthInput");
 const scaleStatus = document.getElementById("scaleStatus");
 const stairStatus = document.getElementById("stairStatus");
 const stairLabelInput = document.getElementById("stairLabelInput");
 const connectionTypeInput = document.getElementById("connectionTypeInput");
+const subwayStatus = document.getElementById("subwayStatus");
+const subwayLabelInput = document.getElementById("subwayLabelInput");
 const keepStatus = document.getElementById("keepStatus");
 const imageSelect = document.getElementById("imageSelect");
 const pipelineStatus = document.getElementById("pipelineStatus");
@@ -318,36 +336,47 @@ function drawStairConnections() {
     const isSelected = (conn.connection_id || conn.label) === state.selectedStairId;
     const baseColor = conn.type === "escalator" ? "rgba(0, 180, 120, 0.95)" : "rgba(255, 132, 0, 0.95)";
     const pointColor = conn.type === "escalator" ? "#00b878" : "#ff8400";
-    drawPath(
-      [conn.from_point_source, conn.to_point_source],
-      isSelected ? "rgba(0, 92, 255, 0.95)" : baseColor,
-      isSelected ? 7 : 4,
-    );
-    const fromScreen = worldToScreen(conn.from_point_source);
-    const toScreen = worldToScreen(conn.to_point_source);
+    const lineColor = isSelected ? "rgba(0, 92, 255, 0.95)" : baseColor;
+    const startLine = connectionLinePoints(conn, "from");
+    const endLine = connectionLinePoints(conn, "to");
+    if (startLine && endLine) {
+      drawPath(startLine, lineColor, isSelected ? 7 : 4);
+      drawPath(endLine, lineColor, isSelected ? 7 : 4);
+      drawPath([midpoint(startLine[0], startLine[1]), midpoint(endLine[0], endLine[1])], lineColor, isSelected ? 4 : 2);
+    } else {
+      drawPath(
+        [conn.from_point_source, conn.to_point_source],
+        lineColor,
+        isSelected ? 7 : 4,
+      );
+    }
+    const sourcePoints = [...(startLine || [conn.from_point_source]), ...(endLine || [conn.to_point_source])];
     ctx.fillStyle = isSelected ? "#005cff" : pointColor;
     ctx.strokeStyle = "#111111";
     ctx.lineWidth = 1;
-    for (const screen of [fromScreen, toScreen]) {
+    for (const point of sourcePoints) {
+      const screen = worldToScreen(point);
       ctx.beginPath();
       ctx.arc(screen.x, screen.y, 6, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
     }
-    const labelPoint = [
-      (conn.from_point_source[0] + conn.to_point_source[0]) / 2,
-      (conn.from_point_source[1] + conn.to_point_source[1]) / 2,
-    ];
+    const labelPoint = midpoint(conn.from_point_source, conn.to_point_source);
     drawCanvasLabel(labelPoint, conn.connection_id || conn.label || conn.type, isSelected ? "#005cff" : pointColor, 8, -8);
   }
   if (state.stair.active) {
-    const points = [state.stair.fromPoint, state.stair.toPoint].filter(Boolean);
-    if (points.length === 2) drawPath(points, "rgba(0, 180, 255, 0.95)", 4);
-    points.forEach((point, index) => {
+    const fromPoints = state.stair.fromPoints || [];
+    const toPoints = state.stair.toPoints || [];
+    if (fromPoints.length === 2) drawPath(fromPoints, "rgba(0, 170, 255, 0.95)", 4);
+    if (toPoints.length === 2) drawPath(toPoints, "rgba(255, 132, 0, 0.95)", 4);
+    if (fromPoints.length === 2 && toPoints.length >= 1) {
+      drawPath([midpoint(fromPoints[0], fromPoints[1]), toPoints.length === 2 ? midpoint(toPoints[0], toPoints[1]) : toPoints[0]], "rgba(0, 180, 255, 0.6)", 2);
+    }
+    [...fromPoints, ...toPoints].forEach((point, index) => {
       const screen = worldToScreen(point);
       ctx.beginPath();
       ctx.arc(screen.x, screen.y, 7, 0, Math.PI * 2);
-      ctx.fillStyle = index === 0 ? "#00aaff" : "#ff8400";
+      ctx.fillStyle = index < fromPoints.length ? "#00aaff" : "#ff8400";
       ctx.strokeStyle = "#111111";
       ctx.lineWidth = 1;
       ctx.fill();
@@ -359,6 +388,55 @@ function drawStairConnections() {
     if (state.stair.toPoint && state.stair.toLayer) {
       drawCanvasLabel(state.stair.toPoint, `${state.stair.toLayer} ${state.stair.toPolygonId}`, "#ff8400", 8, 18);
     }
+    if (state.stair.hoverVertex) {
+      const screen = worldToScreen(state.stair.hoverVertex.point);
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, 9, 0, Math.PI * 2);
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, 11, 0, Math.PI * 2);
+      ctx.strokeStyle = "#111111";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      drawCanvasLabel(state.stair.hoverVertex.point, "snap", "#ffffff", 10, -10);
+    }
+  }
+  ctx.restore();
+}
+
+function drawManualAssets() {
+  ctx.save();
+  for (const asset of state.annotations.manual_assets || []) {
+    if (asset.type !== "subway" || !asset.point_source) continue;
+    const selected = (asset.asset_id || asset.label) === state.selectedSubwayId;
+    if (asset.start_point_source && asset.end_point_source) {
+      drawPath([asset.start_point_source, asset.end_point_source], selected ? "rgba(255, 210, 0, 0.95)" : "rgba(0, 120, 255, 0.85)", selected ? 5 : 3);
+    }
+    const screen = worldToScreen(asset.point_source);
+    ctx.beginPath();
+    ctx.rect(screen.x - 9, screen.y - 5, 18, 10);
+    ctx.fillStyle = selected ? "rgba(255, 210, 0, 0.95)" : "rgba(0, 120, 255, 0.85)";
+    ctx.strokeStyle = "#111111";
+    ctx.lineWidth = selected ? 3 : 1;
+    ctx.fill();
+    ctx.stroke();
+    drawCanvasLabel(asset.point_source, asset.asset_id || asset.label || "subway", selected ? "#ffd200" : "#0078ff", 10, -10);
+  }
+  if (state.subway.active) {
+    const points = state.subway.points || [];
+    if (points.length === 2) drawPath(points, "rgba(0, 120, 255, 0.95)", 4);
+    points.forEach((point, index) => {
+      const screen = worldToScreen(point);
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, 7, 0, Math.PI * 2);
+      ctx.fillStyle = index === 0 ? "#00aaff" : "#0078ff";
+      ctx.strokeStyle = "#111111";
+      ctx.lineWidth = 1;
+      ctx.fill();
+      ctx.stroke();
+    });
   }
   ctx.restore();
 }
@@ -877,12 +955,17 @@ function drawCutHolePreview() {
 }
 
 function drawLayerAlignPreview() {
+  if (!state.showCorrections && !state.layerAlign.active) return;
   ctx.save();
-  for (const pair of state.annotations.layer_alignment_pairs || []) {
-    if (!pair.from_point_source || !pair.to_point_source) continue;
-    drawPath([pair.from_point_source, pair.to_point_source], "rgba(123, 44, 255, 0.75)", 3);
-    drawCanvasLabel(pair.from_point_source, `${pair.from_layer} ${pair.label || ""}`, "#7b2cff", 8, -8);
-    drawCanvasLabel(pair.to_point_source, `${pair.to_layer} ${pair.label || ""}`, "#7b2cff", 8, 18);
+  if (state.showCorrections) {
+    (state.annotations.layer_alignment_pairs || []).forEach((pair, index) => {
+      if (!pair.from_point_source || !pair.to_point_source) return;
+      const selected = index === state.selectedLayerAlignIndex;
+      const color = selected ? "rgba(255, 210, 0, 0.95)" : "rgba(123, 44, 255, 0.75)";
+      drawPath([pair.from_point_source, pair.to_point_source], color, selected ? 5 : 3);
+      drawCanvasLabel(pair.from_point_source, `${pair.from_layer} ${pair.label || ""}`, selected ? "#ffd200" : "#7b2cff", 8, -8);
+      drawCanvasLabel(pair.to_point_source, `${pair.to_layer} ${pair.label || ""}`, selected ? "#ffd200" : "#7b2cff", 8, 18);
+    });
   }
   if (state.layerAlign.active) {
     const previewToPoint = state.layerAlign.toPoint || state.layerAlign.hoverPoint;
@@ -967,6 +1050,7 @@ function draw() {
   drawConnections();
   drawIcons();
   drawStairConnections();
+  drawManualAssets();
   drawManualMarkerPreview();
   drawMergePreview();
   drawStraightenPreview();
@@ -1713,17 +1797,18 @@ function updateLayerAlignStatus(message = null) {
     layerAlignStatus.textContent = [
       message,
       `pairs: ${(state.annotations.layer_alignment_pairs || []).length}`,
+      state.selectedLayerAlignIndex !== null ? `selected: ${state.selectedLayerAlignIndex + 1}` : null,
     ].filter(Boolean).join("\n") || "inactive";
     return;
   }
   const next = !state.layerAlign.fromPoint
-    ? "Click first elevator point on a layered polygon"
+    ? "Click first correction point on a layered polygon"
     : !state.layerAlign.toPoint
-      ? "Click matching elevator y-position on another layered polygon"
+      ? "Click matching correction point on another layered polygon"
       : "Pair ready";
   layerAlignStatus.textContent = [
     message,
-    "mode: layer align xy vertical",
+    `correction mode: ${state.layerAlign.alignMode || "same_xy"}`,
     `from: ${state.layerAlign.fromLayer || "-"} (${state.layerAlign.fromPolygonId || "-"})`,
     `to: ${state.layerAlign.toLayer || "-"} (${state.layerAlign.toPolygonId || "-"})`,
     `label: ${state.layerAlign.label}`,
@@ -1737,7 +1822,8 @@ function startLayerAlign() {
   state.tool = "layerAlign";
   state.layerAlign = {
     active: true,
-    label: alignLabelInput.value.trim() || "elevator_A",
+    label: alignLabelInput.value.trim() || "align_A",
+    alignMode: alignModeInput?.value || "same_xy",
     fromPoint: null,
     fromLayer: null,
     fromPolygonId: null,
@@ -1754,7 +1840,8 @@ function resetLayerAlign() {
   state.tool = "select";
   state.layerAlign = {
     active: false,
-    label: alignLabelInput.value.trim() || "elevator_A",
+    label: alignLabelInput.value.trim() || "align_A",
+    alignMode: alignModeInput?.value || "same_xy",
     fromPoint: null,
     fromLayer: null,
     fromPolygonId: null,
@@ -1774,7 +1861,7 @@ function polygonLayerValue(poly) {
 
 function verticalLayerAlignPoint(world) {
   const point = [Number(world.x.toFixed(2)), Number(world.y.toFixed(2))];
-  if (state.layerAlign.fromPoint) {
+  if ((state.layerAlign.alignMode || "same_xy") === "vertical_y" && state.layerAlign.fromPoint) {
     point[0] = state.layerAlign.fromPoint[0];
   }
   return point;
@@ -1816,12 +1903,84 @@ function addLayerAlignPoint(world, poly) {
     to_polygon_id: state.layerAlign.toPolygonId,
     from_point_source: state.layerAlign.fromPoint,
     to_point_source: state.layerAlign.toPoint,
-    mode: "xy_vertical",
+    mode: state.layerAlign.alignMode || "same_xy",
   });
   saveAnnotations().then((result) => {
     saveResult.textContent = JSON.stringify(result, null, 2);
     resetLayerAlign();
     updateLayerAlignStatus("Alignment pair saved.");
+  });
+}
+
+function nearestLayerAlignPair(world, maxScreenDistance = 12) {
+  const mouseScreen = worldToScreen([world.x, world.y]);
+  let best = null;
+  (state.annotations.layer_alignment_pairs || []).forEach((pair, index) => {
+    if (!pair.from_point_source || !pair.to_point_source) return;
+    const projected = projectPointToSegment(world, pair.from_point_source, pair.to_point_source);
+    const projectedScreen = worldToScreen(projected);
+    const lineDistance = Math.hypot(projectedScreen.x - mouseScreen.x, projectedScreen.y - mouseScreen.y);
+    const fromScreen = worldToScreen(pair.from_point_source);
+    const toScreen = worldToScreen(pair.to_point_source);
+    const endpointDistance = Math.min(
+      Math.hypot(fromScreen.x - mouseScreen.x, fromScreen.y - mouseScreen.y),
+      Math.hypot(toScreen.x - mouseScreen.x, toScreen.y - mouseScreen.y),
+    );
+    const distance = Math.min(lineDistance, endpointDistance);
+    if (distance <= maxScreenDistance && (!best || distance < best.distance)) {
+      best = {index, distance};
+    }
+  });
+  return best;
+}
+
+function selectLayerAlignPair(world) {
+  const hit = nearestLayerAlignPair(world);
+  if (!hit) {
+    state.selectedLayerAlignIndex = null;
+    updateLayerAlignStatus();
+    draw();
+    return false;
+  }
+  state.selectedLayerAlignIndex = hit.index;
+  state.selectedStairId = null;
+  state.selectedId = null;
+  updateSelectedInfo();
+  updateLayerAlignStatus(`Selected correction pair ${hit.index + 1}.`);
+  draw();
+  return true;
+}
+
+function deleteSelectedLayerAlignPair() {
+  if (state.selectedLayerAlignIndex === null) {
+    updateLayerAlignStatus("Select a correction pair first.");
+    return;
+  }
+  state.annotations.layer_alignment_pairs = state.annotations.layer_alignment_pairs || [];
+  if (state.selectedLayerAlignIndex < 0 || state.selectedLayerAlignIndex >= state.annotations.layer_alignment_pairs.length) {
+    state.selectedLayerAlignIndex = null;
+    updateLayerAlignStatus("Selected correction pair is missing.");
+    draw();
+    return;
+  }
+  const removed = state.annotations.layer_alignment_pairs.splice(state.selectedLayerAlignIndex, 1)[0];
+  state.selectedLayerAlignIndex = null;
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateLayerAlignStatus(`Deleted ${removed.label || "correction pair"}.`);
+    draw();
+  });
+}
+
+function deleteAllLayerAlignPairs() {
+  state.annotations.layer_alignment_pairs = state.annotations.layer_alignment_pairs || [];
+  const removed = state.annotations.layer_alignment_pairs.length;
+  state.annotations.layer_alignment_pairs = [];
+  state.selectedLayerAlignIndex = null;
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateLayerAlignStatus(`Deleted ${removed} correction pairs.`);
+    draw();
   });
 }
 
@@ -1832,6 +1991,7 @@ function undoLastLayerAlignPair() {
     updateLayerAlignStatus("No alignment pair to undo.");
     return;
   }
+  state.selectedLayerAlignIndex = null;
   saveAnnotations().then((result) => {
     saveResult.textContent = JSON.stringify(result, null, 2);
     updateLayerAlignStatus(`Removed ${removed.from_layer}->${removed.to_layer}.`);
@@ -1928,6 +2088,37 @@ function selectedConnectionType() {
   return connectionTypeInput?.value || "stair";
 }
 
+function midpoint(a, b) {
+  return [
+    (Number(a[0]) + Number(b[0])) / 2,
+    (Number(a[1]) + Number(b[1])) / 2,
+  ];
+}
+
+function validLinePoints(points) {
+  return Array.isArray(points) && points.length === 2 && points.every((point) => Array.isArray(point) && point.length >= 2);
+}
+
+function connectionLinePoints(connection, side) {
+  const key = side === "from" ? "from_points_source" : "to_points_source";
+  return validLinePoints(connection[key]) ? connection[key] : null;
+}
+
+function parallelLineThroughCenter(referenceLine, centerPoint) {
+  const dx = Number(referenceLine[1][0]) - Number(referenceLine[0][0]);
+  const dy = Number(referenceLine[1][1]) - Number(referenceLine[0][1]);
+  return [
+    [
+      Number((Number(centerPoint[0]) - dx / 2).toFixed(2)),
+      Number((Number(centerPoint[1]) - dy / 2).toFixed(2)),
+    ],
+    [
+      Number((Number(centerPoint[0]) + dx / 2).toFixed(2)),
+      Number((Number(centerPoint[1]) + dy / 2).toFixed(2)),
+    ],
+  ];
+}
+
 function nextTypedConnectionId(type) {
   const prefix = type || "stair";
   const numbers = (state.annotations.manual_connections || [])
@@ -1953,14 +2144,17 @@ function updateStairStatus(message = null) {
     ].filter(Boolean).join("\n") || "inactive";
     return;
   }
-  const next = !state.stair.fromPoint
-    ? `Click ${currentType} start point on a layered polygon`
-    : !state.stair.toPoint
-      ? `Click ${currentType} destination point, same layer allowed`
-      : "Connection ready";
+  const fromCount = (state.stair.fromPoints || []).length;
+  const toCount = (state.stair.toPoints || []).length;
+  const next = fromCount < 2
+    ? `Click ${currentType} start line point ${fromCount + 1}/2`
+    : `Click ${currentType} end center point`;
   stairStatus.textContent = [
     message,
     `mode: ${currentType} connection`,
+    "schema: start line + end center",
+    `start line: ${fromCount}/2`,
+    `end line: ${toCount ? "auto" : "-"}`,
     `from: ${state.stair.fromLayer || "-"} (${state.stair.fromPolygonId || "-"})`,
     `to: ${state.stair.toLayer || "-"} (${state.stair.toPolygonId || "-"})`,
     `label: ${state.stair.label || "auto"}`,
@@ -1977,12 +2171,15 @@ function startStairConnection() {
     active: true,
     label: stairLabelInput.value.trim(),
     connectionType: selectedConnectionType(),
+    fromPoints: [],
+    toPoints: [],
     fromPoint: null,
     fromLayer: null,
     fromPolygonId: null,
     toPoint: null,
     toLayer: null,
     toPolygonId: null,
+    hoverVertex: null,
   };
   updateStairStatus();
   draw();
@@ -1994,12 +2191,15 @@ function resetStairConnection() {
     active: false,
     label: stairLabelInput.value.trim(),
     connectionType: selectedConnectionType(),
+    fromPoints: [],
+    toPoints: [],
     fromPoint: null,
     fromLayer: null,
     fromPolygonId: null,
     toPoint: null,
     toLayer: null,
     toPolygonId: null,
+    hoverVertex: null,
   };
   updateStairStatus();
   draw();
@@ -2007,6 +2207,10 @@ function resetStairConnection() {
 
 function addStairPoint(world, poly) {
   if (!state.stair.active) return;
+  const snap = nearestConnectionVertex(world, poly, 14);
+  if (snap) {
+    poly = snap.poly;
+  }
   if (!poly) {
     updateStairStatus("Click inside a polygon.");
     return;
@@ -2016,9 +2220,15 @@ function addStairPoint(world, poly) {
     updateStairStatus(`Set layer first: ${poly.polygon_id}`);
     return;
   }
-  const point = [Number(world.x.toFixed(2)), Number(world.y.toFixed(2))];
-  if (!state.stair.fromPoint) {
-    state.stair.fromPoint = point;
+  const rawPoint = snap ? snap.point : [world.x, world.y];
+  const point = [Number(rawPoint[0].toFixed(2)), Number(rawPoint[1].toFixed(2))];
+  state.stair.fromPoints = state.stair.fromPoints || [];
+  state.stair.toPoints = state.stair.toPoints || [];
+  if (state.stair.fromPoints.length < 2) {
+    state.stair.fromPoints.push(point);
+    state.stair.fromPoint = state.stair.fromPoints.length === 2
+      ? midpoint(state.stair.fromPoints[0], state.stair.fromPoints[1])
+      : point;
     state.stair.fromLayer = layer;
     state.stair.fromPolygonId = poly.polygon_id;
     updateStairStatus();
@@ -2027,14 +2237,16 @@ function addStairPoint(world, poly) {
   }
   const connectionType = state.stair.connectionType || selectedConnectionType();
   const connectionId = nextTypedConnectionId(connectionType);
-  state.stair.toPoint = point;
   state.stair.toLayer = layer;
   state.stair.toPolygonId = poly.polygon_id;
+  state.stair.toPoint = point;
+  state.stair.toPoints = parallelLineThroughCenter(state.stair.fromPoints, point);
   state.annotations.manual_connections = state.annotations.manual_connections || [];
   state.annotations.manual_connections.push({
     connection_id: connectionId,
     type: connectionType,
     asset_type: connectionType,
+    connection_schema: "start_line_end_center_v3",
     label: state.stair.label || connectionId,
     from_polygon_id: state.stair.fromPolygonId,
     to_polygon_id: state.stair.toPolygonId,
@@ -2042,6 +2254,9 @@ function addStairPoint(world, poly) {
     to_layer: state.stair.toLayer,
     from_point_source: state.stair.fromPoint,
     to_point_source: state.stair.toPoint,
+    from_points_source: state.stair.fromPoints,
+    to_points_source: state.stair.toPoints,
+    to_point_mode: "center_generated_parallel_line",
     bidirectional: true,
   });
   saveAnnotations().then((result) => {
@@ -2118,6 +2333,19 @@ function deleteSelectedStairConnection() {
   });
 }
 
+function deleteAllStairConnections() {
+  state.annotations.manual_connections = state.annotations.manual_connections || [];
+  const before = state.annotations.manual_connections.length;
+  state.annotations.manual_connections = state.annotations.manual_connections.filter((conn) => !["stair", "escalator"].includes(conn.type));
+  const removed = before - state.annotations.manual_connections.length;
+  state.selectedStairId = null;
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateStairStatus(`Deleted ${removed} vertical connections.`);
+    draw();
+  });
+}
+
 function undoLastStairConnection() {
   state.annotations.manual_connections = state.annotations.manual_connections || [];
   for (let index = state.annotations.manual_connections.length - 1; index >= 0; index -= 1) {
@@ -2131,6 +2359,206 @@ function undoLastStairConnection() {
     return;
   }
   updateStairStatus("No stair connection to undo.");
+}
+
+function nextManualAssetId(type) {
+  const prefix = type || "asset";
+  const numbers = (state.annotations.manual_assets || [])
+    .filter((asset) => asset.type === prefix)
+    .map((asset) => {
+      const match = String(asset.asset_id || "").match(new RegExp(`^${prefix}_(\\d+)$`));
+      return match ? Number(match[1]) : 0;
+    });
+  const next = Math.max(0, ...numbers) + 1;
+  return `${prefix}_${String(next).padStart(3, "0")}`;
+}
+
+function updateSubwayStatus(message = null) {
+  const count = (state.annotations.manual_assets || []).filter((asset) => asset.type === "subway").length;
+  if (!state.subway.active) {
+    subwayStatus.textContent = [
+      message,
+      `subways: ${count}`,
+      state.selectedSubwayId ? `selected: ${state.selectedSubwayId}` : null,
+    ].filter(Boolean).join("\n") || "inactive";
+    return;
+  }
+  subwayStatus.textContent = [
+    message,
+    "mode: subway train",
+    `label: ${state.subway.label || "auto"}`,
+    `points: ${(state.subway.points || []).length}/2`,
+    (state.subway.points || []).length < 1 ? "Click train start point" : "Click train end point",
+  ].filter(Boolean).join("\n");
+}
+
+function startSubwayPlacement() {
+  if (!canEdit()) return;
+  state.tool = "subway";
+  state.subway = {
+    active: true,
+    label: subwayLabelInput.value.trim(),
+    points: [],
+    polygonId: null,
+    layer: null,
+  };
+  updateSubwayStatus();
+  draw();
+}
+
+function resetSubwayPlacement() {
+  state.tool = "select";
+  state.subway = {
+    active: false,
+    label: subwayLabelInput.value.trim(),
+    points: [],
+    polygonId: null,
+    layer: null,
+  };
+  updateSubwayStatus();
+  draw();
+}
+
+function addSubwayAsset(world, poly) {
+  if (!state.subway.active) return;
+  if (!poly) {
+    updateSubwayStatus("Click inside a polygon.");
+    return;
+  }
+  const layer = polygonLayerValue(poly);
+  if (!layer) {
+    updateSubwayStatus(`Set layer first: ${poly.polygon_id}`);
+    return;
+  }
+  const point = [Number(world.x.toFixed(2)), Number(world.y.toFixed(2))];
+  state.subway.points = state.subway.points || [];
+  if (state.subway.points.length < 1) {
+    state.subway.points.push(point);
+    state.subway.polygonId = poly.polygon_id;
+    state.subway.layer = layer;
+    updateSubwayStatus();
+    draw();
+    return;
+  }
+  const start = state.subway.points[0];
+  const end = point;
+  const dx = end[0] - start[0];
+  const dy = end[1] - start[1];
+  const scaleX = Math.hypot(dx, dy);
+  if (scaleX <= 0) {
+    updateSubwayStatus("Click a different end point.");
+    return;
+  }
+  const rotationZ = Math.atan2(dy, dx) * 180 / Math.PI;
+  const center = [
+    Number(((start[0] + end[0]) / 2).toFixed(2)),
+    Number(((start[1] + end[1]) / 2).toFixed(2)),
+  ];
+  const assetId = nextManualAssetId("subway");
+  state.annotations.manual_assets = state.annotations.manual_assets || [];
+  state.annotations.manual_assets.push({
+    asset_id: assetId,
+    type: "subway",
+    blend: "Subway.blend",
+    label: state.subway.label || assetId,
+    polygon_id: state.subway.polygonId,
+    layer: state.subway.layer,
+    point_source: center,
+    start_point_source: start,
+    end_point_source: end,
+    rotation_z: rotationZ,
+    scale: [scaleX, 1.0, 1.0],
+  });
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    resetSubwayPlacement();
+    updateSubwayStatus(`${assetId} saved.`);
+  });
+}
+
+function nearestSubwayAsset(world, maxScreenDistance = 14) {
+  const mouseScreen = worldToScreen([world.x, world.y]);
+  let best = null;
+  (state.annotations.manual_assets || []).forEach((asset, index) => {
+    if (asset.type !== "subway" || !asset.point_source) return;
+    const screen = worldToScreen(asset.point_source);
+    const distance = Math.hypot(screen.x - mouseScreen.x, screen.y - mouseScreen.y);
+    if (distance <= maxScreenDistance && (!best || distance < best.distance)) {
+      best = {index, assetId: asset.asset_id || asset.label || `subway_${index + 1}`, distance};
+    }
+  });
+  return best;
+}
+
+function selectSubwayAsset(world) {
+  const hit = nearestSubwayAsset(world);
+  if (!hit) {
+    state.selectedSubwayId = null;
+    updateSubwayStatus();
+    draw();
+    return false;
+  }
+  state.selectedSubwayId = hit.assetId;
+  state.selectedStairId = null;
+  state.selectedLayerAlignIndex = null;
+  state.selectedId = null;
+  updateSelectedInfo();
+  updateSubwayStatus(`Selected ${hit.assetId}.`);
+  draw();
+  return true;
+}
+
+function deleteSelectedSubwayAsset() {
+  if (!state.selectedSubwayId) {
+    updateSubwayStatus("Select a subway first.");
+    return;
+  }
+  state.annotations.manual_assets = state.annotations.manual_assets || [];
+  const index = state.annotations.manual_assets.findIndex(
+    (asset) => asset.type === "subway" && (asset.asset_id || asset.label) === state.selectedSubwayId,
+  );
+  if (index < 0) {
+    state.selectedSubwayId = null;
+    updateSubwayStatus("Selected subway is missing.");
+    draw();
+    return;
+  }
+  const removed = state.annotations.manual_assets.splice(index, 1)[0];
+  state.selectedSubwayId = null;
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateSubwayStatus(`Deleted ${removed.asset_id || removed.label}.`);
+    draw();
+  });
+}
+
+function deleteAllSubwayAssets() {
+  state.annotations.manual_assets = state.annotations.manual_assets || [];
+  const before = state.annotations.manual_assets.length;
+  state.annotations.manual_assets = state.annotations.manual_assets.filter((asset) => asset.type !== "subway");
+  const removed = before - state.annotations.manual_assets.length;
+  state.selectedSubwayId = null;
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateSubwayStatus(`Deleted ${removed} subways.`);
+    draw();
+  });
+}
+
+function undoLastSubwayAsset() {
+  state.annotations.manual_assets = state.annotations.manual_assets || [];
+  for (let index = state.annotations.manual_assets.length - 1; index >= 0; index -= 1) {
+    if (state.annotations.manual_assets[index].type !== "subway") continue;
+    const removed = state.annotations.manual_assets.splice(index, 1)[0];
+    state.selectedSubwayId = null;
+    saveAnnotations().then((result) => {
+      saveResult.textContent = JSON.stringify(result, null, 2);
+      updateSubwayStatus(`Removed ${removed.asset_id || removed.label}.`);
+      draw();
+    });
+    return;
+  }
+  updateSubwayStatus("No subway to undo.");
 }
 
 function startSimpleKeep() {
@@ -2436,6 +2864,26 @@ function nearestVertexForPolygon(poly, world, maxScreenDistance = 10) {
       best = {polygonId: poly.polygon_id, index, point, distance};
     }
   });
+  return best;
+}
+
+function nearestConnectionVertex(world, preferredPoly = null, maxScreenDistance = 12) {
+  const candidates = preferredPoly ? [preferredPoly, ...allPolygons().filter((poly) => poly.polygon_id !== preferredPoly.polygon_id)] : allPolygons();
+  const mouseScreen = worldToScreen([world.x, world.y]);
+  let best = null;
+  for (const poly of candidates) {
+    const visit = (point, index, holeIndex = null) => {
+      const screen = worldToScreen(point);
+      const distance = Math.hypot(screen.x - mouseScreen.x, screen.y - mouseScreen.y);
+      if (distance <= maxScreenDistance && (!best || distance < best.distance)) {
+        best = {poly, polygonId: poly.polygon_id, holeIndex, index, point, distance};
+      }
+    };
+    (poly.points_source || []).forEach((point, index) => visit(point, index, null));
+    (poly.holes_source || []).forEach((hole, holeIndex) => {
+      (hole || []).forEach((point, index) => visit(point, index, holeIndex));
+    });
+  }
   return best;
 }
 
@@ -2869,6 +3317,7 @@ function resetToInitialPolygons() {
   state.annotations.manual_merges = [];
   state.annotations.manual_connections = [];
   state.annotations.manual_walls = [];
+  state.annotations.manual_assets = [];
   state.annotations.layer_alignment_pairs = [];
   state.annotations.scale_calibration = null;
   state.manualPolygons = [];
@@ -2883,6 +3332,7 @@ function resetToInitialPolygons() {
   resetAddPolygon();
   resetCutHole();
   resetStairConnection();
+  resetSubwayPlacement();
   resetLayerAlign();
   resetScaleCalibration();
   resetSharedEdge();
@@ -3128,6 +3578,7 @@ function loadProject() {
       state.icons = project.icons?.icons || [];
       state.annotations = project.annotations || state.annotations;
       state.annotations.manual_connections = state.annotations.manual_connections || [];
+      state.annotations.manual_assets = state.annotations.manual_assets || [];
       state.annotations.scale_calibration = state.annotations.scale_calibration || null;
       state.annotations.polygon_z_offsets = state.annotations.polygon_z_offsets || {};
       state.annotations.polygon_z_values = state.annotations.polygon_z_values || {};
@@ -3191,6 +3642,7 @@ function loadSelectedImage() {
         manual_merges: [],
         manual_connections: [],
         manual_walls: [],
+        manual_assets: [],
         layer_alignment_pairs: [],
         scale_calibration: null,
       };
@@ -3334,6 +3786,7 @@ function togglePreviewFinal() {
     resetInsertVertex();
     resetSimpleKeep();
     resetStairConnection();
+    resetSubwayPlacement();
     resetLayerAlign();
     resetScaleCalibration();
   }
@@ -3372,6 +3825,7 @@ function loadExportedFinal() {
         manual_merges: [],
         manual_connections: data.connections || [],
         manual_walls: data.walls || [],
+        manual_assets: state.annotations.manual_assets || [],
         layer_alignment_pairs: state.annotations.layer_alignment_pairs || [],
         scale_calibration: state.annotations.scale_calibration || null,
       };
@@ -3386,6 +3840,7 @@ function loadExportedFinal() {
       resetAddPolygon();
       resetCutHole();
       resetStairConnection();
+      resetSubwayPlacement();
       resetLayerAlign();
       resetScaleCalibration();
       resetSharedEdge();
@@ -3538,6 +3993,21 @@ canvas.addEventListener("mousemove", (event) => {
     }
     return;
   }
+  if (state.tool === "stair" && state.stair.active) {
+    const hover = nearestConnectionVertex(world, findPolygonAt(world), 14);
+    const nextHover = hover ? {
+      polygonId: hover.polygonId,
+      holeIndex: hover.holeIndex,
+      index: hover.index,
+      point: hover.point,
+    } : null;
+    const changed = JSON.stringify(nextHover) !== JSON.stringify(state.stair.hoverVertex);
+    if (changed) {
+      state.stair.hoverVertex = nextHover;
+      draw();
+    }
+    return;
+  }
 
   const poly = findPolygonAt(world);
   const nextHover = poly?.polygon_id || null;
@@ -3614,6 +4084,10 @@ canvas.addEventListener("click", (event) => {
     addScaleCalibrationPoint(world);
     return;
   }
+  if (state.tool === "subway") {
+    addSubwayAsset(world, poly);
+    return;
+  }
   if (state.tool === "stair") {
     addStairPoint(world, poly);
     return;
@@ -3626,10 +4100,16 @@ canvas.addEventListener("click", (event) => {
     toggleKeepVertex(world, poly);
     return;
   }
+  if (selectLayerAlignPair(world)) return;
+  if (selectSubwayAsset(world)) return;
   if (selectStairConnection(world)) return;
   state.selectedId = poly?.polygon_id || null;
   state.selectedStairId = null;
+  state.selectedSubwayId = null;
+  state.selectedLayerAlignIndex = null;
   updateSelectedInfo();
+  updateLayerAlignStatus();
+  updateSubwayStatus();
   updateStairStatus();
   updateDeleteStatus();
   draw();
@@ -3652,6 +4132,10 @@ document.getElementById("showConnectionsToggle").addEventListener("change", (eve
 });
 showIconsToggle.addEventListener("change", (event) => {
   state.showIcons = event.target.checked;
+  draw();
+});
+showCorrectionsToggle.addEventListener("change", (event) => {
+  state.showCorrections = event.target.checked;
   draw();
 });
 document.getElementById("showHiddenToggle").addEventListener("change", (event) => {
@@ -3739,6 +4223,8 @@ document.getElementById("undoHolePointBtn").addEventListener("click", undoCutHol
 document.getElementById("undoCutHoleBtn").addEventListener("click", undoLastCutHole);
 document.getElementById("resetCutHoleBtn").addEventListener("click", resetCutHole);
 document.getElementById("startLayerAlignBtn").addEventListener("click", startLayerAlign);
+document.getElementById("deleteLayerAlignBtn").addEventListener("click", deleteSelectedLayerAlignPair);
+document.getElementById("deleteAllLayerAlignBtn").addEventListener("click", deleteAllLayerAlignPairs);
 document.getElementById("undoLayerAlignBtn").addEventListener("click", undoLastLayerAlignPair);
 document.getElementById("resetLayerAlignBtn").addEventListener("click", resetLayerAlign);
 document.getElementById("startScaleBtn").addEventListener("click", startScaleCalibration);
@@ -3747,8 +4233,14 @@ document.getElementById("clearScaleBtn").addEventListener("click", clearScaleCal
 document.getElementById("resetScaleBtn").addEventListener("click", resetScaleCalibration);
 document.getElementById("startStairBtn").addEventListener("click", startStairConnection);
 document.getElementById("deleteStairBtn").addEventListener("click", deleteSelectedStairConnection);
+document.getElementById("deleteAllConnectionsBtn").addEventListener("click", deleteAllStairConnections);
 document.getElementById("undoStairBtn").addEventListener("click", undoLastStairConnection);
 document.getElementById("resetStairBtn").addEventListener("click", resetStairConnection);
+document.getElementById("startSubwayBtn").addEventListener("click", startSubwayPlacement);
+document.getElementById("deleteSubwayBtn").addEventListener("click", deleteSelectedSubwayAsset);
+document.getElementById("deleteAllSubwayBtn").addEventListener("click", deleteAllSubwayAssets);
+document.getElementById("undoSubwayBtn").addEventListener("click", undoLastSubwayAsset);
+document.getElementById("resetSubwayBtn").addEventListener("click", resetSubwayPlacement);
 document.getElementById("refreshImagesBtn").addEventListener("click", refreshImages);
 document.getElementById("loadImageBtn").addEventListener("click", loadSelectedImage);
 document.getElementById("startMarkerBtn").addEventListener("click", startManualMarker);
@@ -3852,6 +4344,9 @@ document.addEventListener("keydown", (event) => {
   } else if (key === "u") {
     event.preventDefault();
     startStairConnection();
+  } else if (key === "o") {
+    event.preventDefault();
+    startSubwayPlacement();
   } else if (key === "m") {
     event.preventDefault();
     startManualMarker();
@@ -3878,7 +4373,9 @@ document.addEventListener("keydown", (event) => {
     undoLastMerge();
   } else if (event.key === "Delete") {
     event.preventDefault();
-    if (state.selectedStairId) deleteSelectedStairConnection();
+    if (state.selectedSubwayId) deleteSelectedSubwayAsset();
+    else if (state.selectedLayerAlignIndex !== null) deleteSelectedLayerAlignPair();
+    else if (state.selectedStairId) deleteSelectedStairConnection();
     else deleteSelectedPolygon();
   } else if (event.key === "Backspace") {
     event.preventDefault();
@@ -3902,6 +4399,7 @@ document.addEventListener("keydown", (event) => {
     else if (state.tool === "addPolygon") resetAddPolygon();
     else if (state.tool === "cutHole") resetCutHole();
     else if (state.tool === "layerAlign") resetLayerAlign();
+    else if (state.tool === "subway") resetSubwayPlacement();
     else if (state.tool === "scaleCalibration") resetScaleCalibration();
     else if (state.tool === "marker") {
       state.tool = "select";
@@ -3932,5 +4430,6 @@ updateAddPolygonStatus();
 updateCutHoleStatus();
 updateLayerAlignStatus();
 updateScaleCalibrationStatus();
+updateSubwayStatus();
 updateKeepStatus();
 loadProject();

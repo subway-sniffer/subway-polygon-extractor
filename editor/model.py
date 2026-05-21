@@ -100,6 +100,7 @@ def default_annotations():
         "manual_merges": [],
         "manual_connections": [],
         "manual_walls": [],
+        "manual_assets": [],
         "layer_alignment_pairs": [],
         "scale_calibration": None,
     }

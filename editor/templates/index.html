@@ -56,8 +56,12 @@
           auto connection candidates
         </label>
         <label class="row">
-          <input id="showIconsToggle" type="checkbox" checked>
+          <input id="showIconsToggle" type="checkbox">
           detected icons
+        </label>
+        <label class="row">
+          <input id="showCorrectionsToggle" type="checkbox" checked>
+          xy corrections
         </label>
         <label class="row">
           <input id="showHiddenToggle" type="checkbox">
@@ -174,14 +178,23 @@
       </section>
 
       <section>
-        <h2>Layer Align XY</h2>
+        <h2>XY Correction</h2>
         <label>
           Label
-          <input id="alignLabelInput" value="elevator_A">
+          <input id="alignLabelInput" value="align_A">
         </label>
-        <button id="startLayerAlignBtn">Start Layer Align (Y)</button>
-        <button id="undoLayerAlignBtn">Undo Last Align Pair</button>
-        <button id="resetLayerAlignBtn">Reset Layer Align (Esc)</button>
+        <label>
+          Mode
+          <select id="alignModeInput">
+            <option value="same_xy">same XY point</option>
+            <option value="vertical_y">vertical Y lock</option>
+          </select>
+        </label>
+        <button id="startLayerAlignBtn">Start XY Correction (Y)</button>
+        <button id="deleteLayerAlignBtn">Delete Selected Correction</button>
+        <button id="deleteAllLayerAlignBtn">Delete All Corrections</button>
+        <button id="undoLayerAlignBtn">Undo Last Correction Pair</button>
+        <button id="resetLayerAlignBtn">Reset XY Correction (Esc)</button>
         <div id="layerAlignStatus">inactive</div>
       </section>
 
@@ -213,9 +226,24 @@
         </label>
         <button id="startStairBtn">Start Connection (U)</button>
         <button id="deleteStairBtn">Delete Selected Connection</button>
+        <button id="deleteAllConnectionsBtn">Delete All Connections</button>
         <button id="undoStairBtn">Undo Last Connection</button>
         <button id="resetStairBtn">Reset Connection (Esc)</button>
         <div id="stairStatus">inactive</div>
+      </section>
+
+      <section>
+        <h2>Subway Train</h2>
+        <label>
+          Label
+          <input id="subwayLabelInput" placeholder="auto">
+        </label>
+        <button id="startSubwayBtn">Start Subway</button>
+        <button id="deleteSubwayBtn">Delete Selected Subway</button>
+        <button id="deleteAllSubwayBtn">Delete All Subways</button>
+        <button id="undoSubwayBtn">Undo Last Subway</button>
+        <button id="resetSubwayBtn">Reset Subway (Esc)</button>
+        <div id="subwayStatus">inactive</div>
       </section>
 
       <section>
