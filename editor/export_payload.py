@@ -581,6 +581,151 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
     return assets
 
 
+def navigation_node(node_id, node_type, layer, position, polygon_id=None, **extra):
+    """Build one navigation node record."""
+    record = {
+        "node_id": node_id,
+        "type": node_type,
+        "layer": layer,
+        "polygon_id": polygon_id,
+        "position": [float(value) for value in position],
+    }
+    record.update({key: value for key, value in extra.items() if value is not None})
+    return record
+
+
+def navigation_edge(edge_id, from_node, to_node, edge_type, cost=None, bidirectional=True, **extra):
+    """Build one navigation edge record."""
+    record = {
+        "edge_id": edge_id,
+        "from": from_node,
+        "to": to_node,
+        "type": edge_type,
+        "bidirectional": bool(bidirectional),
+    }
+    if cost is not None:
+        record["cost"] = float(cost)
+    record.update({key: value for key, value in extra.items() if value is not None})
+    return record
+
+
+def distance_3d(a, b):
+    """Return Euclidean distance between two 3D points."""
+    return float(np.linalg.norm(np.asarray(a, dtype=np.float64) - np.asarray(b, dtype=np.float64)))
+
+
+def build_navigation_graph(connection_records, icon_records=None, manual_assets=None):
+    """Build a lightweight graph for Unity NavMesh-assisted routing."""
+    nodes = []
+    edges = []
+    nodes_by_layer = {}
+
+    def add_node(node):
+        nodes.append(node)
+        if node.get("layer"):
+            nodes_by_layer.setdefault(node["layer"], []).append(node["node_id"])
+
+    for connection in connection_records or []:
+        connection_id = connection.get("connection_id")
+        if not connection_id:
+            continue
+        from_data = connection.get("from") or {}
+        to_data = connection.get("to") or {}
+        from_pos = from_data.get("position")
+        to_pos = to_data.get("position")
+        if not from_pos or not to_pos:
+            continue
+        connector_type = connection.get("asset_type") or connection.get("type") or "connector"
+        from_node_id = f"{connection_id}_from"
+        to_node_id = f"{connection_id}_to"
+        add_node(
+            navigation_node(
+                from_node_id,
+                "connector",
+                from_data.get("layer"),
+                from_pos,
+                polygon_id=from_data.get("polygon_id"),
+                connector_id=connection_id,
+                connector_type=connector_type,
+                endpoint="from",
+            )
+        )
+        add_node(
+            navigation_node(
+                to_node_id,
+                "connector",
+                to_data.get("layer"),
+                to_pos,
+                polygon_id=to_data.get("polygon_id"),
+                connector_id=connection_id,
+                connector_type=connector_type,
+                endpoint="to",
+            )
+        )
+        edges.append(
+            navigation_edge(
+                f"{connection_id}_edge",
+                from_node_id,
+                to_node_id,
+                "vertical",
+                cost=distance_3d(from_pos, to_pos),
+                bidirectional=connection.get("bidirectional", True),
+                connector_id=connection_id,
+                connector_type=connector_type,
+            )
+        )
+
+    for asset in manual_assets or []:
+        if asset.get("type") != "subway" or not asset.get("location"):
+            continue
+        asset_id = asset.get("asset_id") or asset.get("label")
+        if not asset_id:
+            continue
+        add_node(
+            navigation_node(
+                f"{asset_id}_node",
+                "asset",
+                asset.get("layer"),
+                asset.get("location"),
+                polygon_id=asset.get("polygon_id"),
+                asset_id=asset_id,
+                asset_type="subway",
+                label=asset.get("label"),
+            )
+        )
+
+    for icon in icon_records or []:
+        icon_id = icon.get("icon_id") or icon.get("id")
+        position = icon.get("position") or icon.get("location")
+        if not icon_id or not position:
+            continue
+        icon_type = icon.get("type") or icon.get("category") or icon.get("template_class")
+        add_node(
+            navigation_node(
+                f"{icon_id}_poi",
+                "poi",
+                icon.get("layer"),
+                position,
+                polygon_id=icon.get("polygon_id"),
+                poi_id=icon_id,
+                poi_type=icon_type,
+            )
+        )
+
+    return {
+        "metadata": {
+            "format": "navigation_graph",
+            "graph_mode": "unity_navmesh_assisted_v1",
+            "same_layer_routing": "unity_navmesh",
+            "same_layer_edges": "computed_in_unity",
+            "vertical_edges": "exported",
+        },
+        "nodes": nodes,
+        "edges": edges,
+        "nodes_by_layer": nodes_by_layer,
+    }
+
+
 def color_rgba(color_rgb, alpha=1.0):
     """Convert 0-255 RGB into normalized RGBA used by plane_with_color.json."""
     rgb = color_rgb or [180, 180, 180]
@@ -735,8 +880,8 @@ def synthesize_connection_line(center, other_center, width=1.0):
     ]
 
 
-def order_stair_lines_for_blender(start_line, end_line):
-    """Return low-to-high stair lines normalized for the existing Blender stair script."""
+def order_vertical_connection_lines_for_blender(start_line, end_line):
+    """Return low-to-high line pairs normalized for the existing Blender asset scripts."""
     if not start_line or not end_line:
         return start_line, end_line
     start_z = sum(float(point[2]) for point in start_line) / len(start_line)
@@ -746,9 +891,9 @@ def order_stair_lines_for_blender(start_line, end_line):
 
     # Layer alignment can scale each floor differently, so a line pair that was
     # parallel in editor/source space may no longer be parallel in scene space.
-    # The current Blender stair script uses start_line as the stair width and
-    # start_center -> end_center as the run direction, so normalize end_line
-    # to the same width vector after every export transform has been applied.
+    # The Blender stair/escalator scripts use start_line as the asset width and
+    # start_center -> end_center as the run direction, so normalize end_line to
+    # the same width vector after every export transform has been applied.
     dx = float(start_line[1][0]) - float(start_line[0][0])
     dy = float(start_line[1][1]) - float(start_line[0][1])
     end_center = [
@@ -1191,6 +1336,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         "manual_assets": manual_assets,
     }
     payload["assets"] = assets
+    payload["navigation"] = build_navigation_graph(connection_records, icon_records=icon_records, manual_assets=manual_assets)
     return payload
 
 
@@ -1229,8 +1375,8 @@ def build_assets_from_connections(connections):
             "from": connection.get("from"),
             "to": connection.get("to"),
         }
-        if asset_type == "stair" and connection.get("start_line") and connection.get("end_line"):
-            start_line, end_line = order_stair_lines_for_blender(
+        if asset_type in {"stair", "escalator"} and connection.get("start_line") and connection.get("end_line"):
+            start_line, end_line = order_vertical_connection_lines_for_blender(
                 connection.get("start_line"),
                 connection.get("end_line"),
             )

@@ -290,16 +290,22 @@ def create_app(args):
         example_path = save_json_compact_vectors(payload, ROOT_DIR / "examples" / "polygon_example.json")
         assets_payload = build_assets_payload(payload)
         assets_path = save_json_compact_vectors(assets_payload, store.active["asset_output_path"])
+        navigation_path = save_json_compact_vectors(payload.get("navigation", {}), store.active["output_dir"] / "navigation_graph.json")
+        navigation_example_path = save_json_compact_vectors(payload.get("navigation", {}), ROOT_DIR / "examples" / "navigation_graph_example.json")
         return jsonify(
             {
                 "saved": True,
                 "output": str(saved_path),
                 "assets_output": str(assets_path),
+                "navigation_output": str(navigation_path),
+                "navigation_example_output": str(navigation_example_path),
                 "example_output": str(example_path),
                 "plane_count": len(payload["planes"]),
                 "connection_count": len(payload.get("connections", [])),
                 "asset_count": len(assets_payload.get("assets", [])),
                 "icon_count": len(payload.get("icons", [])),
+                "navigation_node_count": len(payload.get("navigation", {}).get("nodes", [])),
+                "navigation_edge_count": len(payload.get("navigation", {}).get("edges", [])),
                 "format": payload.get("metadata", {}).get("format"),
             }
         )
