@@ -18,6 +18,8 @@
         <button id="refreshImagesBtn">Refresh Images</button>
         <select id="imageSelect"></select>
         <button id="loadImageBtn">Load Selected Image</button>
+        <input id="uploadImageInput" type="file" accept="image/*">
+        <button id="uploadImageBtn">Load Image File</button>
         <button id="startCropBtn">Start Crop</button>
         <button id="applyCropBtn">Apply Crop</button>
         <button id="resetCropBtn">Reset Crop</button>
@@ -111,6 +113,7 @@
           </datalist>
         </label>
         <button id="setLayerBtn">Set Layer</button>
+        <button id="clearLayerSelectionBtn">Clear Multi Selection</button>
         <label>
           Z offset from floor
           <input id="zOverrideInput" type="number" step="0.01" placeholder="0">
@@ -121,6 +124,20 @@
         <button id="deletePolygonBtn">Delete Polygon (Delete)</button>
         <button id="undoDeletePolygonBtn">Undo Last Delete</button>
         <div id="deleteStatus">inactive</div>
+      </section>
+
+      <section>
+        <h2>Layer Grouping</h2>
+        <label>
+          Total floors
+          <input id="groupingLayerCountInput" type="number" value="4" min="1" max="12">
+        </label>
+        <label>
+          Contact area
+          <input id="groupingMinContactAreaInput" type="number" value="700" min="0" step="50">
+        </label>
+        <button id="runEditedGroupingBtn">Group Edited Polygons</button>
+        <div id="groupingStatus">inactive</div>
       </section>
 
       <section>
@@ -202,6 +219,15 @@
       </section>
 
       <section>
+        <h2>Split Polygon</h2>
+        <button id="startSplitPolygonBtn">Start Split Polygon</button>
+        <button id="undoSplitPointBtn">Undo Split Point (Backspace)</button>
+        <button id="undoSplitPolygonBtn">Undo Last Split</button>
+        <button id="resetSplitPolygonBtn">Reset Split Polygon (Esc)</button>
+        <div id="splitPolygonStatus">inactive</div>
+      </section>
+
+      <section>
         <h2>XY Correction</h2>
         <label>
           Label
@@ -236,6 +262,16 @@
       </section>
 
       <section>
+        <h2>Local Axis Correction</h2>
+        <button id="startLocalAxisBtn">Start Local Axis</button>
+        <button id="deleteLocalAxisBtn">Delete Selected Axis</button>
+        <button id="deleteAllLocalAxisBtn">Delete All Axes</button>
+        <button id="undoLocalAxisBtn">Undo Last Axis</button>
+        <button id="resetLocalAxisBtn">Reset Local Axis (Esc)</button>
+        <div id="localAxisStatus">inactive</div>
+      </section>
+
+      <section>
         <h2>Vertical Connection</h2>
         <label>
           Type
@@ -249,6 +285,7 @@
           <input id="stairLabelInput" placeholder="auto">
         </label>
         <button id="startStairBtn">Start Connection (U)</button>
+        <button id="setConnectionTypeBtn">Set Selected Type</button>
         <button id="deleteStairBtn">Delete Selected Connection</button>
         <button id="deleteAllConnectionsBtn">Delete All Connections</button>
         <button id="undoStairBtn">Undo Last Connection</button>
@@ -257,16 +294,23 @@
       </section>
 
       <section>
-        <h2>Subway Train</h2>
+        <h2>Linear Asset</h2>
+        <label>
+          Type
+          <select id="manualAssetTypeInput">
+            <option value="subway">subway</option>
+            <option value="moving_walkway">moving walkway</option>
+          </select>
+        </label>
         <label>
           Label
           <input id="subwayLabelInput" placeholder="auto">
         </label>
-        <button id="startSubwayBtn">Start Subway</button>
-        <button id="deleteSubwayBtn">Delete Selected Subway</button>
-        <button id="deleteAllSubwayBtn">Delete All Subways</button>
-        <button id="undoSubwayBtn">Undo Last Subway</button>
-        <button id="resetSubwayBtn">Reset Subway (Esc)</button>
+        <button id="startSubwayBtn">Start Linear Asset</button>
+        <button id="deleteSubwayBtn">Delete Selected Asset</button>
+        <button id="deleteAllSubwayBtn">Delete All Linear Assets</button>
+        <button id="undoSubwayBtn">Undo Last Linear Asset</button>
+        <button id="resetSubwayBtn">Reset Linear Asset (Esc)</button>
         <div id="subwayStatus">inactive</div>
       </section>
 

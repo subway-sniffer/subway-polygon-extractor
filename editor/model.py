@@ -102,6 +102,7 @@ def default_annotations():
         "manual_walls": [],
         "manual_assets": [],
         "layer_alignment_pairs": [],
+        "polygon_axis_corrections": {},
         "scale_calibration": None,
     }
 

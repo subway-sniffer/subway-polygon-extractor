@@ -15,6 +15,7 @@ const state = {
     manual_walls: [],
     manual_assets: [],
     layer_alignment_pairs: [],
+    polygon_axis_corrections: {},
     scale_calibration: null,
   },
   scale: 1,
@@ -24,7 +25,9 @@ const state = {
   lastMouse: null,
   hoveredId: null,
   selectedId: null,
+  selectedIds: [],
   selectedStairId: null,
+  selectedStairIds: [],
   selectedSubwayId: null,
   showIds: false,
   showConnections: false,
@@ -84,6 +87,7 @@ const state = {
     active: false,
     polygonId: null,
     selectedVertexIndices: [],
+    selectedVertices: [],
     hoverVertex: null,
   },
   autoMerge: {
@@ -100,6 +104,12 @@ const state = {
     polygonId: null,
     points: [],
   },
+  splitPolygon: {
+    active: false,
+    polygonId: null,
+    vertexIndices: [],
+    hoverVertex: null,
+  },
   layerAlign: {
     active: false,
     label: "align_A",
@@ -114,6 +124,11 @@ const state = {
   selectedLayerAlignIndex: null,
   scaleCalibration: {
     active: false,
+    points: [],
+  },
+  localAxis: {
+    active: false,
+    polygonId: null,
     points: [],
   },
   stair: {
@@ -173,18 +188,22 @@ const deleteStatus = document.getElementById("deleteStatus");
 const sharedEdgeStatus = document.getElementById("sharedEdgeStatus");
 const addPolygonStatus = document.getElementById("addPolygonStatus");
 const cutHoleStatus = document.getElementById("cutHoleStatus");
+const splitPolygonStatus = document.getElementById("splitPolygonStatus");
 const layerAlignStatus = document.getElementById("layerAlignStatus");
 const alignLabelInput = document.getElementById("alignLabelInput");
 const alignModeInput = document.getElementById("alignModeInput");
 const scaleLengthInput = document.getElementById("scaleLengthInput");
 const scaleStatus = document.getElementById("scaleStatus");
+const localAxisStatus = document.getElementById("localAxisStatus");
 const stairStatus = document.getElementById("stairStatus");
 const stairLabelInput = document.getElementById("stairLabelInput");
 const connectionTypeInput = document.getElementById("connectionTypeInput");
 const subwayStatus = document.getElementById("subwayStatus");
 const subwayLabelInput = document.getElementById("subwayLabelInput");
+const manualAssetTypeInput = document.getElementById("manualAssetTypeInput");
 const keepStatus = document.getElementById("keepStatus");
 const imageSelect = document.getElementById("imageSelect");
+const uploadImageInput = document.getElementById("uploadImageInput");
 const pipelineStatus = document.getElementById("pipelineStatus");
 const clusterList = document.getElementById("clusterList");
 const pipelineKInput = document.getElementById("pipelineKInput");
@@ -194,6 +213,9 @@ const pipelineEpsilonInput = document.getElementById("pipelineEpsilonInput");
 const pipelineBridgeClustersInput = document.getElementById("pipelineBridgeClustersInput");
 const pipelineGroupingToggle = document.getElementById("pipelineGroupingToggle");
 const iconThresholdInput = document.getElementById("iconThresholdInput");
+const groupingLayerCountInput = document.getElementById("groupingLayerCountInput");
+const groupingMinContactAreaInput = document.getElementById("groupingMinContactAreaInput");
+const groupingStatus = document.getElementById("groupingStatus");
 
 function resizeCanvas() {
   const rect = canvas.getBoundingClientRect();
@@ -253,8 +275,12 @@ function drawPolygon(poly) {
   if (!points || points.length < 3) return;
   const hidden = hiddenIds().has(poly.polygon_id);
   const selected = state.selectedId === poly.polygon_id;
+  const multiSelected = state.selectedIds.includes(poly.polygon_id);
   const hovered = state.hoveredId === poly.polygon_id;
-  const keepActive = state.keep.active && state.keep.polygonId === poly.polygon_id;
+  const keepSourceIds = new Set((state.keep.selectedVertices || []).map((item) => item.polygonId));
+  const keepActive = state.keep.active && (
+    state.keep.polygonId === poly.polygon_id || keepSourceIds.has(poly.polygon_id)
+  );
   const autoMergeSelected = state.autoMerge.active && state.autoMerge.selectedIds.includes(poly.polygon_id);
   const previewActive = state.previewFinal;
 
@@ -274,9 +300,9 @@ function drawPolygon(poly) {
     });
     ctx.closePath();
   }
-  ctx.fillStyle = hidden && !previewActive ? "rgba(120,120,120,0.08)" : polygonColor(poly, selected ? 0.62 : 0.35);
-  ctx.strokeStyle = previewActive ? "rgba(20,20,20,0.85)" : autoMergeSelected ? "#7b2cff" : keepActive ? "#00c853" : selected ? "#ff2d2d" : hovered ? "#ffd400" : "rgba(30,30,30,0.55)";
-  ctx.lineWidth = previewActive ? 2 : autoMergeSelected ? 4 : keepActive ? 4 : selected ? 3 : hovered ? 2 : 1;
+  ctx.fillStyle = hidden && !previewActive ? "rgba(120,120,120,0.08)" : polygonColor(poly, selected || multiSelected ? 0.62 : 0.35);
+  ctx.strokeStyle = previewActive ? "rgba(20,20,20,0.85)" : autoMergeSelected ? "#7b2cff" : keepActive ? "#00c853" : multiSelected ? "#00aaff" : selected ? "#ff2d2d" : hovered ? "#ffd400" : "rgba(30,30,30,0.55)";
+  ctx.lineWidth = previewActive ? 2 : autoMergeSelected ? 4 : keepActive ? 4 : multiSelected ? 4 : selected ? 3 : hovered ? 2 : 1;
   ctx.fill("evenodd");
   ctx.stroke();
 
@@ -341,9 +367,11 @@ function drawIcons() {
 
 function drawStairConnections() {
   ctx.save();
+  const selectedStairIds = new Set([state.selectedStairId, ...(state.selectedStairIds || [])].filter(Boolean));
   for (const conn of state.annotations.manual_connections || []) {
     if (!["stair", "escalator"].includes(conn.type) || !conn.from_point_source || !conn.to_point_source) continue;
-    const isSelected = (conn.connection_id || conn.label) === state.selectedStairId;
+    const connectionId = conn.connection_id || conn.label;
+    const isSelected = selectedStairIds.has(connectionId);
     const baseColor = conn.type === "escalator" ? "rgba(0, 180, 120, 0.95)" : "rgba(255, 132, 0, 0.95)";
     const pointColor = conn.type === "escalator" ? "#00b878" : "#ff8400";
     const lineColor = isSelected ? "rgba(0, 92, 255, 0.95)" : baseColor;
@@ -419,29 +447,35 @@ function drawStairConnections() {
 function drawManualAssets() {
   ctx.save();
   for (const asset of state.annotations.manual_assets || []) {
-    if (asset.type !== "subway" || !asset.point_source) continue;
+    if (!["subway", "moving_walkway"].includes(asset.type) || !asset.point_source) continue;
     const selected = (asset.asset_id || asset.label) === state.selectedSubwayId;
+    const baseColor = asset.type === "moving_walkway" ? "rgba(0, 190, 140, 0.88)" : "rgba(0, 120, 255, 0.85)";
+    const selectedColor = "rgba(255, 210, 0, 0.95)";
+    const labelColor = asset.type === "moving_walkway" ? "#00a878" : "#0078ff";
     if (asset.start_point_source && asset.end_point_source) {
-      drawPath([asset.start_point_source, asset.end_point_source], selected ? "rgba(255, 210, 0, 0.95)" : "rgba(0, 120, 255, 0.85)", selected ? 5 : 3);
+      drawPath([asset.start_point_source, asset.end_point_source], selected ? selectedColor : baseColor, selected ? 5 : 3);
     }
     const screen = worldToScreen(asset.point_source);
     ctx.beginPath();
     ctx.rect(screen.x - 9, screen.y - 5, 18, 10);
-    ctx.fillStyle = selected ? "rgba(255, 210, 0, 0.95)" : "rgba(0, 120, 255, 0.85)";
+    ctx.fillStyle = selected ? selectedColor : baseColor;
     ctx.strokeStyle = "#111111";
     ctx.lineWidth = selected ? 3 : 1;
     ctx.fill();
     ctx.stroke();
-    drawCanvasLabel(asset.point_source, asset.asset_id || asset.label || "subway", selected ? "#ffd200" : "#0078ff", 10, -10);
+    drawCanvasLabel(asset.point_source, asset.asset_id || asset.label || asset.type, selected ? "#ffd200" : labelColor, 10, -10);
   }
   if (state.subway.active) {
     const points = state.subway.points || [];
-    if (points.length === 2) drawPath(points, "rgba(0, 120, 255, 0.95)", 4);
+    const color = state.subway.assetType === "moving_walkway" ? "rgba(0, 190, 140, 0.95)" : "rgba(0, 120, 255, 0.95)";
+    if (points.length === 2) drawPath(points, color, 4);
     points.forEach((point, index) => {
       const screen = worldToScreen(point);
       ctx.beginPath();
       ctx.arc(screen.x, screen.y, 7, 0, Math.PI * 2);
-      ctx.fillStyle = index === 0 ? "#00aaff" : "#0078ff";
+      ctx.fillStyle = state.subway.assetType === "moving_walkway"
+        ? (index === 0 ? "#00d29a" : "#00a878")
+        : (index === 0 ? "#00aaff" : "#0078ff");
       ctx.strokeStyle = "#111111";
       ctx.lineWidth = 1;
       ctx.fill();
@@ -638,6 +672,11 @@ function insertVertexPolygon() {
 function keepPolygon() {
   if (!state.keep.polygonId) return null;
   return allPolygons().find((poly) => poly.polygon_id === state.keep.polygonId) || null;
+}
+
+function splitPolygonTarget() {
+  if (!state.splitPolygon.polygonId) return null;
+  return allPolygons().find((poly) => poly.polygon_id === state.splitPolygon.polygonId) || null;
 }
 
 function sharedEdgePolygonForSlot(slot) {
@@ -852,11 +891,8 @@ function drawInsertVertexPreview() {
 
 function drawKeepPreview() {
   if (!state.keep.active) return;
-  const poly = keepPolygon();
-  if (!poly) return;
-  const points = poly.points_source || [];
-  const selectedSet = new Set(state.keep.selectedVertexIndices);
-  const keptPoints = points.filter((_, index) => selectedSet.has(index));
+  const selectedVertices = state.keep.selectedVertices || [];
+  const keptPoints = selectedVertices.map((item) => item.point);
 
   ctx.save();
   if (keptPoints.length >= 2) {
@@ -872,18 +908,24 @@ function drawKeepPreview() {
     ctx.stroke();
   }
 
-  points.forEach((point, index) => {
-    const screen = worldToScreen(point);
-    const selected = selectedSet.has(index);
-    const hovered = state.keep.hoverVertex && state.keep.hoverVertex.index === index;
-    ctx.beginPath();
-    ctx.arc(screen.x, screen.y, hovered || selected ? 5 : 3, 0, Math.PI * 2);
-    ctx.fillStyle = selected ? "#00c853" : hovered ? "#00aaff" : "#ffffff";
-    ctx.strokeStyle = selected ? "#003d1c" : "#111111";
-    ctx.lineWidth = selected ? 2 : 1;
-    ctx.fill();
-    ctx.stroke();
-  });
+  const selectedKeys = new Set(selectedVertices.map((item) => `${item.polygonId}:${item.index}`));
+  for (const poly of allPolygons()) {
+    (poly.points_source || []).forEach((point, index) => {
+      const key = `${poly.polygon_id}:${index}`;
+      const screen = worldToScreen(point);
+      const selected = selectedKeys.has(key);
+      const hovered = state.keep.hoverVertex
+        && state.keep.hoverVertex.polygonId === poly.polygon_id
+        && state.keep.hoverVertex.index === index;
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, hovered || selected ? 5 : 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = selected ? "#00c853" : hovered ? "#00aaff" : "rgba(255,255,255,0.72)";
+      ctx.strokeStyle = selected ? "#003d1c" : hovered ? "#111111" : "rgba(0,0,0,0.45)";
+      ctx.lineWidth = selected || hovered ? 2 : 1;
+      ctx.fill();
+      ctx.stroke();
+    });
+  }
   ctx.restore();
 }
 
@@ -1093,6 +1135,76 @@ function drawScaleCalibrationPreview() {
   ctx.restore();
 }
 
+function drawSplitPolygonPreview() {
+  if (!state.splitPolygon.active) return;
+  const poly = splitPolygonTarget();
+  ctx.save();
+  if (poly) {
+    const selectedSet = new Set(state.splitPolygon.vertexIndices || []);
+    const vertices = poly.points_source || [];
+    if (state.splitPolygon.vertexIndices.length === 1) {
+      const start = vertices[state.splitPolygon.vertexIndices[0]];
+      const end = state.splitPolygon.hoverVertex?.point;
+      if (start && end) drawPath([start, end], "rgba(255, 0, 90, 0.8)", 4);
+    } else if (state.splitPolygon.vertexIndices.length === 2) {
+      drawPath(
+        [
+          vertices[state.splitPolygon.vertexIndices[0]],
+          vertices[state.splitPolygon.vertexIndices[1]],
+        ],
+        "rgba(255, 0, 90, 0.95)",
+        4,
+      );
+    }
+    vertices.forEach((point, index) => {
+      const screen = worldToScreen(point);
+      const hovered = state.splitPolygon.hoverVertex && state.splitPolygon.hoverVertex.index === index;
+      const selected = selectedSet.has(index);
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, hovered || selected ? 6 : 3, 0, Math.PI * 2);
+      ctx.fillStyle = selected ? "#ff005a" : hovered ? "#00aaff" : "#ffffff";
+      ctx.strokeStyle = "#111111";
+      ctx.lineWidth = 1;
+      ctx.fill();
+      ctx.stroke();
+    });
+  }
+  ctx.restore();
+}
+
+function drawLocalAxisCorrections() {
+  if (!state.showCorrections && !state.localAxis.active) return;
+  ctx.save();
+  if (state.showCorrections) {
+    for (const [polygonId, correction] of Object.entries(state.annotations.polygon_axis_corrections || {})) {
+      const points = [correction.origin, correction.x_axis_point, correction.y_axis_point].filter(Boolean);
+      if (points.length !== 3) continue;
+      drawPath([points[0], points[1]], "rgba(0, 170, 255, 0.9)", 4);
+      drawPath([points[0], points[2]], "rgba(0, 210, 110, 0.9)", 4);
+      drawCanvasLabel(points[0], `${polygonId} O`, "#222222", 8, -8);
+      drawCanvasLabel(points[1], "X", "#00aaff", 8, -8);
+      drawCanvasLabel(points[2], "Y", "#00b878", 8, 18);
+    }
+  }
+  if (state.localAxis.active) {
+    const points = state.localAxis.points;
+    if (points.length >= 2) drawPath(points.slice(0, 2), "rgba(0, 170, 255, 0.95)", 5);
+    if (points.length >= 3) drawPath([points[0], points[2]], "rgba(0, 210, 110, 0.95)", 5);
+    points.forEach((point, index) => {
+      const screen = worldToScreen(point);
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, 7, 0, Math.PI * 2);
+      ctx.fillStyle = index === 0 ? "#ffffff" : index === 1 ? "#00aaff" : "#00b878";
+      ctx.strokeStyle = "#111111";
+      ctx.lineWidth = 2;
+      ctx.fill();
+      ctx.stroke();
+      drawCanvasLabel(point, ["O", "X", "Y"][index], ctx.fillStyle, 8, -8);
+    });
+  }
+  ctx.restore();
+}
+
 function draw() {
   const size = canvasSize();
   ctx.clearRect(0, 0, size.width, size.height);
@@ -1123,8 +1235,10 @@ function draw() {
   drawKeepPreview();
   drawAddPolygonPreview();
   drawCutHolePreview();
+  drawSplitPolygonPreview();
   drawLayerAlignPreview();
   drawScaleCalibrationPreview();
+  drawLocalAxisCorrections();
   drawSharedEdgePreview();
 }
 
@@ -1175,8 +1289,50 @@ function selectedPolygon() {
   return allPolygons().find((poly) => poly.polygon_id === state.selectedId) || null;
 }
 
+function selectedLayerPolygonIds() {
+  return state.selectedIds.length ? state.selectedIds : (state.selectedId ? [state.selectedId] : []);
+}
+
+function clearMultiSelection() {
+  state.selectedIds = [];
+}
+
+function toggleMultiSelectedPolygon(poly) {
+  if (!poly) return;
+  const selected = new Set(state.selectedIds);
+  if (selected.has(poly.polygon_id)) selected.delete(poly.polygon_id);
+  else selected.add(poly.polygon_id);
+  state.selectedIds = Array.from(selected);
+  state.selectedId = poly.polygon_id;
+  state.selectedStairId = null;
+  state.selectedStairIds = [];
+  state.selectedSubwayId = null;
+  state.selectedLayerAlignIndex = null;
+  updateSelectedInfo();
+  updateLayerAlignStatus();
+  updateSubwayStatus();
+  updateStairStatus();
+  updateDeleteStatus();
+  draw();
+}
+
 function updateSelectedInfo() {
   const poly = selectedPolygon();
+  if (state.selectedIds.length > 1) {
+    const layers = new Set(
+      state.selectedIds
+        .map((polygonId) => state.annotations.polygon_layers?.[polygonId])
+        .filter(Boolean),
+    );
+    selectedInfo.innerHTML = `
+      <dt>polygons</dt><dd>${state.selectedIds.length}</dd>
+      <dt>selected</dt><dd>${state.selectedIds.join(", ")}</dd>
+      <dt>layers</dt><dd>${Array.from(layers).join(", ") || "-"}</dd>
+    `;
+    zOverrideInput.value = "";
+    updateDeleteStatus();
+    return;
+  }
   if (!poly) {
     selectedInfo.innerHTML = "<dt>polygon</dt><dd>-</dd><dt>cluster</dt><dd>-</dd><dt>area</dt><dd>-</dd>";
     layerInput.value = "";
@@ -1339,10 +1495,10 @@ function updateKeepStatus(message = null) {
   }
   keepStatus.textContent = [
     message,
-    "mode: simple keep",
-    `polygon: ${state.keep.polygonId || "-"}`,
-    `kept vertices: ${state.keep.selectedVertexIndices.length}`,
-    state.keep.polygonId ? "Click vertices to keep" : "Click one polygon",
+    "mode: simple keep / merge vertices",
+    `source polygons: ${Array.from(new Set((state.keep.selectedVertices || []).map((item) => item.polygonId))).join(", ") || "-"}`,
+    `kept vertices: ${(state.keep.selectedVertices || []).length}`,
+    "Click existing vertices in final polygon order. Shift applies.",
   ].filter(Boolean).join("\n");
 }
 
@@ -1856,6 +2012,153 @@ function undoLastCutHole() {
   });
 }
 
+function updateSplitPolygonStatus(message = null) {
+  if (!state.splitPolygon.active) {
+    splitPolygonStatus.textContent = "inactive";
+    return;
+  }
+  splitPolygonStatus.textContent = [
+    message,
+    "mode: split by existing vertices",
+    `polygon: ${state.splitPolygon.polygonId || "-"}`,
+    `vertices: ${state.splitPolygon.vertexIndices.length}/2`,
+    state.splitPolygon.polygonId ? "Click two existing vertices." : "Click a polygon vertex.",
+  ].filter(Boolean).join("\n");
+}
+
+function startSplitPolygon() {
+  if (!canEdit()) return;
+  state.tool = "splitPolygon";
+  state.splitPolygon = {
+    active: true,
+    polygonId: null,
+    vertexIndices: [],
+    hoverVertex: null,
+  };
+  updateSplitPolygonStatus();
+  draw();
+}
+
+function resetSplitPolygon() {
+  state.tool = "select";
+  state.splitPolygon = {
+    active: false,
+    polygonId: null,
+    vertexIndices: [],
+    hoverVertex: null,
+  };
+  updateSplitPolygonStatus();
+  draw();
+}
+
+function addSplitPolygonPoint(world, poly) {
+  if (!state.splitPolygon.active) return;
+  const targetPoly = state.splitPolygon.polygonId ? splitPolygonTarget() : poly;
+  const vertex = nearestVertexForPolygon(targetPoly, world, 16);
+  if (!targetPoly || !vertex) {
+    updateSplitPolygonStatus("Click near an existing polygon vertex.");
+    return;
+  }
+  if (!state.splitPolygon.polygonId) {
+    state.splitPolygon.polygonId = targetPoly.polygon_id;
+    state.selectedId = targetPoly.polygon_id;
+    updateSelectedInfo();
+  } else if (targetPoly.polygon_id !== state.splitPolygon.polygonId) {
+    updateSplitPolygonStatus(`Keep both vertices on ${state.splitPolygon.polygonId}.`);
+    return;
+  }
+  if (state.splitPolygon.vertexIndices.includes(vertex.index)) {
+    updateSplitPolygonStatus("Select a different vertex.");
+    return;
+  }
+  state.splitPolygon.vertexIndices.push(vertex.index);
+  if (state.splitPolygon.vertexIndices.length >= 2) {
+    applySplitPolygon();
+    return;
+  }
+  updateSplitPolygonStatus();
+  draw();
+}
+
+function undoSplitPolygonPoint() {
+  if (!state.splitPolygon.active) return;
+  if (state.splitPolygon.vertexIndices.length === 0) {
+    updateSplitPolygonStatus("No split point to undo.");
+    return;
+  }
+  state.splitPolygon.vertexIndices.pop();
+  updateSplitPolygonStatus();
+  draw();
+}
+
+function applySplitPolygon() {
+  if (!canEdit()) return;
+  if (!state.splitPolygon.active || !state.splitPolygon.polygonId || state.splitPolygon.vertexIndices.length !== 2) {
+    updateSplitPolygonStatus("Choose target polygon and two vertices.");
+    return;
+  }
+  fetch("/api/split_polygon", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      polygon_id: state.splitPolygon.polygonId,
+      vertex_indices: state.splitPolygon.vertexIndices,
+      working_polygons: workingPolygonsPayload(),
+    }),
+  })
+    .then((response) => response.json().then((data) => ({ok: response.ok, data})))
+    .then(({ok, data}) => {
+      if (!ok) throw new Error(data.error || "split polygon failed");
+      state.annotations.manual_polygons = state.annotations.manual_polygons || [];
+      state.annotations.manual_edits = state.annotations.manual_edits || [];
+      state.annotations.hidden_polygon_ids = state.annotations.hidden_polygon_ids || [];
+      state.annotations.manual_polygons.push(...data.edited_polygons);
+      state.annotations.manual_edits.push(data.edit_record);
+      const hidden = new Set(state.annotations.hidden_polygon_ids || []);
+      hidden.add(data.edit_record.source_polygon_id);
+      state.annotations.hidden_polygon_ids = Array.from(hidden);
+      state.manualPolygons = state.annotations.manual_polygons;
+      state.selectedId = data.edited_polygons[0]?.polygon_id || null;
+      updateSelectedInfo();
+      resetSplitPolygon();
+      saveAnnotations().then((result) => {
+        saveResult.textContent = JSON.stringify(result, null, 2);
+      });
+    })
+    .catch((error) => {
+      updateSplitPolygonStatus(String(error));
+      draw();
+    });
+}
+
+function undoLastSplitPolygon() {
+  const edits = state.annotations.manual_edits || [];
+  const index = [...edits].reverse().findIndex((edit) => edit.type === "split_polygon");
+  if (index < 0) {
+    updateSplitPolygonStatus("No split edit to undo.");
+    return;
+  }
+  const editIndex = edits.length - 1 - index;
+  const removedEdit = edits.splice(editIndex, 1)[0];
+  const createdIds = new Set(removedEdit.created_polygon_ids || []);
+  state.annotations.manual_edits = edits;
+  state.annotations.manual_polygons = (state.annotations.manual_polygons || []).filter(
+    (poly) => !createdIds.has(poly.polygon_id),
+  );
+  state.manualPolygons = state.annotations.manual_polygons;
+  syncHiddenIdsFromManualRecords();
+  if (createdIds.has(state.selectedId)) {
+    state.selectedId = null;
+    updateSelectedInfo();
+  }
+  resetSplitPolygon();
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    splitPolygonStatus.textContent = `Undid ${removedEdit.edit_id || "split"}.`;
+    draw();
+  });
+}
+
 function updateLayerAlignStatus(message = null) {
   if (!state.layerAlign.active) {
     layerAlignStatus.textContent = [
@@ -2008,6 +2311,7 @@ function selectLayerAlignPair(world) {
   }
   state.selectedLayerAlignIndex = hit.index;
   state.selectedStairId = null;
+  state.selectedStairIds = [];
   state.selectedId = null;
   updateSelectedInfo();
   updateLayerAlignStatus(`Selected correction pair ${hit.index + 1}.`);
@@ -2059,6 +2363,141 @@ function undoLastLayerAlignPair() {
   saveAnnotations().then((result) => {
     saveResult.textContent = JSON.stringify(result, null, 2);
     updateLayerAlignStatus(`Removed ${removed.from_layer}->${removed.to_layer}.`);
+    draw();
+  });
+}
+
+function updateLocalAxisStatus(message = null) {
+  const count = Object.keys(state.annotations.polygon_axis_corrections || {}).length;
+  if (!state.localAxis.active) {
+    localAxisStatus.textContent = [
+      message,
+      `saved: ${count}`,
+      state.selectedId ? `selected: ${state.selectedId}` : null,
+    ].filter(Boolean).join("\n") || "inactive";
+    return;
+  }
+  const next = !state.localAxis.polygonId
+    ? "Click origin point inside a polygon"
+    : state.localAxis.points.length === 1
+      ? "Click X-axis point"
+      : state.localAxis.points.length === 2
+        ? "Click Y-axis point"
+        : "Axis ready";
+  localAxisStatus.textContent = [
+    message,
+    `polygon: ${state.localAxis.polygonId || "-"}`,
+    `points: ${state.localAxis.points.length}/3`,
+    next,
+  ].filter(Boolean).join("\n");
+}
+
+function startLocalAxisCorrection() {
+  if (!canEdit()) return;
+  state.tool = "localAxis";
+  state.localAxis = {
+    active: true,
+    polygonId: null,
+    points: [],
+  };
+  updateLocalAxisStatus();
+  draw();
+}
+
+function resetLocalAxisCorrection() {
+  state.tool = "select";
+  state.localAxis = {
+    active: false,
+    polygonId: null,
+    points: [],
+  };
+  updateLocalAxisStatus();
+  draw();
+}
+
+function addLocalAxisPoint(world, poly) {
+  if (!state.localAxis.active) return;
+  const targetPoly = state.localAxis.polygonId
+    ? allPolygons().find((item) => item.polygon_id === state.localAxis.polygonId)
+    : poly;
+  const snap = nearestConnectionVertex(world, targetPoly || poly, 16);
+  const clickedPoly = snap?.poly || poly;
+  if (!clickedPoly) {
+    updateLocalAxisStatus("Click inside a polygon.");
+    return;
+  }
+  if (!state.localAxis.polygonId) {
+    state.localAxis.polygonId = clickedPoly.polygon_id;
+  } else if (clickedPoly.polygon_id !== state.localAxis.polygonId) {
+    updateLocalAxisStatus(`Keep all 3 points on ${state.localAxis.polygonId}.`);
+    return;
+  }
+  const point = snap && snap.polygonId === state.localAxis.polygonId
+    ? snap.point
+    : [world.x, world.y];
+  state.localAxis.points.push([Number(point[0].toFixed(2)), Number(point[1].toFixed(2))]);
+  if (state.localAxis.points.length < 3) {
+    updateLocalAxisStatus(snap ? `Snapped vertex ${snap.index}.` : null);
+    draw();
+    return;
+  }
+  const [origin, xAxisPoint, yAxisPoint] = state.localAxis.points;
+  state.annotations.polygon_axis_corrections = state.annotations.polygon_axis_corrections || {};
+  state.annotations.polygon_axis_corrections[state.localAxis.polygonId] = {
+    type: "orthogonal_3point",
+    origin,
+    x_axis_point: xAxisPoint,
+    y_axis_point: yAxisPoint,
+    target_angle_degrees: 90,
+  };
+  const polygonId = state.localAxis.polygonId;
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    resetLocalAxisCorrection();
+    updateLocalAxisStatus(`Saved local axis for ${polygonId}.`);
+  });
+}
+
+function deleteSelectedLocalAxisCorrection() {
+  if (!state.selectedId) {
+    updateLocalAxisStatus("Select a polygon first.");
+    return;
+  }
+  state.annotations.polygon_axis_corrections = state.annotations.polygon_axis_corrections || {};
+  if (!state.annotations.polygon_axis_corrections[state.selectedId]) {
+    updateLocalAxisStatus(`No local axis on ${state.selectedId}.`);
+    return;
+  }
+  delete state.annotations.polygon_axis_corrections[state.selectedId];
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateLocalAxisStatus(`Deleted local axis for ${state.selectedId}.`);
+    draw();
+  });
+}
+
+function deleteAllLocalAxisCorrections() {
+  const count = Object.keys(state.annotations.polygon_axis_corrections || {}).length;
+  state.annotations.polygon_axis_corrections = {};
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateLocalAxisStatus(`Deleted ${count} local axes.`);
+    draw();
+  });
+}
+
+function undoLastLocalAxisCorrection() {
+  state.annotations.polygon_axis_corrections = state.annotations.polygon_axis_corrections || {};
+  const ids = Object.keys(state.annotations.polygon_axis_corrections);
+  const polygonId = ids[ids.length - 1];
+  if (!polygonId) {
+    updateLocalAxisStatus("No local axis to undo.");
+    return;
+  }
+  delete state.annotations.polygon_axis_corrections[polygonId];
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateLocalAxisStatus(`Removed local axis for ${polygonId}.`);
     draw();
   });
 }
@@ -2152,6 +2591,16 @@ function selectedConnectionType() {
   return connectionTypeInput?.value || "stair";
 }
 
+function stairConnectionId(conn, fallbackIndex = 0) {
+  return conn.connection_id || conn.label || `connection_${fallbackIndex + 1}`;
+}
+
+function selectedStairConnectionIds() {
+  const ids = new Set(state.selectedStairIds || []);
+  if (state.selectedStairId) ids.add(state.selectedStairId);
+  return Array.from(ids);
+}
+
 function midpoint(a, b) {
   return [
     (Number(a[0]) + Number(b[0])) / 2,
@@ -2199,12 +2648,13 @@ function updateStairStatus(message = null) {
   const stairCount = (state.annotations.manual_connections || []).filter((conn) => conn.type === "stair").length;
   const escalatorCount = (state.annotations.manual_connections || []).filter((conn) => conn.type === "escalator").length;
   const currentType = state.stair.active ? state.stair.connectionType : selectedConnectionType();
+  const selectedIds = selectedStairConnectionIds();
   if (!state.stair.active) {
     stairStatus.textContent = [
       message,
       `stairs: ${stairCount}`,
       `escalators: ${escalatorCount}`,
-      state.selectedStairId ? `selected: ${state.selectedStairId}` : null,
+      selectedIds.length ? `selected ${selectedIds.length}: ${selectedIds.join(", ")}` : null,
     ].filter(Boolean).join("\n") || "inactive";
     return;
   }
@@ -2356,43 +2806,88 @@ function nearestStairConnection(world, maxScreenDistance = 12) {
   return best;
 }
 
-function selectStairConnection(world) {
+function selectStairConnection(world, event = null) {
   const hit = nearestStairConnection(world);
   if (!hit) {
     state.selectedStairId = null;
+    if (!event?.ctrlKey && !event?.metaKey) state.selectedStairIds = [];
     updateStairStatus();
     draw();
     return false;
   }
-  state.selectedStairId = hit.connectionId;
+  if (event?.ctrlKey || event?.metaKey) {
+    const selected = new Set(state.selectedStairIds || []);
+    if (selected.has(hit.connectionId)) selected.delete(hit.connectionId);
+    else selected.add(hit.connectionId);
+    state.selectedStairIds = Array.from(selected);
+    state.selectedStairId = state.selectedStairIds[state.selectedStairIds.length - 1] || null;
+  } else {
+    state.selectedStairId = hit.connectionId;
+    state.selectedStairIds = [hit.connectionId];
+  }
   state.selectedId = null;
   updateSelectedInfo();
-  updateStairStatus(`Selected ${hit.connectionId}.`);
+  updateStairStatus(`Selected ${selectedStairConnectionIds().length} connection(s).`);
   draw();
   return true;
 }
 
 function deleteSelectedStairConnection() {
-  if (!state.selectedStairId) {
+  const selectedIds = selectedStairConnectionIds();
+  if (!selectedIds.length) {
     updateStairStatus("Select a stair connection first.");
     return;
   }
   state.annotations.manual_connections = state.annotations.manual_connections || [];
-  const index = state.annotations.manual_connections.findIndex(
-    (conn) => ["stair", "escalator"].includes(conn.type) && (conn.connection_id || conn.label) === state.selectedStairId,
+  const selected = new Set(selectedIds);
+  const before = state.annotations.manual_connections.length;
+  state.annotations.manual_connections = state.annotations.manual_connections.filter(
+    (conn, index) => !["stair", "escalator"].includes(conn.type) || !selected.has(stairConnectionId(conn, index)),
   );
-  if (index < 0) {
-    const missingId = state.selectedStairId;
-    state.selectedStairId = null;
-    updateStairStatus(`Missing stair: ${missingId}`);
-    draw();
-    return;
-  }
-  const removed = state.annotations.manual_connections.splice(index, 1)[0];
+  const removedCount = before - state.annotations.manual_connections.length;
   state.selectedStairId = null;
+  state.selectedStairIds = [];
   saveAnnotations().then((result) => {
     saveResult.textContent = JSON.stringify(result, null, 2);
-    updateStairStatus(`Deleted ${removed.connection_id || removed.label}.`);
+    updateStairStatus(`Deleted ${removedCount} connection(s).`);
+    draw();
+  });
+}
+
+function setSelectedStairConnectionType() {
+  const selectedIds = selectedStairConnectionIds();
+  if (!selectedIds.length) {
+    updateStairStatus("Select stair/escalator connections first.");
+    return;
+  }
+  const targetType = selectedConnectionType();
+  if (!["stair", "escalator"].includes(targetType)) {
+    updateStairStatus("Target type must be stair or escalator.");
+    return;
+  }
+  state.annotations.manual_connections = state.annotations.manual_connections || [];
+  const selected = new Set(selectedIds);
+  let changed = 0;
+  const updatedSelection = [];
+  for (const [index, conn] of state.annotations.manual_connections.entries()) {
+    if (!["stair", "escalator"].includes(conn.type)) continue;
+    const oldId = stairConnectionId(conn, index);
+    if (!selected.has(oldId)) continue;
+    const oldType = conn.type;
+    const nextId = oldType === targetType ? oldId : nextTypedConnectionId(targetType);
+    conn.type = targetType;
+    conn.asset_type = targetType;
+    conn.blend = targetType === "escalator" ? "Escalator.blend" : "Stair.blend";
+    conn.connection_id = nextId;
+    if (!conn.label || conn.label === oldId) conn.label = nextId;
+    updatedSelection.push(nextId);
+    changed += 1;
+  }
+  state.selectedStairIds = updatedSelection;
+  state.selectedStairId = updatedSelection[updatedSelection.length - 1] || null;
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateStairStatus(`Changed ${changed} connection(s) to ${targetType}.`);
     draw();
   });
 }
@@ -2403,6 +2898,7 @@ function deleteAllStairConnections() {
   state.annotations.manual_connections = state.annotations.manual_connections.filter((conn) => !["stair", "escalator"].includes(conn.type));
   const removed = before - state.annotations.manual_connections.length;
   state.selectedStairId = null;
+  state.selectedStairIds = [];
   saveAnnotations().then((result) => {
     saveResult.textContent = JSON.stringify(result, null, 2);
     updateStairStatus(`Deleted ${removed} vertical connections.`);
@@ -2437,22 +2933,39 @@ function nextManualAssetId(type) {
   return `${prefix}_${String(next).padStart(3, "0")}`;
 }
 
+function selectedManualAssetType() {
+  return manualAssetTypeInput?.value || "subway";
+}
+
+function manualAssetBlend(type) {
+  if (type === "moving_walkway") return "MovingWalkway.blend";
+  return "Subway.blend";
+}
+
+function manualAssetDisplayName(type) {
+  if (type === "moving_walkway") return "moving walkway";
+  return "subway train";
+}
+
 function updateSubwayStatus(message = null) {
-  const count = (state.annotations.manual_assets || []).filter((asset) => asset.type === "subway").length;
+  const subwayCount = (state.annotations.manual_assets || []).filter((asset) => asset.type === "subway").length;
+  const walkwayCount = (state.annotations.manual_assets || []).filter((asset) => asset.type === "moving_walkway").length;
+  const currentType = state.subway.active ? state.subway.assetType : selectedManualAssetType();
   if (!state.subway.active) {
     subwayStatus.textContent = [
       message,
-      `subways: ${count}`,
+      `subways: ${subwayCount}`,
+      `moving walkways: ${walkwayCount}`,
       state.selectedSubwayId ? `selected: ${state.selectedSubwayId}` : null,
     ].filter(Boolean).join("\n") || "inactive";
     return;
   }
   subwayStatus.textContent = [
     message,
-    "mode: subway train",
+    `mode: ${manualAssetDisplayName(currentType)}`,
     `label: ${state.subway.label || "auto"}`,
     `points: ${(state.subway.points || []).length}/2`,
-    (state.subway.points || []).length < 1 ? "Click train start point" : "Click train end point",
+    (state.subway.points || []).length < 1 ? "Click asset start point" : "Click asset end point",
   ].filter(Boolean).join("\n");
 }
 
@@ -2462,6 +2975,7 @@ function startSubwayPlacement() {
   state.subway = {
     active: true,
     label: subwayLabelInput.value.trim(),
+    assetType: selectedManualAssetType(),
     points: [],
     polygonId: null,
     layer: null,
@@ -2475,6 +2989,7 @@ function resetSubwayPlacement() {
   state.subway = {
     active: false,
     label: subwayLabelInput.value.trim(),
+    assetType: selectedManualAssetType(),
     points: [],
     polygonId: null,
     layer: null,
@@ -2518,12 +3033,13 @@ function addSubwayAsset(world, poly) {
     Number(((start[0] + end[0]) / 2).toFixed(2)),
     Number(((start[1] + end[1]) / 2).toFixed(2)),
   ];
-  const assetId = nextManualAssetId("subway");
+  const assetType = state.subway.assetType || selectedManualAssetType();
+  const assetId = nextManualAssetId(assetType);
   state.annotations.manual_assets = state.annotations.manual_assets || [];
   state.annotations.manual_assets.push({
     asset_id: assetId,
-    type: "subway",
-    blend: "Subway.blend",
+    type: assetType,
+    blend: manualAssetBlend(assetType),
     label: state.subway.label || assetId,
     polygon_id: state.subway.polygonId,
     layer: state.subway.layer,
@@ -2544,7 +3060,7 @@ function nearestSubwayAsset(world, maxScreenDistance = 14) {
   const mouseScreen = worldToScreen([world.x, world.y]);
   let best = null;
   (state.annotations.manual_assets || []).forEach((asset, index) => {
-    if (asset.type !== "subway" || !asset.point_source) return;
+    if (!["subway", "moving_walkway"].includes(asset.type) || !asset.point_source) return;
     const screen = worldToScreen(asset.point_source);
     const distance = Math.hypot(screen.x - mouseScreen.x, screen.y - mouseScreen.y);
     if (distance <= maxScreenDistance && (!best || distance < best.distance)) {
@@ -2564,6 +3080,7 @@ function selectSubwayAsset(world) {
   }
   state.selectedSubwayId = hit.assetId;
   state.selectedStairId = null;
+  state.selectedStairIds = [];
   state.selectedLayerAlignIndex = null;
   state.selectedId = null;
   updateSelectedInfo();
@@ -2579,7 +3096,7 @@ function deleteSelectedSubwayAsset() {
   }
   state.annotations.manual_assets = state.annotations.manual_assets || [];
   const index = state.annotations.manual_assets.findIndex(
-    (asset) => asset.type === "subway" && (asset.asset_id || asset.label) === state.selectedSubwayId,
+    (asset) => ["subway", "moving_walkway"].includes(asset.type) && (asset.asset_id || asset.label) === state.selectedSubwayId,
   );
   if (index < 0) {
     state.selectedSubwayId = null;
@@ -2599,12 +3116,12 @@ function deleteSelectedSubwayAsset() {
 function deleteAllSubwayAssets() {
   state.annotations.manual_assets = state.annotations.manual_assets || [];
   const before = state.annotations.manual_assets.length;
-  state.annotations.manual_assets = state.annotations.manual_assets.filter((asset) => asset.type !== "subway");
+  state.annotations.manual_assets = state.annotations.manual_assets.filter((asset) => !["subway", "moving_walkway"].includes(asset.type));
   const removed = before - state.annotations.manual_assets.length;
   state.selectedSubwayId = null;
   saveAnnotations().then((result) => {
     saveResult.textContent = JSON.stringify(result, null, 2);
-    updateSubwayStatus(`Deleted ${removed} subways.`);
+    updateSubwayStatus(`Deleted ${removed} linear assets.`);
     draw();
   });
 }
@@ -2612,7 +3129,7 @@ function deleteAllSubwayAssets() {
 function undoLastSubwayAsset() {
   state.annotations.manual_assets = state.annotations.manual_assets || [];
   for (let index = state.annotations.manual_assets.length - 1; index >= 0; index -= 1) {
-    if (state.annotations.manual_assets[index].type !== "subway") continue;
+    if (!["subway", "moving_walkway"].includes(state.annotations.manual_assets[index].type)) continue;
     const removed = state.annotations.manual_assets.splice(index, 1)[0];
     state.selectedSubwayId = null;
     saveAnnotations().then((result) => {
@@ -2622,7 +3139,7 @@ function undoLastSubwayAsset() {
     });
     return;
   }
-  updateSubwayStatus("No subway to undo.");
+  updateSubwayStatus("No linear asset to undo.");
 }
 
 function startSimpleKeep() {
@@ -2632,6 +3149,7 @@ function startSimpleKeep() {
     active: true,
     polygonId: null,
     selectedVertexIndices: [],
+    selectedVertices: [],
     hoverVertex: null,
   };
   updateKeepStatus();
@@ -2644,6 +3162,7 @@ function resetSimpleKeep() {
     active: false,
     polygonId: null,
     selectedVertexIndices: [],
+    selectedVertices: [],
     hoverVertex: null,
   };
   updateKeepStatus();
@@ -2652,34 +3171,34 @@ function resetSimpleKeep() {
 
 function toggleKeepVertex(world, poly) {
   if (!state.keep.active) return;
-  if (!state.keep.polygonId) {
-    if (!poly) {
-      updateKeepStatus("Click one polygon first.");
-      return;
-    }
-    state.keep.polygonId = poly.polygon_id;
-    state.selectedId = poly.polygon_id;
-    state.keep.selectedVertexIndices = [];
-    updateSelectedInfo();
-    updateKeepStatus("Polygon selected. Click vertices to keep.");
-    draw();
-    return;
-  }
-
-  const activePoly = keepPolygon();
-  const vertex = nearestVertexForPolygon(activePoly, world);
+  const vertex = nearestConnectionVertex(world, poly, 14);
   if (!vertex) {
     updateKeepStatus("Click a visible vertex point.");
     return;
   }
+  if (vertex.holeIndex !== null && vertex.holeIndex !== undefined) {
+    updateKeepStatus("Hole vertices are not supported for Simple Keep yet.");
+    return;
+  }
 
-  const selected = new Set(state.keep.selectedVertexIndices);
-  if (selected.has(vertex.index)) {
+  const selected = new Set((state.keep.selectedVertices || []).map((item) => `${item.polygonId}:${item.index}`));
+  const key = `${vertex.polygonId}:${vertex.index}`;
+  if (selected.has(key)) {
     updateKeepStatus("Already selected.");
     return;
   }
-  selected.add(vertex.index);
-  state.keep.selectedVertexIndices = Array.from(selected).sort((a, b) => a - b);
+  state.keep.polygonId = state.keep.polygonId || vertex.polygonId;
+  state.selectedId = vertex.polygonId;
+  state.keep.selectedVertices = state.keep.selectedVertices || [];
+  state.keep.selectedVertices.push({
+    polygonId: vertex.polygonId,
+    index: vertex.index,
+    point: [Number(vertex.point[0].toFixed(2)), Number(vertex.point[1].toFixed(2))],
+  });
+  state.keep.selectedVertexIndices = state.keep.selectedVertices
+    .filter((item) => item.polygonId === state.keep.polygonId)
+    .map((item) => item.index);
+  updateSelectedInfo();
   updateKeepStatus();
   draw();
 }
@@ -2690,8 +3209,8 @@ function applySimpleKeep() {
     updateKeepStatus("Start Simple Keep first.");
     return;
   }
-  if (!state.keep.polygonId || state.keep.selectedVertexIndices.length < 3) {
-    updateKeepStatus("Choose one polygon and keep at least 3 vertices.");
+  if ((state.keep.selectedVertices || []).length < 3) {
+    updateKeepStatus("Choose at least 3 vertices.");
     return;
   }
   fetch("/api/simple_keep_vertices", {
@@ -2700,6 +3219,7 @@ function applySimpleKeep() {
     body: JSON.stringify({
       polygon_id: state.keep.polygonId,
       kept_vertex_indices: state.keep.selectedVertexIndices,
+      kept_vertices: state.keep.selectedVertices,
       working_polygons: workingPolygonsPayload(),
     }),
   })
@@ -2711,12 +3231,23 @@ function applySimpleKeep() {
       state.annotations.manual_edits = state.annotations.manual_edits || [];
       state.annotations.hidden_polygon_ids = state.annotations.hidden_polygon_ids || [];
 
-      state.annotations.manual_polygons.push(data.edited_polygon);
       state.annotations.manual_edits.push(data.edit_record);
       const hidden = new Set(state.annotations.hidden_polygon_ids || []);
-      hidden.add(data.edit_record.source_polygon_id);
+      const sourceIds = data.edit_record.source_polygon_ids || [data.edit_record.source_polygon_id];
+      for (const polygonId of sourceIds) {
+        if (polygonId) hidden.add(polygonId);
+      }
       state.annotations.hidden_polygon_ids = Array.from(hidden);
-      state.manualPolygons = state.annotations.manual_polygons;
+
+      if (state.loadedFinalWorkingSet) {
+        const sourceIdSet = new Set(sourceIds.filter(Boolean));
+        state.polygons = state.polygons.filter((poly) => !sourceIdSet.has(poly.polygon_id));
+        state.polygons.push(data.edited_polygon);
+        state.manualPolygons = [];
+      } else {
+        state.annotations.manual_polygons.push(data.edited_polygon);
+        state.manualPolygons = state.annotations.manual_polygons;
+      }
       state.selectedId = data.edited_polygon.polygon_id;
       updateSelectedInfo();
       resetSimpleKeep();
@@ -3383,6 +3914,7 @@ function resetToInitialPolygons() {
   state.annotations.manual_walls = [];
   state.annotations.manual_assets = [];
   state.annotations.layer_alignment_pairs = [];
+  state.annotations.polygon_axis_corrections = {};
   state.annotations.scale_calibration = null;
   state.manualPolygons = [];
   state.loadedFinalWorkingSet = false;
@@ -3395,9 +3927,11 @@ function resetToInitialPolygons() {
   resetAutoMerge();
   resetAddPolygon();
   resetCutHole();
+  resetSplitPolygon();
   resetStairConnection();
   resetSubwayPlacement();
   resetLayerAlign();
+  resetLocalAxisCorrection();
   resetScaleCalibration();
   resetSharedEdge();
   updateSelectedInfo();
@@ -3646,6 +4180,7 @@ function loadProject() {
       state.annotations.scale_calibration = state.annotations.scale_calibration || null;
       state.annotations.polygon_z_offsets = state.annotations.polygon_z_offsets || {};
       state.annotations.polygon_z_values = state.annotations.polygon_z_values || {};
+      state.annotations.polygon_axis_corrections = state.annotations.polygon_axis_corrections || {};
       state.manualPolygons = state.annotations.manual_polygons || [];
       const image = new Image();
       image.onload = () => {
@@ -3683,6 +4218,36 @@ function refreshImages() {
     });
 }
 
+function resetProjectWorkingState(message) {
+  state.polygons = [];
+  state.manualPolygons = [];
+  state.annotations = {
+    polygon_layers: {},
+    polygon_z_offsets: {},
+    polygon_z_values: {},
+    hidden_polygon_ids: [],
+    manual_polygons: [],
+    manual_edits: [],
+    manual_merges: [],
+    manual_connections: [],
+    manual_walls: [],
+    manual_assets: [],
+    layer_alignment_pairs: [],
+    polygon_axis_corrections: {},
+    scale_calibration: null,
+  };
+  state.marker.points = [];
+  state.crop = {active: false, start: null, current: null, rect: null};
+  state.loadedFinalWorkingSet = false;
+  state.selectedId = null;
+  state.selectedIds = [];
+  state.selectedStairId = null;
+  state.selectedStairIds = [];
+  pipelineStatus.textContent = message;
+  updateScaleCalibrationStatus();
+  updateLocalAxisStatus();
+}
+
 function loadSelectedImage() {
   const imagePath = imageSelect.value;
   if (!imagePath) return;
@@ -3694,27 +4259,33 @@ function loadSelectedImage() {
     .then((response) => response.json().then((data) => ({ok: response.ok, data})))
     .then(({ok, data}) => {
       if (!ok) throw new Error(data.error || "failed to select image");
-      state.polygons = [];
-      state.manualPolygons = [];
-      state.annotations = {
-        polygon_layers: {},
-        polygon_z_offsets: {},
-        polygon_z_values: {},
-        hidden_polygon_ids: [],
-        manual_polygons: [],
-        manual_edits: [],
-        manual_merges: [],
-        manual_connections: [],
-        manual_walls: [],
-        manual_assets: [],
-        layer_alignment_pairs: [],
-        scale_calibration: null,
-      };
-      state.marker.points = [];
-      state.crop = {active: false, start: null, current: null, rect: null};
-      state.loadedFinalWorkingSet = false;
-      pipelineStatus.textContent = `selected: ${data.image}\noutput: ${data.output_dir}`;
-      updateScaleCalibrationStatus();
+      resetProjectWorkingState(`selected: ${data.image}\noutput: ${data.output_dir}`);
+      loadProject();
+      refreshImages();
+    })
+    .catch((error) => {
+      pipelineStatus.textContent = String(error);
+    });
+}
+
+function uploadImageFile() {
+  const file = uploadImageInput.files?.[0];
+  if (!file) {
+    pipelineStatus.textContent = "select an image file first.";
+    return;
+  }
+  const formData = new FormData();
+  formData.append("image", file);
+  pipelineStatus.textContent = `uploading: ${file.name}`;
+  fetch("/api/project/upload", {
+    method: "POST",
+    body: formData,
+  })
+    .then((response) => response.json().then((data) => ({ok: response.ok, data})))
+    .then(({ok, data}) => {
+      if (!ok) throw new Error(data.error || "failed to upload image");
+      uploadImageInput.value = "";
+      resetProjectWorkingState(`uploaded: ${data.image}\noutput: ${data.output_dir}`);
       loadProject();
       refreshImages();
     })
@@ -3975,6 +4546,51 @@ function runPipelineFromUi() {
     });
 }
 
+function applyLayerAssignments(polygonLayers) {
+  state.annotations.polygon_layers = state.annotations.polygon_layers || {};
+  for (const [polygonId, layer] of Object.entries(polygonLayers || {})) {
+    state.annotations.polygon_layers[polygonId] = layer;
+    const poly = [...state.polygons, ...state.manualPolygons].find((item) => item.polygon_id === polygonId);
+    if (poly) {
+      poly.semantic = poly.semantic || {};
+      poly.semantic.layer = layer || null;
+    }
+  }
+  updateSelectedInfo();
+  draw();
+}
+
+function runEditedGroupingFromUi() {
+  const options = {
+    working_polygons: workingPolygonsPayload(),
+    target_layers: groupingLayerCountInput.value,
+    min_contact_area: groupingMinContactAreaInput.value,
+    target_group_strategy: "centroid_y",
+  };
+  groupingStatus.textContent = "grouping edited polygons...";
+  saveAnnotations()
+    .then(() => fetch("/api/grouping/edited", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(options),
+    }))
+    .then((response) => response.json().then((data) => ({ok: response.ok, data})))
+    .then(({ok, data}) => {
+      if (!ok) throw new Error(data.error || "grouping failed");
+      applyLayerAssignments(data.polygon_layers || {});
+      groupingStatus.textContent = [
+        `groups: ${data.group_count}`,
+        `edges: ${data.edge_count}`,
+        `output: ${data.output}`,
+        `debug: ${data.debug_image}`,
+      ].join("\n");
+      saveResult.textContent = JSON.stringify(data, null, 2);
+    })
+    .catch((error) => {
+      groupingStatus.textContent = String(error);
+    });
+}
+
 function loadClusters() {
   fetch("/api/clusters")
     .then((response) => response.json())
@@ -4063,10 +4679,14 @@ function applyExportedFinalPayload(data, sourceLabel = null) {
     manual_walls: data.walls || [],
     manual_assets: state.annotations.manual_assets || [],
     layer_alignment_pairs: state.annotations.layer_alignment_pairs || [],
+    polygon_axis_corrections: state.annotations.polygon_axis_corrections || {},
     scale_calibration: state.annotations.scale_calibration || null,
   };
   state.tool = "select";
   state.selectedId = null;
+  state.selectedIds = [];
+  state.selectedStairId = null;
+  state.selectedStairIds = [];
   resetMerge();
   resetAutoMerge();
   resetStraighten();
@@ -4075,9 +4695,11 @@ function applyExportedFinalPayload(data, sourceLabel = null) {
   resetSimpleKeep();
   resetAddPolygon();
   resetCutHole();
+  resetSplitPolygon();
   resetStairConnection();
   resetSubwayPlacement();
   resetLayerAlign();
+  resetLocalAxisCorrection();
   resetScaleCalibration();
   resetSharedEdge();
   updateSelectedInfo();
@@ -4234,11 +4856,21 @@ canvas.addEventListener("mousemove", (event) => {
     return;
   }
   if (state.tool === "keep" && state.keep.active) {
-    const activePoly = keepPolygon();
-    const nextVertex = nearestVertexForPolygon(activePoly, world);
+    const activePoly = findPolygonAt(world);
+    const nextVertex = nearestConnectionVertex(world, activePoly, 14);
     const changed = JSON.stringify(nextVertex) !== JSON.stringify(state.keep.hoverVertex);
     if (changed) {
       state.keep.hoverVertex = nextVertex;
+      draw();
+    }
+    return;
+  }
+  if (state.tool === "splitPolygon" && state.splitPolygon.active) {
+    const activePoly = splitPolygonTarget() || findPolygonAt(world);
+    const nextVertex = nearestVertexForPolygon(activePoly, world, 16);
+    const changed = JSON.stringify(nextVertex) !== JSON.stringify(state.splitPolygon.hoverVertex);
+    if (changed) {
+      state.splitPolygon.hoverVertex = nextVertex;
       draw();
     }
     return;
@@ -4357,8 +4989,16 @@ canvas.addEventListener("click", (event) => {
     addCutHolePoint(world, poly);
     return;
   }
+  if (state.tool === "splitPolygon") {
+    addSplitPolygonPoint(world, poly);
+    return;
+  }
   if (state.tool === "layerAlign") {
     addLayerAlignPoint(world, poly);
+    return;
+  }
+  if (state.tool === "localAxis") {
+    addLocalAxisPoint(world, poly);
     return;
   }
   if (state.tool === "scaleCalibration") {
@@ -4383,9 +5023,15 @@ canvas.addEventListener("click", (event) => {
   }
   if (selectLayerAlignPair(world)) return;
   if (selectSubwayAsset(world)) return;
-  if (selectStairConnection(world)) return;
+  if (selectStairConnection(world, event)) return;
+  if (event.ctrlKey || event.metaKey) {
+    toggleMultiSelectedPolygon(poly);
+    return;
+  }
+  clearMultiSelection();
   state.selectedId = poly?.polygon_id || null;
   state.selectedStairId = null;
+  state.selectedStairIds = [];
   state.selectedSubwayId = null;
   state.selectedLayerAlignIndex = null;
   updateSelectedInfo();
@@ -4428,15 +5074,22 @@ document.getElementById("showHiddenToggle").addEventListener("change", (event) =
   draw();
 });
 document.getElementById("setLayerBtn").addEventListener("click", () => {
-  if (!state.selectedId) return;
+  const polygonIds = selectedLayerPolygonIds();
+  if (!polygonIds.length) return;
   state.annotations.polygon_layers = state.annotations.polygon_layers || {};
   const layer = layerInput.value.trim();
-  state.annotations.polygon_layers[state.selectedId] = layer;
-  const poly = selectedPolygon();
-  if (poly) {
+  for (const polygonId of polygonIds) {
+    state.annotations.polygon_layers[polygonId] = layer;
+    const poly = [...state.polygons, ...state.manualPolygons].find((item) => item.polygon_id === polygonId);
+    if (!poly) continue;
     poly.semantic = poly.semantic || {};
     poly.semantic.layer = layer || null;
   }
+  updateSelectedInfo();
+  draw();
+});
+document.getElementById("clearLayerSelectionBtn").addEventListener("click", () => {
+  clearMultiSelection();
   updateSelectedInfo();
   draw();
 });
@@ -4507,6 +5160,10 @@ document.getElementById("applyCutHoleBtn").addEventListener("click", applyCutHol
 document.getElementById("undoHolePointBtn").addEventListener("click", undoCutHolePoint);
 document.getElementById("undoCutHoleBtn").addEventListener("click", undoLastCutHole);
 document.getElementById("resetCutHoleBtn").addEventListener("click", resetCutHole);
+document.getElementById("startSplitPolygonBtn").addEventListener("click", startSplitPolygon);
+document.getElementById("undoSplitPointBtn").addEventListener("click", undoSplitPolygonPoint);
+document.getElementById("undoSplitPolygonBtn").addEventListener("click", undoLastSplitPolygon);
+document.getElementById("resetSplitPolygonBtn").addEventListener("click", resetSplitPolygon);
 document.getElementById("startLayerAlignBtn").addEventListener("click", startLayerAlign);
 document.getElementById("deleteLayerAlignBtn").addEventListener("click", deleteSelectedLayerAlignPair);
 document.getElementById("deleteAllLayerAlignBtn").addEventListener("click", deleteAllLayerAlignPairs);
@@ -4516,7 +5173,13 @@ document.getElementById("startScaleBtn").addEventListener("click", startScaleCal
 document.getElementById("applyScaleBtn").addEventListener("click", applyScaleCalibration);
 document.getElementById("clearScaleBtn").addEventListener("click", clearScaleCalibration);
 document.getElementById("resetScaleBtn").addEventListener("click", resetScaleCalibration);
+document.getElementById("startLocalAxisBtn").addEventListener("click", startLocalAxisCorrection);
+document.getElementById("deleteLocalAxisBtn").addEventListener("click", deleteSelectedLocalAxisCorrection);
+document.getElementById("deleteAllLocalAxisBtn").addEventListener("click", deleteAllLocalAxisCorrections);
+document.getElementById("undoLocalAxisBtn").addEventListener("click", undoLastLocalAxisCorrection);
+document.getElementById("resetLocalAxisBtn").addEventListener("click", resetLocalAxisCorrection);
 document.getElementById("startStairBtn").addEventListener("click", startStairConnection);
+document.getElementById("setConnectionTypeBtn").addEventListener("click", setSelectedStairConnectionType);
 document.getElementById("deleteStairBtn").addEventListener("click", deleteSelectedStairConnection);
 document.getElementById("deleteAllConnectionsBtn").addEventListener("click", deleteAllStairConnections);
 document.getElementById("undoStairBtn").addEventListener("click", undoLastStairConnection);
@@ -4528,6 +5191,7 @@ document.getElementById("undoSubwayBtn").addEventListener("click", undoLastSubwa
 document.getElementById("resetSubwayBtn").addEventListener("click", resetSubwayPlacement);
 document.getElementById("refreshImagesBtn").addEventListener("click", refreshImages);
 document.getElementById("loadImageBtn").addEventListener("click", loadSelectedImage);
+document.getElementById("uploadImageBtn").addEventListener("click", uploadImageFile);
 document.getElementById("startCropBtn").addEventListener("click", startCrop);
 document.getElementById("applyCropBtn").addEventListener("click", applyCrop);
 document.getElementById("resetCropBtn").addEventListener("click", resetCrop);
@@ -4541,6 +5205,7 @@ document.getElementById("runKmeansBtn").addEventListener("click", runKmeansFromU
 document.getElementById("extractPolygonsBtn").addEventListener("click", extractPolygonsFromUi);
 document.getElementById("runPipelineBtn").addEventListener("click", runPipelineFromUi);
 document.getElementById("loadClustersBtn").addEventListener("click", loadClusters);
+document.getElementById("runEditedGroupingBtn").addEventListener("click", runEditedGroupingFromUi);
 document.getElementById("resetAllBtn").addEventListener("click", resetToInitialPolygons);
 document.getElementById("saveBtn").addEventListener("click", () => {
   saveAnnotations().then((result) => {
@@ -4575,6 +5240,7 @@ document.getElementById("exportPlanesBtn").addEventListener("click", () => {
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
         working_polygons: workingPolygonsPayload(),
+        render_preview: document.getElementById("renderScenePreviewToggle").checked,
       }),
     }))
     .then((response) => response.json())
@@ -4639,6 +5305,9 @@ document.addEventListener("keydown", (event) => {
   } else if (key === "i") {
     event.preventDefault();
     startScaleCalibration();
+  } else if (key === "l") {
+    event.preventDefault();
+    startLocalAxisCorrection();
   } else if (key === "u") {
     event.preventDefault();
     startStairConnection();
@@ -4682,6 +5351,7 @@ document.addEventListener("keydown", (event) => {
     event.preventDefault();
     if (state.tool === "marker") undoManualMarkerPoint();
     else if (state.tool === "cutHole") undoCutHolePoint();
+    else if (state.tool === "splitPolygon") undoSplitPolygonPoint();
     else if (state.tool === "scaleCalibration") undoScaleCalibrationPoint();
     else undoAddPolygonPoint();
   } else if (event.key === "Shift") {
@@ -4700,7 +5370,9 @@ document.addEventListener("keydown", (event) => {
     if (state.tool === "keep") resetSimpleKeep();
     else if (state.tool === "addPolygon") resetAddPolygon();
     else if (state.tool === "cutHole") resetCutHole();
+    else if (state.tool === "splitPolygon") resetSplitPolygon();
     else if (state.tool === "layerAlign") resetLayerAlign();
+    else if (state.tool === "localAxis") resetLocalAxisCorrection();
     else if (state.tool === "subway") resetSubwayPlacement();
     else if (state.tool === "scaleCalibration") resetScaleCalibration();
     else if (state.tool === "marker") {
@@ -4731,6 +5403,7 @@ updateDeleteStatus();
 updateSharedEdgeStatus();
 updateAddPolygonStatus();
 updateCutHoleStatus();
+updateSplitPolygonStatus();
 updateLayerAlignStatus();
 updateScaleCalibrationStatus();
 updateSubwayStatus();

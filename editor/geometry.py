@@ -294,6 +294,153 @@ def build_cut_hole_polygon(poly, hole_points):
     }
 
 
+def line_segment_intersection(line_a, line_b, seg_a, seg_b, eps=1e-6):
+    """Return intersection between an infinite line and a segment."""
+    p = np.array(line_a, dtype=np.float64)
+    r = np.array(line_b, dtype=np.float64) - p
+    q = np.array(seg_a, dtype=np.float64)
+    s = np.array(seg_b, dtype=np.float64) - q
+    denom = float(r[0] * s[1] - r[1] * s[0])
+    if abs(denom) <= eps:
+        return None
+    qmp = q - p
+    t = float((qmp[0] * s[1] - qmp[1] * s[0]) / denom)
+    u = float((qmp[0] * r[1] - qmp[1] * r[0]) / denom)
+    if u < -eps or u > 1.0 + eps:
+        return None
+    point = p + t * r
+    return {
+        "point": [float(point[0]), float(point[1])],
+        "line_t": t,
+        "edge_u": max(0.0, min(1.0, u)),
+    }
+
+
+def unique_intersections(intersections, eps=1e-4):
+    """Deduplicate line-boundary intersections."""
+    output = []
+    for item in sorted(intersections, key=lambda value: value["line_t"]):
+        point = np.array(item["point"], dtype=np.float64)
+        if any(np.linalg.norm(point - np.array(existing["point"], dtype=np.float64)) <= eps for existing in output):
+            continue
+        output.append(item)
+    return output
+
+
+def cyclic_augmented_path(points, start_index, end_index):
+    """Return a cyclic path on an augmented polygon vertex list."""
+    if start_index <= end_index:
+        return points[start_index:end_index + 1]
+    return points[start_index:] + points[:end_index + 1]
+
+
+def build_split_polygons(poly, split_points):
+    """Split a polygon into two polygons using a user-drawn line segment."""
+    if len(split_points) != 2:
+        raise ValueError("Split Polygon에는 선분 점 2개가 필요합니다.")
+    if poly.get("holes_source"):
+        raise ValueError("hole이 있는 polygon split은 아직 지원하지 않습니다.")
+
+    points = normalize_points(poly["points_source"]).astype(float).tolist()
+    if len(points) < 3:
+        raise ValueError("split 대상 polygon의 점이 부족합니다.")
+
+    line_a = [float(split_points[0][0]), float(split_points[0][1])]
+    line_b = [float(split_points[1][0]), float(split_points[1][1])]
+    if np.linalg.norm(np.array(line_b) - np.array(line_a)) <= 1e-6:
+        raise ValueError("서로 다른 두 점으로 split 선분을 그려야 합니다.")
+
+    intersections = []
+    for index, edge_start in enumerate(points):
+        edge_end = points[(index + 1) % len(points)]
+        hit = line_segment_intersection(line_a, line_b, edge_start, edge_end)
+        if not hit:
+            continue
+        hit["edge_index"] = index
+        intersections.append(hit)
+
+    intersections = unique_intersections(intersections)
+    if len(intersections) < 2:
+        raise ValueError("split 선분이 polygon 외곽과 두 번 이상 만나야 합니다.")
+    if len(intersections) > 2:
+        raise ValueError("split 선분이 polygon을 여러 번 가로지릅니다. 더 단순한 선으로 나눠주세요.")
+
+    hit_by_edge = {}
+    for item in intersections:
+        hit_by_edge.setdefault(item["edge_index"], []).append(item)
+
+    augmented = []
+    split_indices = []
+    for index, point in enumerate(points):
+        augmented.append(point)
+        edge_hits = sorted(hit_by_edge.get(index, []), key=lambda item: item["edge_u"])
+        for hit in edge_hits:
+            if np.linalg.norm(np.array(augmented[-1]) - np.array(hit["point"])) <= 1e-4:
+                split_indices.append(len(augmented) - 1)
+                continue
+            augmented.append(hit["point"])
+            split_indices.append(len(augmented) - 1)
+
+    if len(split_indices) != 2 or split_indices[0] == split_indices[1]:
+        raise ValueError("split 교차점을 안정적으로 계산하지 못했습니다.")
+
+    first, second = split_indices
+    candidate_a = remove_consecutive_duplicates(cyclic_augmented_path(augmented, first, second))
+    candidate_b = remove_consecutive_duplicates(cyclic_augmented_path(augmented, second, first))
+    if len(candidate_a) < 3 or len(candidate_b) < 3:
+        raise ValueError("split 결과 polygon의 점이 부족합니다.")
+
+    area_a = abs(cv2.contourArea(np.array(candidate_a, dtype=np.float32)))
+    area_b = abs(cv2.contourArea(np.array(candidate_b, dtype=np.float32)))
+    if area_a <= 1.0 or area_b <= 1.0:
+        raise ValueError("split 결과 polygon 면적이 너무 작습니다.")
+
+    return [candidate_a, candidate_b], {
+        "method": "line_split",
+        "split_points_source": [line_a, line_b],
+        "boundary_intersections": [intersections[0]["point"], intersections[1]["point"]],
+        "source_vertex_count": len(points),
+        "result_vertex_counts": [len(candidate_a), len(candidate_b)],
+        "result_areas": [float(area_a), float(area_b)],
+    }
+
+
+def build_split_polygons_by_vertices(poly, vertex_indices):
+    """Split one polygon into two polygons using two existing vertices."""
+    if len(vertex_indices) != 2:
+        raise ValueError("vertex split에는 vertex index 2개가 필요합니다.")
+    if poly.get("holes_source"):
+        raise ValueError("hole이 있는 polygon split은 아직 지원하지 않습니다.")
+
+    points = normalize_points(poly["points_source"]).astype(float).tolist()
+    if len(points) < 4:
+        raise ValueError("split 대상 polygon은 최소 4개의 vertex가 필요합니다.")
+    start_index, end_index = [int(value) for value in vertex_indices]
+    if start_index == end_index:
+        raise ValueError("서로 다른 vertex 2개를 선택해야 합니다.")
+    if start_index < 0 or end_index < 0 or start_index >= len(points) or end_index >= len(points):
+        raise ValueError("vertex index가 polygon 범위를 벗어났습니다.")
+
+    candidate_a = remove_consecutive_duplicates(cyclic_path(points, start_index, end_index))
+    candidate_b = remove_consecutive_duplicates(cyclic_path(points, end_index, start_index))
+    if len(candidate_a) < 3 or len(candidate_b) < 3:
+        raise ValueError("선택한 두 vertex가 너무 가까워 split 결과 polygon의 점이 부족합니다.")
+
+    area_a = abs(cv2.contourArea(np.array(candidate_a, dtype=np.float32)))
+    area_b = abs(cv2.contourArea(np.array(candidate_b, dtype=np.float32)))
+    if area_a <= 1.0 or area_b <= 1.0:
+        raise ValueError("split 결과 polygon 면적이 너무 작습니다.")
+
+    return [candidate_a, candidate_b], {
+        "method": "existing_vertex_split",
+        "vertex_indices": [start_index, end_index],
+        "split_vertices": [points[start_index], points[end_index]],
+        "source_vertex_count": len(points),
+        "result_vertex_counts": [len(candidate_a), len(candidate_b)],
+        "result_areas": [float(area_a), float(area_b)],
+    }
+
+
 def directed_path(points, start_index, end_index, direction="forward"):
     """Return the selected cyclic path in the requested direction."""
     if direction == "forward":
@@ -633,4 +780,3 @@ def build_spliced_merge_polygon(poly_a, poly_b, clicked_points=None, vertex_indi
             "polygon_b": b_path_info,
         },
     }
-

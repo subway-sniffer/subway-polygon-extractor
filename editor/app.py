@@ -1,8 +1,11 @@
 import argparse
+import struct
 import sys
+from types import SimpleNamespace
 from pathlib import Path
 
 import cv2
+import numpy as np
 from flask import Flask, Response, jsonify, render_template, request, send_file
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
@@ -27,6 +30,8 @@ from editor.geometry import (
     build_moved_vertex_polygon,
     build_shared_edge_edit,
     build_simple_keep_vertices_polygon,
+    build_split_polygons_by_vertices,
+    build_split_polygons,
     build_spliced_merge_polygon,
     build_straightened_polygon,
     polygon_metrics,
@@ -40,6 +45,7 @@ from editor.model import (
     next_edited_polygon_id,
     next_manual_polygon_id,
     next_wall_id,
+    reserve_prefixed_polygon_ids,
     save_json,
     save_json_compact_vectors,
 )
@@ -53,7 +59,98 @@ from editor.pipeline_runner import (
     run_pipeline_for_project,
 )
 from editor.project_store import ProjectStore
+from pipeline.polygon_grouping import (
+    build_adjacency_graph,
+    build_polygon_groups,
+    connected_components,
+    draw_polygon_groups_debug,
+    group_polygons_payload,
+    select_edges_for_target_groups,
+)
 from tests.render_scene_planes import draw_scene_planes, render_layers
+
+
+MAX_IMAGE_PIXELS = 80_000_000
+MAX_IMAGE_SIDE = 20_000
+
+
+def image_dimensions_from_bytes(data):
+    """Return image width and height from common image headers without full decode."""
+    if data.startswith(b"\x89PNG\r\n\x1a\n") and len(data) >= 24:
+        width, height = struct.unpack(">II", data[16:24])
+        return int(width), int(height)
+    if data.startswith((b"GIF87a", b"GIF89a")) and len(data) >= 10:
+        width, height = struct.unpack("<HH", data[6:10])
+        return int(width), int(height)
+    if data.startswith(b"BM") and len(data) >= 26:
+        width = struct.unpack("<i", data[18:22])[0]
+        height = struct.unpack("<i", data[22:26])[0]
+        return abs(int(width)), abs(int(height))
+    if data.startswith(b"\xff\xd8"):
+        index = 2
+        while index + 9 < len(data):
+            if data[index] != 0xFF:
+                index += 1
+                continue
+            marker = data[index + 1]
+            index += 2
+            if marker in {0xD8, 0xD9}:
+                continue
+            if index + 2 > len(data):
+                break
+            segment_length = struct.unpack(">H", data[index:index + 2])[0]
+            if segment_length < 2 or index + segment_length > len(data):
+                break
+            if marker in {0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF}:
+                height = struct.unpack(">H", data[index + 3:index + 5])[0]
+                width = struct.unpack(">H", data[index + 5:index + 7])[0]
+                return int(width), int(height)
+            index += segment_length
+    if data.startswith(b"RIFF") and data[8:12] == b"WEBP" and len(data) >= 30:
+        chunk = data[12:16]
+        if chunk == b"VP8X" and len(data) >= 30:
+            width = 1 + int.from_bytes(data[24:27], "little")
+            height = 1 + int.from_bytes(data[27:30], "little")
+            return int(width), int(height)
+        if chunk == b"VP8 " and len(data) >= 30:
+            width = struct.unpack("<H", data[26:28])[0] & 0x3FFF
+            height = struct.unpack("<H", data[28:30])[0] & 0x3FFF
+            return int(width), int(height)
+        if chunk == b"VP8L" and len(data) >= 25:
+            bits = int.from_bytes(data[21:25], "little")
+            width = (bits & 0x3FFF) + 1
+            height = ((bits >> 14) & 0x3FFF) + 1
+            return int(width), int(height)
+    return None
+
+
+def validate_image_dimensions(width, height):
+    """Raise ValueError when an image is too large to safely decode."""
+    if width <= 0 or height <= 0:
+        raise ValueError("이미지 크기를 확인할 수 없습니다.")
+    if width > MAX_IMAGE_SIDE or height > MAX_IMAGE_SIDE or width * height > MAX_IMAGE_PIXELS:
+        raise ValueError(
+            f"이미지가 너무 큽니다: {width}x{height}. "
+            f"최대 {MAX_IMAGE_SIDE}px/side, {MAX_IMAGE_PIXELS} pixels까지 허용합니다."
+        )
+
+
+def validate_image_bytes(data):
+    """Validate encoded image bytes before OpenCV decoding."""
+    dimensions = image_dimensions_from_bytes(data)
+    if dimensions:
+        validate_image_dimensions(*dimensions)
+    return dimensions
+
+
+def validate_image_path(path):
+    """Validate an image path by reading a small header before OpenCV loads it."""
+    with Path(path).open("rb") as file:
+        header = file.read(4096)
+    dimensions = image_dimensions_from_bytes(header)
+    if dimensions:
+        validate_image_dimensions(*dimensions)
+    return dimensions
 
 
 def create_app(args):
@@ -61,6 +158,7 @@ def create_app(args):
     app = Flask(__name__)
     store = ProjectStore(args)
     layer_z = parse_layer_z(args.layer_z)
+    validate_image_path(store.active["image_path"])
     source_image = cv2.imread(str(store.active["image_path"]))
     if source_image is None:
         raise FileNotFoundError(f"이미지를 불러올 수 없습니다: {store.active['image_path']}")
@@ -95,12 +193,50 @@ def create_app(args):
         image = Path(data.get("image_path", "")).resolve()
         if not image.exists():
             return jsonify({"error": f"image does not exist: {image}"}), 404
+        try:
+            validate_image_path(image)
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
         if cv2.imread(str(image)) is None:
             return jsonify({"error": f"이미지를 불러올 수 없습니다: {image}"}), 400
         project_data = store.activate_image(image)
         return jsonify(
             {
                 "selected": True,
+                "image": str(project_data["image_path"]),
+                "output_dir": str(project_data["output_dir"]),
+                "polygons_file": str(project_data["polygons_path"]),
+                "marker_config_file": str(project_data["marker_config_path"]),
+            }
+        )
+
+    @app.route("/api/project/upload", methods=["POST"])
+    def upload_project_image():
+        """Upload an image from the browser and switch to its editor project."""
+        uploaded = request.files.get("image")
+        if not uploaded or not uploaded.filename:
+            return jsonify({"error": "image 파일이 필요합니다."}), 400
+
+        data = uploaded.read()
+        if not data:
+            return jsonify({"error": "빈 이미지 파일입니다."}), 400
+        try:
+            validate_image_bytes(data)
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+        image_array = np.frombuffer(data, dtype=np.uint8)
+        image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
+        if image is None:
+            return jsonify({"error": f"이미지를 불러올 수 없습니다: {uploaded.filename}"}), 400
+
+        upload_path = store.uploaded_image_path(uploaded.filename)
+        if not cv2.imwrite(str(upload_path), image):
+            return jsonify({"error": f"업로드 이미지를 저장하지 못했습니다: {upload_path}"}), 500
+
+        project_data = store.activate_image(upload_path)
+        return jsonify(
+            {
+                "uploaded": True,
                 "image": str(project_data["image_path"]),
                 "output_dir": str(project_data["output_dir"]),
                 "polygons_file": str(project_data["polygons_path"]),
@@ -135,6 +271,10 @@ def create_app(args):
     def crop_active_image():
         """Crop the active source image and switch the editor to the cropped project."""
         data = request.get_json(force=True)
+        try:
+            validate_image_path(store.active["image_path"])
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
         image = cv2.imread(str(store.active["image_path"]))
         if image is None:
             return jsonify({"error": f"이미지를 불러올 수 없습니다: {store.active['image_path']}"}), 400
@@ -293,8 +433,8 @@ def create_app(args):
                 "polygons_file": str(store.active["polygons_path"]),
                 "connections_file": str(store.active["connections_path"]) if store.active["connections_path"] else None,
                 "output_file": str(store.active["annotations_path"]),
-                "final_output_file": str(store.active["final_output_path"]),
-                "plane_output_file": str(store.active["plane_output_path"]),
+                "final_output_file": str(store.named_output_path("final_polygons")),
+                "plane_output_file": str(store.named_output_path("scene_planes")),
                 "icon_matches_file": str(store.active["icon_matches_path"]) if store.active["icon_matches_path"] else None,
                 "marker_config_file": str(store.active["marker_config_path"]) if store.active["marker_config_path"] else None,
                 "polygon_data": polygon_data,
@@ -307,6 +447,10 @@ def create_app(args):
     @app.route("/api/image")
     def image():
         """Serve the editor background as OpenCV-normalized PNG."""
+        try:
+            validate_image_path(store.active["image_path"])
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
         image_data = cv2.imread(str(store.active["image_path"]))
         if image_data is None:
             return jsonify({"error": f"이미지를 불러올 수 없습니다: {store.active['image_path']}"}), 404
@@ -327,6 +471,131 @@ def create_app(args):
         save_json(data, store.active["annotations_path"])
         return jsonify({"saved": True, "output": str(store.active["annotations_path"])})
 
+    @app.route("/api/grouping/edited", methods=["POST"])
+    def group_edited_polygons():
+        """Group the current edited polygons and assign layer names top-to-bottom."""
+        data = request.get_json(silent=True) or {}
+        annotations = load_annotations(store.active["annotations_path"])
+        working_polygons = data.get("working_polygons") or []
+        if not working_polygons:
+            return jsonify({"error": "working_polygons가 필요합니다."}), 400
+
+        try:
+            target_layers = int(data.get("target_layers") or 0)
+        except (TypeError, ValueError):
+            return jsonify({"error": "target_layers는 숫자여야 합니다."}), 400
+        if target_layers <= 0:
+            return jsonify({"error": "target_layers는 1 이상이어야 합니다."}), 400
+
+        try:
+            adjacency_distance = float(data.get("adjacency_distance", 25))
+            same_color_distance = float(data.get("same_color_distance", 100))
+            contact_distance = int(data.get("contact_distance", 8))
+            min_contact_area = int(data.get("min_contact_area", 700))
+        except (TypeError, ValueError):
+            return jsonify({"error": "grouping 수치 옵션이 올바르지 않습니다."}), 400
+
+        final_payload = build_working_final_payload(
+            store.active["polygons_path"],
+            working_polygons,
+            annotations,
+            store.active["transform_metadata"],
+        )
+        polygons = [
+            poly
+            for poly in final_payload.get("polygons", [])
+            if poly.get("polygon_id") and len(poly.get("points_transformed", [])) >= 3
+        ]
+        if not polygons:
+            return jsonify({"error": "grouping 가능한 transformed polygon이 없습니다."}), 400
+
+        graph = build_adjacency_graph(
+            polygons,
+            adjacency_distance,
+            same_color_distance,
+            "contact_area",
+            contact_distance,
+            min_contact_area,
+        )
+        graph, target_metadata = select_edges_for_target_groups(
+            polygons,
+            graph,
+            target_layers,
+            data.get("target_group_strategy", "centroid_y"),
+        )
+        components = connected_components(graph)
+        groups, polygons_with_groups = build_polygon_groups(polygons, components)
+
+        sorted_groups = sorted(groups, key=lambda group: float(group["merged_centroid"][1]))
+        group_layers = {
+            group["group_id"]: f"B{index}"
+            for index, group in enumerate(sorted_groups, start=1)
+        }
+        polygon_layers = annotations.setdefault("polygon_layers", {})
+        for group in groups:
+            layer = group_layers.get(group["group_id"])
+            group["semantic"]["layer"] = layer
+            for polygon_id in group["polygon_ids"]:
+                polygon_layers[polygon_id] = layer
+        for poly in polygons_with_groups:
+            layer = group_layers.get(poly.get("group_id"))
+            poly.setdefault("semantic", dict(DEFAULT_SEMANTIC))
+            poly["semantic"]["layer"] = layer
+
+        grouping_args = SimpleNamespace(
+            adjacency_mode="contact_area",
+            adjacency_distance=adjacency_distance,
+            same_color_distance=same_color_distance,
+            contact_distance=contact_distance,
+            min_contact_area=min_contact_area,
+        )
+        grouping_payload = group_polygons_payload(
+            final_payload,
+            "editor_working_polygons",
+            polygons,
+            graph,
+            groups,
+            polygons_with_groups,
+            grouping_args,
+            target_metadata,
+        )
+        grouping_payload["layer_assignment"] = {
+            "method": "top_to_bottom_by_group_centroid_y",
+            "requested_layers": target_layers,
+            "achieved_groups": len(groups),
+            "group_layers": group_layers,
+        }
+
+        output_path = store.active["output_dir"] / "polygon_groups.json"
+        debug_path = store.active["debug_dir"] / "polygon_groups.png"
+        save_json(grouping_payload, output_path)
+        draw_polygon_groups_debug(
+            polygons_with_groups,
+            groups,
+            debug_path,
+            canvas_width=int(data.get("canvas_width", 1400)),
+            canvas_height=int(data.get("canvas_height", 900)),
+        )
+        save_json(annotations, store.active["annotations_path"])
+
+        return jsonify(
+            {
+                "grouped": True,
+                "output": str(output_path),
+                "debug_image": str(debug_path),
+                "group_count": len(groups),
+                "edge_count": len(graph["edges"]),
+                "requested_layers": target_layers,
+                "group_layers": group_layers,
+                "polygon_layers": {
+                    polygon_id: polygon_layers[polygon_id]
+                    for group in groups
+                    for polygon_id in group["polygon_ids"]
+                },
+                "target_grouping": target_metadata,
+            }
+        )
+
     @app.route("/api/export/final", methods=["POST"])
     def export_final_polygons():
         """Export final polygons after replacing hidden originals with manual polygons."""
@@ -344,7 +613,7 @@ def create_app(args):
                 "source": str(store.active["icon_matches_path"]),
                 "match_count": len(icons.get("icons", [])),
             }
-        saved_path = save_json(payload, store.active["final_output_path"])
+        saved_path = save_json(payload, store.named_output_path("final_polygons"))
         return jsonify(
             {
                 "saved": True,
@@ -357,10 +626,11 @@ def create_app(args):
     @app.route("/api/export/final_file", methods=["GET"])
     def load_exported_final_polygons():
         """Load the previously exported final polygon file."""
-        if not store.active["final_output_path"].exists():
-            return jsonify({"error": f"final export file does not exist: {store.active['final_output_path']}"}), 404
-        payload = load_json(store.active["final_output_path"])
-        payload["source"] = str(store.active["final_output_path"])
+        final_path = next((path for path in store.final_output_candidates() if path.exists()), None)
+        if not final_path:
+            return jsonify({"error": f"final export file does not exist: {store.final_output_candidates()[0]}"}), 404
+        payload = load_json(final_path)
+        payload["source"] = str(final_path)
         return jsonify(payload)
 
     @app.route("/api/export/planes", methods=["POST"])
@@ -399,16 +669,16 @@ def create_app(args):
                 invert_y=args.invert_y,
                 icon_matches=icon_matches,
             )
-        saved_path = save_json_compact_vectors(payload, store.active["plane_output_path"])
+        saved_path = save_json_compact_vectors(payload, store.named_output_path("scene_planes"))
         example_path = save_json_compact_vectors(payload, ROOT_DIR / "examples" / "polygon_example.json")
         assets_payload = build_assets_payload(payload)
-        assets_path = save_json_compact_vectors(assets_payload, store.active["asset_output_path"])
-        navigation_path = save_json_compact_vectors(payload.get("navigation", {}), store.active["output_dir"] / "navigation_graph.json")
+        assets_path = save_json_compact_vectors(assets_payload, store.named_output_path("assets"))
+        navigation_path = save_json_compact_vectors(payload.get("navigation", {}), store.named_output_path("navigation_graph"))
         navigation_example_path = save_json_compact_vectors(payload.get("navigation", {}), ROOT_DIR / "examples" / "navigation_graph_example.json")
         preview_path = None
         layer_preview_dir = None
         if data.get("render_preview"):
-            preview_path = store.active["output_dir"] / "scene_planes_preview.png"
+            preview_path = store.named_output_path("scene_planes_preview", suffix=".png")
             layer_preview_dir = store.active["output_dir"] / "scene_planes_layers"
             preview = draw_scene_planes(payload)
             cv2.imwrite(str(preview_path), preview)
@@ -470,7 +740,7 @@ def create_app(args):
                 icon_matches=icon_matches,
             )
         payload = build_assets_payload(scene_payload)
-        saved_path = save_json_compact_vectors(payload, store.active["asset_output_path"])
+        saved_path = save_json_compact_vectors(payload, store.named_output_path("assets"))
         return jsonify(
             {
                 "saved": True,
@@ -729,6 +999,65 @@ def create_app(args):
             }
         )
 
+    @app.route("/api/split_polygon", methods=["POST"])
+    def split_polygon():
+        """Split one polygon into two polygons using a drawn line segment."""
+        data = request.get_json(force=True)
+        annotations = load_annotations(store.active["annotations_path"])
+        polygon_lookup = build_polygon_lookup(store.active["polygons_path"], annotations, data.get("working_polygons"))
+        polygon_id = data.get("polygon_id")
+        if polygon_id not in polygon_lookup:
+            return jsonify({"error": "존재하지 않는 polygon_id입니다."}), 400
+
+        source_poly = polygon_lookup[polygon_id]
+        try:
+            if data.get("vertex_indices"):
+                split_points_list, split_geometry = build_split_polygons_by_vertices(
+                    source_poly,
+                    data.get("vertex_indices", []),
+                )
+            else:
+                split_points_list, split_geometry = build_split_polygons(
+                    source_poly,
+                    data.get("split_points_source", []),
+                )
+        except (TypeError, ValueError) as exc:
+            return jsonify({"error": str(exc)}), 400
+
+        edited_ids = reserve_prefixed_polygon_ids("edited", len(split_points_list), annotations, data.get("working_polygons"))
+        edited_polygons = []
+        for edited_id, edited_points in zip(edited_ids, split_points_list):
+            metrics = polygon_metrics(edited_points)
+            edited_polygons.append(
+                {
+                    "polygon_id": edited_id,
+                    "type": "split_polygon",
+                    "source_polygon_ids": [polygon_id],
+                    "color_cluster": source_poly.get("color_cluster"),
+                    "color_rgb": source_poly.get("color_rgb") or [180, 180, 180],
+                    "points_source": edited_points,
+                    "area_source": metrics["area_source"],
+                    "bbox_source": metrics["bbox_source"],
+                    "centroid_source": metrics["centroid_source"],
+                    "semantic": source_poly.get("semantic") or dict(DEFAULT_SEMANTIC),
+                }
+            )
+
+        edit_record = {
+            "edit_id": f"edit_{len(annotations.get('manual_edits', [])) + 1:03d}",
+            "type": "split_polygon",
+            "source_polygon_id": polygon_id,
+            "source_polygon_ids": [polygon_id],
+            "created_polygon_ids": edited_ids,
+            "geometry": split_geometry,
+        }
+        return jsonify(
+            {
+                "edited_polygons": edited_polygons,
+                "edit_record": edit_record,
+            }
+        )
+
     @app.route("/api/move_vertex", methods=["POST"])
     def move_vertex():
         """Create an edited polygon by moving one vertex."""
@@ -831,29 +1160,55 @@ def create_app(args):
 
     @app.route("/api/simple_keep_vertices", methods=["POST"])
     def simple_keep_vertices():
-        """Create an edited polygon by keeping selected vertices only."""
+        """Create an edited polygon from selected vertices, including across polygons."""
         data = request.get_json(force=True)
         annotations = load_annotations(store.active["annotations_path"])
         polygon_lookup = build_polygon_lookup(store.active["polygons_path"], annotations, data.get("working_polygons"))
-        polygon_id = data.get("polygon_id")
-        if polygon_id not in polygon_lookup:
-            return jsonify({"error": "존재하지 않는 polygon_id입니다."}), 400
-
-        source_poly = polygon_lookup[polygon_id]
         try:
-            edited_points, edit_geometry = build_simple_keep_vertices_polygon(
-                source_poly,
-                data.get("kept_vertex_indices", []),
-            )
+            kept_vertices = data.get("kept_vertices") or []
+            if kept_vertices:
+                edited_points = build_added_polygon([item.get("point") for item in kept_vertices])
+                source_polygon_ids = []
+                for item in kept_vertices:
+                    item_polygon_id = item.get("polygonId") or item.get("polygon_id")
+                    if item_polygon_id and item_polygon_id not in source_polygon_ids:
+                        source_polygon_ids.append(item_polygon_id)
+                missing = [item for item in source_polygon_ids if item not in polygon_lookup]
+                if missing:
+                    return jsonify({"error": f"존재하지 않는 polygon_id가 포함되어 있습니다: {missing}"}), 400
+                if not source_polygon_ids:
+                    return jsonify({"error": "kept_vertices에 source polygon 정보가 없습니다."}), 400
+                polygon_id = source_polygon_ids[0]
+                source_poly = polygon_lookup[polygon_id]
+                edit_geometry = {
+                    "method": "multi_polygon_simple_keep",
+                    "kept_vertices": kept_vertices,
+                    "kept_vertex_count": len(kept_vertices),
+                    "source_polygon_ids": source_polygon_ids,
+                }
+            else:
+                polygon_id = data.get("polygon_id")
+                if polygon_id not in polygon_lookup:
+                    return jsonify({"error": "존재하지 않는 polygon_id입니다."}), 400
+                source_poly = polygon_lookup[polygon_id]
+                edited_points, edit_geometry = build_simple_keep_vertices_polygon(
+                    source_poly,
+                    data.get("kept_vertex_indices", []),
+                )
+                source_polygon_ids = [polygon_id]
         except (TypeError, ValueError) as exc:
             return jsonify({"error": str(exc)}), 400
 
         metrics = polygon_metrics(edited_points)
-        edited_id = next_edited_polygon_id(annotations, data.get("working_polygons"))
+        edited_id = (
+            next_manual_polygon_id(annotations, data.get("working_polygons"))
+            if len(source_polygon_ids) > 1
+            else next_edited_polygon_id(annotations, data.get("working_polygons"))
+        )
         edited_polygon = {
             "polygon_id": edited_id,
-            "type": "simple_keep_vertices_polygon",
-            "source_polygon_ids": [polygon_id],
+            "type": "multi_simple_keep_polygon" if len(source_polygon_ids) > 1 else "simple_keep_vertices_polygon",
+            "source_polygon_ids": source_polygon_ids,
             "color_cluster": source_poly.get("color_cluster"),
             "color_rgb": source_poly.get("color_rgb") or [180, 180, 180],
             "points_source": edited_points,
@@ -872,8 +1227,9 @@ def create_app(args):
             "edit_id": f"edit_{len(annotations.get('manual_edits', [])) + 1:03d}",
             "type": "simple_keep_vertices",
             "source_polygon_id": polygon_id,
-            "kept_vertex_indices": edit_geometry["kept_vertex_indices"],
-            "removed_vertex_indices": edit_geometry["removed_vertex_indices"],
+            "source_polygon_ids": source_polygon_ids,
+            "kept_vertex_indices": edit_geometry.get("kept_vertex_indices", []),
+            "removed_vertex_indices": edit_geometry.get("removed_vertex_indices", []),
             "geometry": edit_geometry,
             "created_polygon_id": edited_id,
         }

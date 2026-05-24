@@ -511,7 +511,8 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
     """Build Blender assets from manually placed editor asset markers."""
     assets = []
     for asset in (annotations or {}).get("manual_assets", []):
-        if asset.get("type") != "subway" or not asset.get("point_source"):
+        asset_type = asset.get("type") or "subway"
+        if asset_type not in {"subway", "moving_walkway"} or not asset.get("point_source"):
             continue
         layer = asset.get("layer")
         polygon_id = asset.get("polygon_id")
@@ -565,8 +566,8 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
         assets.append(
             {
                 "asset_id": asset.get("asset_id"),
-                "type": "subway",
-                "blend": asset.get("blend") or "Subway.blend",
+                "type": asset_type,
+                "blend": asset.get("blend") or ("MovingWalkway.blend" if asset_type == "moving_walkway" else "Subway.blend"),
                 "label": asset.get("label"),
                 "polygon_id": polygon_id,
                 "layer": layer,
@@ -676,7 +677,7 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
         )
 
     for asset in manual_assets or []:
-        if asset.get("type") != "subway" or not asset.get("location"):
+        if asset.get("type") not in {"subway", "moving_walkway"} or not asset.get("location"):
             continue
         asset_id = asset.get("asset_id") or asset.get("label")
         if not asset_id:
@@ -689,7 +690,7 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
                 asset.get("location"),
                 polygon_id=asset.get("polygon_id"),
                 asset_id=asset_id,
-                asset_type="subway",
+                asset_type=asset.get("type"),
                 label=asset.get("label"),
             )
         )
@@ -802,6 +803,85 @@ def apply_layer_transform_to_vertices(vertices, matrix):
         out_x, out_y = apply_xy_transform([x, y], matrix)
         transformed.append([out_x, out_y, float(z)])
     return transformed
+
+
+def scene_xy_from_transformed_point(point, scale=0.01, invert_x=False, invert_y=False):
+    """Convert one transformed 2D point to scene XY before layer alignment."""
+    x, y = point
+    out_x = -float(x) if invert_x else float(x)
+    out_y = -float(y) if invert_y else float(y)
+    return [out_x * float(scale), out_y * float(scale)]
+
+
+def axis_correction_scene_points(correction, transform_metadata=None, transform_info=None, scale=0.01, invert_x=False, invert_y=False):
+    """Return local-axis correction reference points in scene XY."""
+    raw_points = [
+        correction.get("origin"),
+        correction.get("x_axis_point"),
+        correction.get("y_axis_point") or correction.get("z_axis_point"),
+    ]
+    if any(not point or len(point) < 2 for point in raw_points):
+        return None
+    scene_points = [
+        scene_xy_from_point(
+            point,
+            transform_metadata=transform_metadata,
+            transform_info=transform_info,
+            scale=scale,
+            invert_x=invert_x,
+            invert_y=invert_y,
+        )
+        for point in raw_points
+    ]
+    return scene_points
+
+
+def orthogonal_target_basis(origin, x_point, y_point):
+    """Build a 90-degree target basis from two clicked local axes."""
+    origin = np.asarray(origin, dtype=np.float64)
+    x_point = np.asarray(x_point, dtype=np.float64)
+    y_point = np.asarray(y_point, dtype=np.float64)
+    vx = x_point - origin
+    vy = y_point - origin
+    len_x = float(np.linalg.norm(vx))
+    len_y = float(np.linalg.norm(vy))
+    if len_x <= 1e-9 or len_y <= 1e-9:
+        return None
+    unit_x = vx / len_x
+    perp = np.array([-unit_x[1], unit_x[0]], dtype=np.float64)
+    if float(np.dot(perp, vy)) < 0:
+        perp = -perp
+    return unit_x * len_x, perp * len_y
+
+
+def apply_local_axis_correction_to_scene_xy(points_xy, correction_points):
+    """Rectify scene XY points using a 3-point local orthogonal axis correction."""
+    if not correction_points or len(correction_points) != 3:
+        return points_xy, None
+    origin, x_point, y_point = [np.asarray(point, dtype=np.float64) for point in correction_points]
+    source_x = x_point - origin
+    source_y = y_point - origin
+    source_basis = np.column_stack([source_x, source_y])
+    if abs(float(np.linalg.det(source_basis))) <= 1e-9:
+        return points_xy, None
+    target_basis = orthogonal_target_basis(origin, x_point, y_point)
+    if target_basis is None:
+        return points_xy, None
+    target_x, target_y = target_basis
+    inverse_source = np.linalg.inv(source_basis)
+    corrected = []
+    for point in points_xy:
+        point_array = np.asarray(point, dtype=np.float64)
+        local = inverse_source @ (point_array - origin)
+        out = origin + (target_x * local[0]) + (target_y * local[1])
+        corrected.append([float(out[0]), float(out[1])])
+    return corrected, {
+        "type": "orthogonal_3point",
+        "origin_scene_xy": [float(origin[0]), float(origin[1])],
+        "x_axis_scene_xy": [float(x_point[0]), float(x_point[1])],
+        "y_axis_scene_xy": [float(y_point[0]), float(y_point[1])],
+        "target_angle_degrees": 90.0,
+    }
 
 
 def signed_area_xy(vertices):
@@ -1051,6 +1131,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         reference_layer=annotations.get("layer_alignment_reference"),
     )
     planes = []
+    axis_corrections = annotations.get("polygon_axis_corrections") or {}
     for poly in polygons:
         if transform_metadata and transform_info and poly.get("points_source"):
             points = transform_source_points(
@@ -1064,11 +1145,23 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
             continue
         layer = polygon_layer(poly, annotations=annotations)
         z_value = polygon_z_value(poly, annotations=annotations, layer_z=layer_z, default_z=default_z, floor_height=floor_height)
-        vertices = []
-        for x, y in points:
-            out_x = -float(x) if invert_x else float(x)
-            out_y = -float(y) if invert_y else float(y)
-            vertices.append([out_x * effective_scale, out_y * effective_scale, float(z_value)])
+        scene_xy_points = [
+            scene_xy_from_transformed_point(point, scale=effective_scale, invert_x=invert_x, invert_y=invert_y)
+            for point in points
+        ]
+        axis_metadata = None
+        correction = axis_corrections.get(poly.get("polygon_id"))
+        correction_points = axis_correction_scene_points(
+            correction,
+            transform_metadata=transform_metadata,
+            transform_info=transform_info,
+            scale=effective_scale,
+            invert_x=invert_x,
+            invert_y=invert_y,
+        ) if correction else None
+        if correction_points:
+            scene_xy_points, axis_metadata = apply_local_axis_correction_to_scene_xy(scene_xy_points, correction_points)
+        vertices = [[float(x), float(y), float(z_value)] for x, y in scene_xy_points]
         layer_transform = alignment_transforms.get(layer)
         vertices = apply_layer_transform_to_vertices(vertices, layer_transform)
         vertices = ensure_winding(vertices, clockwise=False)
@@ -1084,20 +1177,23 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
             ]
         else:
             hole_sets = poly.get("holes_transformed") or poly.get("holes_source") or []
-        holes = [
-            ensure_winding(
-                apply_layer_transform_to_vertices(
-                    [
-                        [(-float(x) if invert_x else float(x)) * effective_scale, (-float(y) if invert_y else float(y)) * effective_scale, float(z_value)]
-                        for x, y in hole
-                    ],
-                    layer_transform,
-                ),
-                clockwise=True,
+        holes = []
+        for hole in hole_sets:
+            if len(hole) < 3:
+                continue
+            hole_xy = [
+                scene_xy_from_transformed_point(point, scale=effective_scale, invert_x=invert_x, invert_y=invert_y)
+                for point in hole
+            ]
+            if correction_points:
+                hole_xy, _ = apply_local_axis_correction_to_scene_xy(hole_xy, correction_points)
+            hole_vertices = [[float(x), float(y), float(z_value)] for x, y in hole_xy]
+            holes.append(
+                ensure_winding(
+                    apply_layer_transform_to_vertices(hole_vertices, layer_transform),
+                    clockwise=True,
+                )
             )
-            for hole in hole_sets
-            if len(hole) >= 3
-        ]
         planes.append(
             {
                 "name": f"{layer}_{poly['polygon_id']}" if layer else poly["polygon_id"],
@@ -1111,6 +1207,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
                 "color": color_rgba(poly.get("color_rgb")),
                 "vertices": vertices,
                 "holes": holes,
+                "local_axis_correction": axis_metadata,
                 "alignment_transform": xy_transform_to_list(layer_transform) if layer_transform is not None else None,
             }
         )
@@ -1311,6 +1408,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
             "layer_z": layer_z,
             "polygon_z_offsets": annotations.get("polygon_z_offsets") or {},
             "polygon_z_values": annotations.get("polygon_z_values") or {},
+            "polygon_axis_corrections": annotations.get("polygon_axis_corrections") or {},
             "icon_matches": {
                 "source_image": icon_matches.get("source_image") if icon_matches else None,
                 "match_count": len(icon_records),

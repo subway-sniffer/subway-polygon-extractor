@@ -116,7 +116,9 @@ dd {
 #sharedEdgeStatus,
 #addPolygonStatus,
 #cutHoleStatus,
+#splitPolygonStatus,
 #layerAlignStatus,
+#localAxisStatus,
 #pipelineStatus,
 #keepStatus {
   min-height: 44px;

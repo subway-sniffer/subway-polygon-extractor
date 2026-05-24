@@ -27,6 +27,21 @@ class ProjectStore:
             connections_path=Path(args.connections).resolve() if args.connections else None,
         )
 
+    def active_image_stem(self):
+        """Return a filesystem-safe stem for the active image name."""
+        stem = self.active["image_path"].stem
+        return "".join(char if char.isalnum() or char in {"-", "_"} else "_" for char in stem).strip("_") or "image"
+
+    def named_output_path(self, prefix, suffix=".json"):
+        """Return an output path with the active image stem appended."""
+        return self.active["output_dir"] / f"{prefix}_{self.active_image_stem()}{suffix}"
+
+    def final_output_candidates(self):
+        """Return preferred and legacy final polygon output paths."""
+        preferred = self.named_output_path("final_polygons")
+        legacy = self.active["final_output_path"]
+        return [preferred] if preferred == legacy else [preferred, legacy]
+
     def list_images(self):
         """Return image files under image_root with lightweight processing status."""
         images = []
@@ -34,6 +49,9 @@ class ProjectStore:
         crop_root = self.output_root / "_cropped_images"
         if crop_root.exists():
             roots.append((crop_root, "crop"))
+        upload_root = self.output_root / "_uploads"
+        if upload_root.exists():
+            roots.append((upload_root, "upload"))
         seen = set()
         for root, label in roots:
             if not root.exists():
@@ -82,6 +100,19 @@ class ProjectStore:
             index += 1
         return candidate
 
+    def uploaded_image_path(self, filename):
+        """Return a unique normalized upload path for a browser-selected image."""
+        upload_root = self.output_root / "_uploads"
+        upload_root.mkdir(parents=True, exist_ok=True)
+        stem = Path(filename or "uploaded_image").stem
+        safe_name = "".join(char if char.isalnum() or char in {"-", "_"} else "_" for char in stem).strip("_") or "uploaded_image"
+        candidate = upload_root / f"{safe_name}.png"
+        index = 1
+        while candidate.exists():
+            candidate = upload_root / f"{safe_name}_{index:03d}.png"
+            index += 1
+        return candidate
+
     def output_dir_for_image(self, image_path):
         """Return a stable output directory for one source image."""
         image_path = Path(image_path).resolve()
@@ -101,9 +132,9 @@ class ProjectStore:
             image_path,
             polygons_path=output_dir / "intermediate_polygons.json",
             annotations_path=output_dir / "manual_annotations.json",
-            final_output_path=output_dir / "final_polygons.json",
-            plane_output_path=output_dir / "scene_planes.json",
-            asset_output_path=output_dir / "assets.json",
+            final_output_path=output_dir / f"final_polygons_{image_path.stem}.json",
+            plane_output_path=output_dir / f"scene_planes_{image_path.stem}.json",
+            asset_output_path=output_dir / f"assets_{image_path.stem}.json",
             icon_matches_path=self.resolve_icon_matches_path(output_dir, image_path),
             marker_config_path=marker_config_path,
             connections_path=output_dir / "connections.json",
@@ -172,9 +203,9 @@ class ProjectStore:
             image_path,
             polygons_path=output_dir / "intermediate_polygons.json",
             annotations_path=output_dir / "manual_annotations.json",
-            final_output_path=output_dir / "final_polygons.json",
-            plane_output_path=output_dir / "scene_planes.json",
-            asset_output_path=output_dir / "assets.json",
+            final_output_path=output_dir / f"final_polygons_{image_path.stem}.json",
+            plane_output_path=output_dir / f"scene_planes_{image_path.stem}.json",
+            asset_output_path=output_dir / f"assets_{image_path.stem}.json",
             icon_matches_path=self.resolve_icon_matches_path(output_dir, image_path),
             marker_config_path=output_dir / "marker_config.json",
             connections_path=output_dir / "connections.json",
