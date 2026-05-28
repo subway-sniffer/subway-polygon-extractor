@@ -215,6 +215,7 @@ def build_final_polygons_payload(polygons_path, annotations, transform_metadata=
     )
     return {
         "image": polygon_data.get("image", {}),
+        "station_metadata": annotations.get("station_metadata") or {},
         "extraction": polygon_data.get("extraction", {}),
         "manual_export": {
             "hidden_polygon_count": len(annotations.get("hidden_polygon_ids", [])),
@@ -227,6 +228,7 @@ def build_final_polygons_payload(polygons_path, annotations, transform_metadata=
         "polygons": polygons,
         "walls": walls,
         "connections": connections,
+        "platforms": annotations.get("manual_platforms", []),
     }
 
 
@@ -284,6 +286,7 @@ def build_working_final_payload(polygons_path, working_polygons, annotations, tr
 
     return {
         "image": polygon_data.get("image", {}),
+        "station_metadata": annotations.get("station_metadata") or {},
         "extraction": polygon_data.get("extraction", {}),
         "manual_export": {
             "source": "editor_working_polygons",
@@ -297,6 +300,7 @@ def build_working_final_payload(polygons_path, working_polygons, annotations, tr
         "polygons": polygons,
         "walls": walls,
         "connections": connections,
+        "platforms": annotations.get("manual_platforms", []),
     }
 
 
@@ -512,7 +516,7 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
     assets = []
     for asset in (annotations or {}).get("manual_assets", []):
         asset_type = asset.get("type") or "subway"
-        if asset_type not in {"subway", "moving_walkway"} or not asset.get("point_source"):
+        if asset_type not in {"subway", "moving_walkway", "ticket_gate"} or not asset.get("point_source"):
             continue
         layer = asset.get("layer")
         polygon_id = asset.get("polygon_id")
@@ -567,7 +571,7 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
             {
                 "asset_id": asset.get("asset_id"),
                 "type": asset_type,
-                "blend": asset.get("blend") or ("MovingWalkway.blend" if asset_type == "moving_walkway" else "Subway.blend"),
+                "blend": asset.get("blend") or blend_name_for_manual_asset(asset_type),
                 "label": asset.get("label"),
                 "polygon_id": polygon_id,
                 "layer": layer,
@@ -577,6 +581,8 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
                 "point_source": asset.get("point_source"),
                 "start_point_source": start_source,
                 "end_point_source": end_source,
+                "gate_type": asset.get("gate_type") if asset_type == "ticket_gate" else None,
+                "navigation": asset.get("navigation") if asset_type == "ticket_gate" else None,
             }
         )
     return assets
@@ -615,7 +621,141 @@ def distance_3d(a, b):
     return float(np.linalg.norm(np.asarray(a, dtype=np.float64) - np.asarray(b, dtype=np.float64)))
 
 
-def build_navigation_graph(connection_records, icon_records=None, manual_assets=None):
+def build_platform_records(annotations=None, transform_metadata=None, transform_info=None, scale=0.01, layer_z=None, floor_height=5.0, default_z=0.0, invert_x=False, invert_y=False, alignment_transforms=None):
+    """Build platform direction records and generated car-door navigation points."""
+    records = []
+    for platform in (annotations or {}).get("manual_platforms", []):
+        platform_id = platform.get("platform_id") or platform.get("label")
+        if not platform_id:
+            continue
+        layer = platform.get("layer")
+        polygon_id = platform.get("polygon_id")
+        z_value = polygon_id_z_value(
+            polygon_id,
+            layer,
+            annotations=annotations,
+            layer_z=layer_z,
+            default_z=default_z,
+            floor_height=floor_height,
+        )
+        car_count = max(1, int(platform.get("car_count") or 1))
+        doors_per_car = max(1, int(platform.get("doors_per_car") or 1))
+        total_positions = car_count * doors_per_car
+        anchors = []
+        for anchor in platform.get("anchors") or []:
+            if not anchor.get("point_source") or not anchor.get("car") or not anchor.get("door"):
+                continue
+            ordinal = int((int(anchor["car"]) - 1) * doors_per_car + int(anchor["door"]))
+            xy = scene_xy_for_connection_point(
+                anchor["point_source"],
+                layer,
+                alignment_transforms=alignment_transforms,
+                transform_metadata=transform_metadata,
+                transform_info=transform_info,
+                scale=scale,
+                invert_x=invert_x,
+                invert_y=invert_y,
+            )
+            anchors.append(
+                {
+                    "car": int(anchor["car"]),
+                    "door": int(anchor["door"]),
+                    "ordinal": ordinal,
+                    "point_source": anchor["point_source"],
+                    "position": [float(xy[0]), float(xy[1]), float(z_value)],
+                    "near_connection_id": anchor.get("near_connection_id"),
+                }
+            )
+        if not anchors and platform.get("start_point_source") and platform.get("end_point_source"):
+            anchors = [
+                {
+                    "car": 1,
+                    "door": 1,
+                    "ordinal": 1,
+                    "point_source": platform["start_point_source"],
+                },
+                {
+                    "car": car_count,
+                    "door": doors_per_car,
+                    "ordinal": total_positions,
+                    "point_source": platform["end_point_source"],
+                },
+            ]
+            for anchor in anchors:
+                xy = scene_xy_for_connection_point(
+                    anchor["point_source"],
+                    layer,
+                    alignment_transforms=alignment_transforms,
+                    transform_metadata=transform_metadata,
+                    transform_info=transform_info,
+                    scale=scale,
+                    invert_x=invert_x,
+                    invert_y=invert_y,
+                )
+                anchor["position"] = [float(xy[0]), float(xy[1]), float(z_value)]
+                anchor["near_connection_id"] = None
+        anchors = sorted(anchors, key=lambda item: item["ordinal"])
+        if len(anchors) < 2:
+            continue
+
+        def interpolate_position(ordinal):
+            if ordinal <= anchors[0]["ordinal"]:
+                left, right = anchors[0], anchors[1]
+            elif ordinal >= anchors[-1]["ordinal"]:
+                left, right = anchors[-2], anchors[-1]
+            else:
+                left, right = anchors[0], anchors[-1]
+                for index in range(len(anchors) - 1):
+                    if anchors[index]["ordinal"] <= ordinal <= anchors[index + 1]["ordinal"]:
+                        left, right = anchors[index], anchors[index + 1]
+                        break
+            span = right["ordinal"] - left["ordinal"]
+            t = 0.0 if span == 0 else (ordinal - left["ordinal"]) / span
+            return [
+                float(left["position"][0]) + (float(right["position"][0]) - float(left["position"][0])) * t,
+                float(left["position"][1]) + (float(right["position"][1]) - float(left["position"][1])) * t,
+                float(z_value),
+            ]
+
+        nodes = []
+        for car in range(1, car_count + 1):
+            for door in range(1, doors_per_car + 1):
+                ordinal = (car - 1) * doors_per_car + door
+                position = interpolate_position(ordinal)
+                nodes.append(
+                    {
+                        "node_id": f"{platform_id}_car_{car}_door_{door}",
+                        "type": "platform_position",
+                        "car": car,
+                        "door": door,
+                        "car_door": f"{car}-{door}",
+                        "ordinal": ordinal,
+                        "position": position,
+                    }
+                )
+        records.append(
+            {
+                "platform_id": platform_id,
+                "type": platform.get("type", "platform_direction"),
+                "label": platform.get("label"),
+                "line_id": platform.get("line_id"),
+                "direction": platform.get("direction"),
+                "layer": layer,
+                "polygon_id": polygon_id,
+                "car_count": car_count,
+                "doors_per_car": doors_per_car,
+                "anchors": anchors,
+                "start_point_source": anchors[0]["point_source"],
+                "end_point_source": anchors[-1]["point_source"],
+                "start_position": anchors[0]["position"],
+                "end_position": anchors[-1]["position"],
+                "nodes": nodes,
+            }
+        )
+    return records
+
+
+def build_navigation_graph(connection_records, icon_records=None, manual_assets=None, platform_records=None):
     """Build a lightweight graph for Unity NavMesh-assisted routing."""
     nodes = []
     edges = []
@@ -677,21 +817,26 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
         )
 
     for asset in manual_assets or []:
-        if asset.get("type") not in {"subway", "moving_walkway"} or not asset.get("location"):
+        if asset.get("type") not in {"subway", "moving_walkway", "ticket_gate"} or not asset.get("location"):
             continue
         asset_id = asset.get("asset_id") or asset.get("label")
         if not asset_id:
             continue
+        is_gate = asset.get("type") == "ticket_gate"
+        navigation_extra = asset.get("navigation") or {}
         add_node(
             navigation_node(
                 f"{asset_id}_node",
-                "asset",
+                "gate" if is_gate else "asset",
                 asset.get("layer"),
                 asset.get("location"),
                 polygon_id=asset.get("polygon_id"),
                 asset_id=asset_id,
                 asset_type=asset.get("type"),
                 label=asset.get("label"),
+                gate_type=asset.get("gate_type") if is_gate else None,
+                access_transition=navigation_extra.get("access_transition") if is_gate else None,
+                cost=navigation_extra.get("cost") if is_gate else None,
             )
         )
 
@@ -712,6 +857,44 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
                 poi_type=icon_type,
             )
         )
+
+    for platform in platform_records or []:
+        previous_node_id = None
+        previous_position = None
+        for platform_node in platform.get("nodes", []):
+            node_id = platform_node.get("node_id")
+            position = platform_node.get("position")
+            if not node_id or not position:
+                continue
+            add_node(
+                navigation_node(
+                    node_id,
+                    "platform_position",
+                    platform.get("layer"),
+                    position,
+                    polygon_id=platform.get("polygon_id"),
+                    platform_id=platform.get("platform_id"),
+                    line_id=platform.get("line_id"),
+                    direction=platform.get("direction"),
+                    car=platform_node.get("car"),
+                    door=platform_node.get("door"),
+                    car_door=platform_node.get("car_door"),
+                )
+            )
+            if previous_node_id and previous_position:
+                edges.append(
+                    navigation_edge(
+                        f"{previous_node_id}_to_{node_id}",
+                        previous_node_id,
+                        node_id,
+                        "platform_walk",
+                        cost=distance_3d(previous_position, position),
+                        bidirectional=True,
+                        platform_id=platform.get("platform_id"),
+                    )
+                )
+            previous_node_id = node_id
+            previous_position = position
 
     return {
         "metadata": {
@@ -1375,6 +1558,18 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         invert_y=invert_y,
         alignment_transforms=alignment_transforms,
     )
+    platform_records = build_platform_records(
+        annotations=annotations,
+        transform_metadata=transform_metadata,
+        transform_info=transform_info,
+        scale=effective_scale,
+        layer_z=layer_z,
+        floor_height=floor_height,
+        default_z=default_z,
+        invert_x=invert_x,
+        invert_y=invert_y,
+        alignment_transforms=alignment_transforms,
+    )
     assets = connection_assets + manual_assets
     assets_by_connection_id = {
         asset.get("connection_id"): asset
@@ -1409,6 +1604,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
             "polygon_z_offsets": annotations.get("polygon_z_offsets") or {},
             "polygon_z_values": annotations.get("polygon_z_values") or {},
             "polygon_axis_corrections": annotations.get("polygon_axis_corrections") or {},
+            "station_metadata": annotations.get("station_metadata") or {},
             "icon_matches": {
                 "source_image": icon_matches.get("source_image") if icon_matches else None,
                 "match_count": len(icon_records),
@@ -1428,13 +1624,20 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
             },
         },
         "planes": planes,
+        "station_metadata": annotations.get("station_metadata") or {},
         "walls": wall_records,
         "connections": connection_records,
+        "platforms": platform_records,
         "icons": icon_records,
         "manual_assets": manual_assets,
     }
     payload["assets"] = assets
-    payload["navigation"] = build_navigation_graph(connection_records, icon_records=icon_records, manual_assets=manual_assets)
+    payload["navigation"] = build_navigation_graph(
+        connection_records,
+        icon_records=icon_records,
+        manual_assets=manual_assets,
+        platform_records=platform_records,
+    )
     return payload
 
 
@@ -1447,6 +1650,17 @@ def blend_name_for_connection(connection):
         return "Escalator.blend"
     if asset_type in {"moving_walkway", "moving-walkway"}:
         return "MovingWalkway.blend"
+    return f"{asset_type}.blend"
+
+
+def blend_name_for_manual_asset(asset_type):
+    """Return the Blender asset filename for one manual linear asset."""
+    if asset_type == "ticket_gate":
+        return "TicketGate.blend"
+    if asset_type == "moving_walkway":
+        return "MovingWalkway.blend"
+    if asset_type == "subway":
+        return "Subway.blend"
     return f"{asset_type}.blend"
 
 
@@ -1518,6 +1732,7 @@ def build_assets_payload(scene_payload):
                 "y": "asset_width_ratio",
                 "z": "connection_abs_z_delta",
             },
+            "station_metadata": scene_payload.get("station_metadata") or scene_payload.get("metadata", {}).get("station_metadata") or {},
         },
         "assets": scene_payload.get("assets") or build_assets_from_connections(scene_payload.get("connections", [])),
     }

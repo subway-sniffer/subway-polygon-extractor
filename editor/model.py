@@ -101,9 +101,11 @@ def default_annotations():
         "manual_connections": [],
         "manual_walls": [],
         "manual_assets": [],
+        "manual_platforms": [],
         "layer_alignment_pairs": [],
         "polygon_axis_corrections": {},
         "scale_calibration": None,
+        "station_metadata": {},
     }
 
 

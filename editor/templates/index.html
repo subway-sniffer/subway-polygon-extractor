@@ -66,6 +66,32 @@
       </section>
 
       <section>
+        <h2>Station Info</h2>
+        <label>
+          Station ID
+          <input id="stationIdInput" placeholder="736">
+        </label>
+        <label>
+          Station name
+          <input id="stationNameInput" placeholder="이수">
+        </label>
+        <label>
+          Lines
+          <input id="stationLinesInput" placeholder="4,7">
+        </label>
+        <label>
+          Floors
+          <input id="stationFloorsInput" placeholder="B1,B2,B3">
+        </label>
+        <label>
+          Map ID
+          <input id="stationMapIdInput" placeholder="736_U_SB_191107">
+        </label>
+        <button id="saveStationInfoBtn">Save Station Info</button>
+        <div id="stationStatus">inactive</div>
+      </section>
+
+      <section>
         <h2>View</h2>
         <button id="fitViewBtn">Fit</button>
         <button id="resetViewBtn">Reset</button>
@@ -300,6 +326,7 @@
           <select id="manualAssetTypeInput">
             <option value="subway">subway</option>
             <option value="moving_walkway">moving walkway</option>
+            <option value="ticket_gate">ticket gate</option>
           </select>
         </label>
         <label>
@@ -312,6 +339,46 @@
         <button id="undoSubwayBtn">Undo Last Linear Asset</button>
         <button id="resetSubwayBtn">Reset Linear Asset (Esc)</button>
         <div id="subwayStatus">inactive</div>
+      </section>
+
+      <section>
+        <h2>Platform Direction</h2>
+        <label>
+          Line
+          <input id="platformLineInput" placeholder="4">
+        </label>
+        <label>
+          Direction
+          <input id="platformDirectionInput" placeholder="사당 방면">
+        </label>
+        <label>
+          Cars
+          <input id="platformCarCountInput" type="number" value="10" min="1" max="20">
+        </label>
+        <label>
+          Doors / car
+          <input id="platformDoorsInput" type="number" value="4" min="1" max="8">
+        </label>
+        <label>
+          Anchor car
+          <input id="platformAnchorCarInput" type="number" value="1" min="1" max="20">
+        </label>
+        <label>
+          Anchor door
+          <input id="platformAnchorDoorInput" type="number" value="1" min="1" max="8">
+        </label>
+        <label>
+          Label
+          <input id="platformLabelInput" placeholder="auto">
+        </label>
+        <button id="startPlatformBtn">Start Platform Anchors (P)</button>
+        <button id="savePlatformBtn">Save Platform Anchors</button>
+        <button id="undoPlatformAnchorBtn">Undo Anchor</button>
+        <button id="deletePlatformBtn">Delete Selected Platform</button>
+        <button id="deleteAllPlatformsBtn">Delete All Platforms</button>
+        <button id="undoPlatformBtn">Undo Last Platform</button>
+        <button id="resetPlatformBtn">Reset Platform</button>
+        <div id="platformStatus">inactive</div>
       </section>
 
       <section>

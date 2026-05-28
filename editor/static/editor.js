@@ -14,9 +14,11 @@ const state = {
     manual_connections: [],
     manual_walls: [],
     manual_assets: [],
+    manual_platforms: [],
     layer_alignment_pairs: [],
     polygon_axis_corrections: {},
     scale_calibration: null,
+    station_metadata: {},
   },
   scale: 1,
   offsetX: 0,
@@ -29,6 +31,7 @@ const state = {
   selectedStairId: null,
   selectedStairIds: [],
   selectedSubwayId: null,
+  selectedPlatformId: null,
   showIds: false,
   showConnections: false,
   showIcons: false,
@@ -147,7 +150,19 @@ const state = {
   subway: {
     active: false,
     label: "",
+    assetType: "subway",
     points: [],
+    polygonId: null,
+    layer: null,
+  },
+  platform: {
+    active: false,
+    anchors: [],
+    lineId: "",
+    direction: "",
+    carCount: 10,
+    doorsPerCar: 4,
+    label: "",
     polygonId: null,
     layer: null,
   },
@@ -201,6 +216,14 @@ const connectionTypeInput = document.getElementById("connectionTypeInput");
 const subwayStatus = document.getElementById("subwayStatus");
 const subwayLabelInput = document.getElementById("subwayLabelInput");
 const manualAssetTypeInput = document.getElementById("manualAssetTypeInput");
+const platformStatus = document.getElementById("platformStatus");
+const platformLineInput = document.getElementById("platformLineInput");
+const platformDirectionInput = document.getElementById("platformDirectionInput");
+const platformCarCountInput = document.getElementById("platformCarCountInput");
+const platformDoorsInput = document.getElementById("platformDoorsInput");
+const platformAnchorCarInput = document.getElementById("platformAnchorCarInput");
+const platformAnchorDoorInput = document.getElementById("platformAnchorDoorInput");
+const platformLabelInput = document.getElementById("platformLabelInput");
 const keepStatus = document.getElementById("keepStatus");
 const imageSelect = document.getElementById("imageSelect");
 const uploadImageInput = document.getElementById("uploadImageInput");
@@ -216,6 +239,13 @@ const iconThresholdInput = document.getElementById("iconThresholdInput");
 const groupingLayerCountInput = document.getElementById("groupingLayerCountInput");
 const groupingMinContactAreaInput = document.getElementById("groupingMinContactAreaInput");
 const groupingStatus = document.getElementById("groupingStatus");
+const stationIdInput = document.getElementById("stationIdInput");
+const stationNameInput = document.getElementById("stationNameInput");
+const stationLinesInput = document.getElementById("stationLinesInput");
+const stationFloorsInput = document.getElementById("stationFloorsInput");
+const stationMapIdInput = document.getElementById("stationMapIdInput");
+const stationStatus = document.getElementById("stationStatus");
+const MANUAL_ASSET_TYPES = ["subway", "moving_walkway", "ticket_gate"];
 
 function resizeCanvas() {
   const rect = canvas.getBoundingClientRect();
@@ -447,11 +477,11 @@ function drawStairConnections() {
 function drawManualAssets() {
   ctx.save();
   for (const asset of state.annotations.manual_assets || []) {
-    if (!["subway", "moving_walkway"].includes(asset.type) || !asset.point_source) continue;
+    if (!MANUAL_ASSET_TYPES.includes(asset.type) || !asset.point_source) continue;
     const selected = (asset.asset_id || asset.label) === state.selectedSubwayId;
-    const baseColor = asset.type === "moving_walkway" ? "rgba(0, 190, 140, 0.88)" : "rgba(0, 120, 255, 0.85)";
+    const baseColor = manualAssetColor(asset.type, 0.88);
     const selectedColor = "rgba(255, 210, 0, 0.95)";
-    const labelColor = asset.type === "moving_walkway" ? "#00a878" : "#0078ff";
+    const labelColor = manualAssetLabelColor(asset.type);
     if (asset.start_point_source && asset.end_point_source) {
       drawPath([asset.start_point_source, asset.end_point_source], selected ? selectedColor : baseColor, selected ? 5 : 3);
     }
@@ -467,19 +497,71 @@ function drawManualAssets() {
   }
   if (state.subway.active) {
     const points = state.subway.points || [];
-    const color = state.subway.assetType === "moving_walkway" ? "rgba(0, 190, 140, 0.95)" : "rgba(0, 120, 255, 0.95)";
+    const color = manualAssetColor(state.subway.assetType, 0.95);
     if (points.length === 2) drawPath(points, color, 4);
     points.forEach((point, index) => {
       const screen = worldToScreen(point);
       ctx.beginPath();
       ctx.arc(screen.x, screen.y, 7, 0, Math.PI * 2);
-      ctx.fillStyle = state.subway.assetType === "moving_walkway"
-        ? (index === 0 ? "#00d29a" : "#00a878")
-        : (index === 0 ? "#00aaff" : "#0078ff");
+      ctx.fillStyle = manualAssetPointColor(state.subway.assetType, index);
       ctx.strokeStyle = "#111111";
       ctx.lineWidth = 1;
       ctx.fill();
       ctx.stroke();
+    });
+  }
+  ctx.restore();
+}
+
+function drawPlatforms() {
+  ctx.save();
+  for (const platform of state.annotations.manual_platforms || []) {
+    const anchors = platformAnchors(platform);
+    if (anchors.length < 1) continue;
+    const selected = (platform.platform_id || platform.label) === state.selectedPlatformId;
+    const color = selected ? "rgba(255, 210, 0, 0.95)" : "rgba(155, 80, 255, 0.9)";
+    const points = anchors.map((anchor) => anchor.point_source);
+    if (points.length >= 2) {
+      drawPath(points, color, selected ? 6 : 4);
+      drawPathArrow(points, color);
+    }
+    for (const anchor of anchors) {
+      const screen = worldToScreen(anchor.point_source);
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, selected ? 7 : 5, 0, Math.PI * 2);
+      ctx.fillStyle = selected ? "#ffd200" : "#7b2cff";
+      ctx.strokeStyle = "#111111";
+      ctx.lineWidth = 1;
+      ctx.fill();
+      ctx.stroke();
+      drawCanvasLabel(anchor.point_source, `${anchor.car}-${anchor.door}`, selected ? "#ffd200" : "#7b2cff", 8, 16);
+    }
+    const labelPoint = points[Math.floor((points.length - 1) / 2)];
+    drawCanvasLabel(
+      labelPoint,
+      platform.label || `${platform.line_id || "-"} ${platform.direction || ""}`.trim(),
+      selected ? "#ffd200" : "#7b2cff",
+      10,
+      -10,
+    );
+  }
+  if (state.platform.active) {
+    const points = (state.platform.anchors || []).map((anchor) => anchor.point_source);
+    if (points.length >= 2) {
+      drawPath(points, "rgba(155, 80, 255, 0.95)", 4);
+      drawPathArrow(points, "rgba(155, 80, 255, 0.95)");
+    }
+    (state.platform.anchors || []).forEach((anchor, index) => {
+      const point = anchor.point_source;
+      const screen = worldToScreen(point);
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, 7, 0, Math.PI * 2);
+      ctx.fillStyle = index === 0 ? "#c49cff" : "#7b2cff";
+      ctx.strokeStyle = "#111111";
+      ctx.lineWidth = 1;
+      ctx.fill();
+      ctx.stroke();
+      drawCanvasLabel(point, `${anchor.car}-${anchor.door}`, "#7b2cff", 8, 16);
     });
   }
   ctx.restore();
@@ -583,6 +665,59 @@ function drawPath(points, color, width = 4) {
 function titleCase(value) {
   if (!value) return "";
   return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function splitListInput(value) {
+  return String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function stationMetadataFromInputs() {
+  const stationId = stationIdInput.value.trim();
+  const stationName = stationNameInput.value.trim();
+  const lines = splitListInput(stationLinesInput.value);
+  const floors = splitListInput(stationFloorsInput.value);
+  const mapId = stationMapIdInput.value.trim();
+  return {
+    station_id: stationId || null,
+    station_name: stationName || null,
+    lines: lines.map((line) => ({line_id: line, line_name: line})),
+    line_ids: lines,
+    floors,
+    map_id: mapId || null,
+  };
+}
+
+function populateStationInputs(metadata = {}) {
+  const lines = metadata.line_ids || (metadata.lines || []).map((line) => line.line_id || line.line_name || line).filter(Boolean);
+  stationIdInput.value = metadata.station_id || "";
+  stationNameInput.value = metadata.station_name || "";
+  stationLinesInput.value = lines.join(",");
+  stationFloorsInput.value = (metadata.floors || []).join(",");
+  stationMapIdInput.value = metadata.map_id || "";
+  updateStationStatus();
+}
+
+function updateStationStatus(message = null) {
+  const metadata = state.annotations.station_metadata || {};
+  const parts = [
+    message,
+    metadata.station_name ? `station: ${metadata.station_name}` : null,
+    metadata.station_id ? `id: ${metadata.station_id}` : null,
+    metadata.line_ids?.length ? `lines: ${metadata.line_ids.join(", ")}` : null,
+    metadata.floors?.length ? `floors: ${metadata.floors.join(", ")}` : null,
+  ].filter(Boolean);
+  stationStatus.textContent = parts.join("\n") || "inactive";
+}
+
+function saveStationInfo() {
+  state.annotations.station_metadata = stationMetadataFromInputs();
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateStationStatus("Station info saved.");
+  });
 }
 
 function drawCanvasLabel(point, text, color, dx = 8, dy = -8) {
@@ -1226,6 +1361,7 @@ function draw() {
   drawIcons();
   drawStairConnections();
   drawManualAssets();
+  drawPlatforms();
   drawManualMarkerPreview();
   drawCropPreview();
   drawMergePreview();
@@ -1306,6 +1442,7 @@ function toggleMultiSelectedPolygon(poly) {
   state.selectedId = poly.polygon_id;
   state.selectedStairId = null;
   state.selectedStairIds = [];
+  state.selectedPlatformId = null;
   state.selectedSubwayId = null;
   state.selectedLayerAlignIndex = null;
   updateSelectedInfo();
@@ -1377,6 +1514,7 @@ function syncLayerAnnotationsFromPolygons() {
 
 function saveAnnotations() {
   syncLayerAnnotationsFromPolygons();
+  state.annotations.station_metadata = stationMetadataFromInputs();
   return fetch("/api/annotations", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
@@ -2312,6 +2450,7 @@ function selectLayerAlignPair(world) {
   state.selectedLayerAlignIndex = hit.index;
   state.selectedStairId = null;
   state.selectedStairIds = [];
+  state.selectedPlatformId = null;
   state.selectedId = null;
   updateSelectedInfo();
   updateLayerAlignStatus(`Selected correction pair ${hit.index + 1}.`);
@@ -2826,6 +2965,7 @@ function selectStairConnection(world, event = null) {
     state.selectedStairIds = [hit.connectionId];
   }
   state.selectedId = null;
+  state.selectedPlatformId = null;
   updateSelectedInfo();
   updateStairStatus(`Selected ${selectedStairConnectionIds().length} connection(s).`);
   draw();
@@ -2938,24 +3078,46 @@ function selectedManualAssetType() {
 }
 
 function manualAssetBlend(type) {
+  if (type === "ticket_gate") return "TicketGate.blend";
   if (type === "moving_walkway") return "MovingWalkway.blend";
   return "Subway.blend";
 }
 
 function manualAssetDisplayName(type) {
+  if (type === "ticket_gate") return "ticket gate";
   if (type === "moving_walkway") return "moving walkway";
   return "subway train";
+}
+
+function manualAssetColor(type, alpha = 0.9) {
+  if (type === "ticket_gate") return `rgba(210, 31, 60, ${alpha})`;
+  if (type === "moving_walkway") return `rgba(0, 190, 140, ${alpha})`;
+  return `rgba(0, 120, 255, ${alpha})`;
+}
+
+function manualAssetLabelColor(type) {
+  if (type === "ticket_gate") return "#d21f3c";
+  if (type === "moving_walkway") return "#00a878";
+  return "#0078ff";
+}
+
+function manualAssetPointColor(type, index) {
+  if (type === "ticket_gate") return index === 0 ? "#ff5a6f" : "#d21f3c";
+  if (type === "moving_walkway") return index === 0 ? "#00d29a" : "#00a878";
+  return index === 0 ? "#00aaff" : "#0078ff";
 }
 
 function updateSubwayStatus(message = null) {
   const subwayCount = (state.annotations.manual_assets || []).filter((asset) => asset.type === "subway").length;
   const walkwayCount = (state.annotations.manual_assets || []).filter((asset) => asset.type === "moving_walkway").length;
+  const gateCount = (state.annotations.manual_assets || []).filter((asset) => asset.type === "ticket_gate").length;
   const currentType = state.subway.active ? state.subway.assetType : selectedManualAssetType();
   if (!state.subway.active) {
     subwayStatus.textContent = [
       message,
       `subways: ${subwayCount}`,
       `moving walkways: ${walkwayCount}`,
+      `ticket gates: ${gateCount}`,
       state.selectedSubwayId ? `selected: ${state.selectedSubwayId}` : null,
     ].filter(Boolean).join("\n") || "inactive";
     return;
@@ -3048,6 +3210,10 @@ function addSubwayAsset(world, poly) {
     end_point_source: end,
     rotation_z: rotationZ,
     scale: [scaleX, 1.0, 1.0],
+    gate_type: assetType === "ticket_gate" ? "ticket_gate" : null,
+    navigation: assetType === "ticket_gate"
+      ? {node_type: "gate", access_transition: "public_paid", cost: 10}
+      : null,
   });
   saveAnnotations().then((result) => {
     saveResult.textContent = JSON.stringify(result, null, 2);
@@ -3060,11 +3226,18 @@ function nearestSubwayAsset(world, maxScreenDistance = 14) {
   const mouseScreen = worldToScreen([world.x, world.y]);
   let best = null;
   (state.annotations.manual_assets || []).forEach((asset, index) => {
-    if (!["subway", "moving_walkway"].includes(asset.type) || !asset.point_source) return;
-    const screen = worldToScreen(asset.point_source);
-    const distance = Math.hypot(screen.x - mouseScreen.x, screen.y - mouseScreen.y);
+    if (!MANUAL_ASSET_TYPES.includes(asset.type) || !asset.point_source) return;
+    let distance;
+    if (asset.start_point_source && asset.end_point_source) {
+      const projected = projectPointToSegment(world, asset.start_point_source, asset.end_point_source);
+      const projectedScreen = worldToScreen(projected);
+      distance = Math.hypot(projectedScreen.x - mouseScreen.x, projectedScreen.y - mouseScreen.y);
+    } else {
+      const screen = worldToScreen(asset.point_source);
+      distance = Math.hypot(screen.x - mouseScreen.x, screen.y - mouseScreen.y);
+    }
     if (distance <= maxScreenDistance && (!best || distance < best.distance)) {
-      best = {index, assetId: asset.asset_id || asset.label || `subway_${index + 1}`, distance};
+      best = {index, assetId: asset.asset_id || asset.label || `${asset.type}_${index + 1}`, distance};
     }
   });
   return best;
@@ -3079,6 +3252,7 @@ function selectSubwayAsset(world) {
     return false;
   }
   state.selectedSubwayId = hit.assetId;
+  state.selectedPlatformId = null;
   state.selectedStairId = null;
   state.selectedStairIds = [];
   state.selectedLayerAlignIndex = null;
@@ -3091,16 +3265,16 @@ function selectSubwayAsset(world) {
 
 function deleteSelectedSubwayAsset() {
   if (!state.selectedSubwayId) {
-    updateSubwayStatus("Select a subway first.");
+    updateSubwayStatus("Select a linear asset first.");
     return;
   }
   state.annotations.manual_assets = state.annotations.manual_assets || [];
   const index = state.annotations.manual_assets.findIndex(
-    (asset) => ["subway", "moving_walkway"].includes(asset.type) && (asset.asset_id || asset.label) === state.selectedSubwayId,
+    (asset) => MANUAL_ASSET_TYPES.includes(asset.type) && (asset.asset_id || asset.label) === state.selectedSubwayId,
   );
   if (index < 0) {
     state.selectedSubwayId = null;
-    updateSubwayStatus("Selected subway is missing.");
+    updateSubwayStatus("Selected linear asset is missing.");
     draw();
     return;
   }
@@ -3116,7 +3290,7 @@ function deleteSelectedSubwayAsset() {
 function deleteAllSubwayAssets() {
   state.annotations.manual_assets = state.annotations.manual_assets || [];
   const before = state.annotations.manual_assets.length;
-  state.annotations.manual_assets = state.annotations.manual_assets.filter((asset) => !["subway", "moving_walkway"].includes(asset.type));
+  state.annotations.manual_assets = state.annotations.manual_assets.filter((asset) => !MANUAL_ASSET_TYPES.includes(asset.type));
   const removed = before - state.annotations.manual_assets.length;
   state.selectedSubwayId = null;
   saveAnnotations().then((result) => {
@@ -3129,7 +3303,7 @@ function deleteAllSubwayAssets() {
 function undoLastSubwayAsset() {
   state.annotations.manual_assets = state.annotations.manual_assets || [];
   for (let index = state.annotations.manual_assets.length - 1; index >= 0; index -= 1) {
-    if (!["subway", "moving_walkway"].includes(state.annotations.manual_assets[index].type)) continue;
+    if (!MANUAL_ASSET_TYPES.includes(state.annotations.manual_assets[index].type)) continue;
     const removed = state.annotations.manual_assets.splice(index, 1)[0];
     state.selectedSubwayId = null;
     saveAnnotations().then((result) => {
@@ -3140,6 +3314,285 @@ function undoLastSubwayAsset() {
     return;
   }
   updateSubwayStatus("No linear asset to undo.");
+}
+
+function nextPlatformId() {
+  const numbers = (state.annotations.manual_platforms || [])
+    .map((platform) => {
+      const match = String(platform.platform_id || "").match(/^platform_(\d+)$/);
+      return match ? Number(match[1]) : 0;
+    });
+  const next = Math.max(0, ...numbers) + 1;
+  return `platform_${String(next).padStart(3, "0")}`;
+}
+
+function platformOrdinal(car, door, doorsPerCar) {
+  return (Number(car) - 1) * Number(doorsPerCar) + Number(door);
+}
+
+function platformAnchors(platform) {
+  const doorsPerCar = Number(platform.doors_per_car || platform.doorsPerCar || 4);
+  let anchors = (platform.anchors || [])
+    .filter((anchor) => anchor.point_source && anchor.car && anchor.door)
+    .map((anchor) => ({
+      car: Number(anchor.car),
+      door: Number(anchor.door),
+      point_source: anchor.point_source,
+      ordinal: platformOrdinal(anchor.car, anchor.door, doorsPerCar),
+      near_connection_id: anchor.near_connection_id || null,
+    }));
+  if (!anchors.length && platform.start_point_source && platform.end_point_source) {
+    const carCount = Number(platform.car_count || 10);
+    anchors = [
+      {car: 1, door: 1, point_source: platform.start_point_source, ordinal: 1, near_connection_id: null},
+      {
+        car: carCount,
+        door: doorsPerCar,
+        point_source: platform.end_point_source,
+        ordinal: platformOrdinal(carCount, doorsPerCar, doorsPerCar),
+        near_connection_id: null,
+      },
+    ];
+  }
+  return anchors.sort((a, b) => a.ordinal - b.ordinal);
+}
+
+function updatePlatformStatus(message = null) {
+  const count = (state.annotations.manual_platforms || []).length;
+  if (!state.platform.active) {
+    platformStatus.textContent = [
+      message,
+      `platforms: ${count}`,
+      state.selectedPlatformId ? `selected: ${state.selectedPlatformId}` : null,
+    ].filter(Boolean).join("\n") || "inactive";
+    return;
+  }
+  platformStatus.textContent = [
+    message,
+    `mode: platform direction`,
+    `line: ${state.platform.lineId || "-"}`,
+    `direction: ${state.platform.direction || "-"}`,
+    `cars: ${state.platform.carCount}`,
+    `doors/car: ${state.platform.doorsPerCar}`,
+    `anchors: ${(state.platform.anchors || []).length}`,
+    `next anchor: ${platformAnchorCarInput.value || "-"}-${platformAnchorDoorInput.value || "-"}`,
+    "Set car/door, click point, repeat. Save when 2+ anchors.",
+  ].filter(Boolean).join("\n");
+}
+
+function startPlatformLine() {
+  if (!canEdit()) return;
+  state.tool = "platform";
+  state.platform = {
+    active: true,
+    anchors: [],
+    lineId: platformLineInput.value.trim(),
+    direction: platformDirectionInput.value.trim(),
+    carCount: Number(platformCarCountInput.value) || 10,
+    doorsPerCar: Number(platformDoorsInput.value) || 4,
+    label: platformLabelInput.value.trim(),
+    polygonId: null,
+    layer: null,
+  };
+  updatePlatformStatus();
+  draw();
+}
+
+function resetPlatformLine() {
+  state.tool = "select";
+  state.platform = {
+    active: false,
+    anchors: [],
+    lineId: platformLineInput.value.trim(),
+    direction: platformDirectionInput.value.trim(),
+    carCount: Number(platformCarCountInput.value) || 10,
+    doorsPerCar: Number(platformDoorsInput.value) || 4,
+    label: platformLabelInput.value.trim(),
+    polygonId: null,
+    layer: null,
+  };
+  updatePlatformStatus();
+  draw();
+}
+
+function addPlatformPoint(world, poly) {
+  if (!state.platform.active) return;
+  if (!poly) {
+    updatePlatformStatus("Click inside a platform polygon.");
+    return;
+  }
+  const layer = polygonLayerValue(poly);
+  if (!layer) {
+    updatePlatformStatus(`Set layer first: ${poly.polygon_id}`);
+    return;
+  }
+  const point = [Number(world.x.toFixed(2)), Number(world.y.toFixed(2))];
+  const car = Number(platformAnchorCarInput.value);
+  const door = Number(platformAnchorDoorInput.value);
+  if (!Number.isFinite(car) || car < 1 || car > state.platform.carCount) {
+    updatePlatformStatus("Anchor car is out of range.");
+    return;
+  }
+  if (!Number.isFinite(door) || door < 1 || door > state.platform.doorsPerCar) {
+    updatePlatformStatus("Anchor door is out of range.");
+    return;
+  }
+  const ordinal = platformOrdinal(car, door, state.platform.doorsPerCar);
+  const existingIndex = (state.platform.anchors || []).findIndex((anchor) => anchor.ordinal === ordinal);
+  const anchor = {car, door, point_source: point, ordinal};
+  if (existingIndex >= 0) {
+    state.platform.anchors[existingIndex] = anchor;
+  } else {
+    state.platform.anchors.push(anchor);
+  }
+  state.platform.anchors.sort((a, b) => a.ordinal - b.ordinal);
+  if (!state.platform.polygonId) {
+    state.platform.polygonId = poly.polygon_id;
+    state.platform.layer = layer;
+  }
+  updatePlatformStatus(`Anchor ${car}-${door} added.`);
+  draw();
+}
+
+function savePlatformAnchors() {
+  if (!state.platform.active) {
+    updatePlatformStatus("Start Platform Anchors first.");
+    return;
+  }
+  if ((state.platform.anchors || []).length < 2) {
+    updatePlatformStatus("Add at least 2 anchors.");
+    return;
+  }
+  const platformId = nextPlatformId();
+  state.annotations.manual_platforms = state.annotations.manual_platforms || [];
+  state.annotations.manual_platforms.push({
+    platform_id: platformId,
+    type: "platform_direction",
+    label: state.platform.label || platformId,
+    line_id: state.platform.lineId || null,
+    direction: state.platform.direction || null,
+    car_count: state.platform.carCount,
+    doors_per_car: state.platform.doorsPerCar,
+    polygon_id: state.platform.polygonId,
+    layer: state.platform.layer,
+    anchors: state.platform.anchors.map((anchor) => ({
+      car: anchor.car,
+      door: anchor.door,
+      point_source: anchor.point_source,
+      ordinal: anchor.ordinal,
+    })),
+    start_point_source: state.platform.anchors[0].point_source,
+    end_point_source: state.platform.anchors[state.platform.anchors.length - 1].point_source,
+    bidirectional: false,
+  });
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    resetPlatformLine();
+    updatePlatformStatus(`${platformId} saved.`);
+  });
+}
+
+function undoPlatformAnchor() {
+  if (!state.platform.active || !(state.platform.anchors || []).length) {
+    updatePlatformStatus("No anchor to undo.");
+    return;
+  }
+  const removed = state.platform.anchors.pop();
+  updatePlatformStatus(`Removed anchor ${removed.car}-${removed.door}.`);
+  draw();
+}
+
+function nearestPlatform(world, maxScreenDistance = 14) {
+  const mouseScreen = worldToScreen([world.x, world.y]);
+  let best = null;
+  (state.annotations.manual_platforms || []).forEach((platform, index) => {
+    const anchors = platformAnchors(platform);
+    if (anchors.length < 1) return;
+    for (let anchorIndex = 0; anchorIndex < anchors.length; anchorIndex += 1) {
+      const anchor = anchors[anchorIndex];
+      const screen = worldToScreen(anchor.point_source);
+      let distance = Math.hypot(screen.x - mouseScreen.x, screen.y - mouseScreen.y);
+      if (anchorIndex < anchors.length - 1) {
+        const projected = projectPointToSegment(world, anchor.point_source, anchors[anchorIndex + 1].point_source);
+        const projectedScreen = worldToScreen(projected);
+        distance = Math.min(distance, Math.hypot(projectedScreen.x - mouseScreen.x, projectedScreen.y - mouseScreen.y));
+      }
+      if (distance <= maxScreenDistance && (!best || distance < best.distance)) {
+        best = {index, platformId: platform.platform_id || platform.label || `platform_${index + 1}`, distance};
+      }
+    }
+  });
+  return best;
+}
+
+function selectPlatform(world) {
+  const hit = nearestPlatform(world);
+  if (!hit) {
+    state.selectedPlatformId = null;
+    updatePlatformStatus();
+    draw();
+    return false;
+  }
+  state.selectedPlatformId = hit.platformId;
+  state.selectedId = null;
+  state.selectedSubwayId = null;
+  state.selectedStairId = null;
+  state.selectedStairIds = [];
+  updateSelectedInfo();
+  updatePlatformStatus(`Selected ${hit.platformId}.`);
+  draw();
+  return true;
+}
+
+function deleteSelectedPlatform() {
+  if (!state.selectedPlatformId) {
+    updatePlatformStatus("Select a platform first.");
+    return;
+  }
+  state.annotations.manual_platforms = state.annotations.manual_platforms || [];
+  const index = state.annotations.manual_platforms.findIndex(
+    (platform) => (platform.platform_id || platform.label) === state.selectedPlatformId,
+  );
+  if (index < 0) {
+    state.selectedPlatformId = null;
+    updatePlatformStatus("Selected platform is missing.");
+    draw();
+    return;
+  }
+  const removed = state.annotations.manual_platforms.splice(index, 1)[0];
+  state.selectedPlatformId = null;
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updatePlatformStatus(`Deleted ${removed.platform_id || removed.label}.`);
+    draw();
+  });
+}
+
+function deleteAllPlatforms() {
+  state.annotations.manual_platforms = state.annotations.manual_platforms || [];
+  const removed = state.annotations.manual_platforms.length;
+  state.annotations.manual_platforms = [];
+  state.selectedPlatformId = null;
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updatePlatformStatus(`Deleted ${removed} platform(s).`);
+    draw();
+  });
+}
+
+function undoLastPlatform() {
+  state.annotations.manual_platforms = state.annotations.manual_platforms || [];
+  const removed = state.annotations.manual_platforms.pop();
+  if (!removed) {
+    updatePlatformStatus("No platform to undo.");
+    return;
+  }
+  state.selectedPlatformId = null;
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updatePlatformStatus(`Removed ${removed.platform_id || removed.label}.`);
+    draw();
+  });
 }
 
 function startSimpleKeep() {
@@ -3913,6 +4366,7 @@ function resetToInitialPolygons() {
   state.annotations.manual_connections = [];
   state.annotations.manual_walls = [];
   state.annotations.manual_assets = [];
+  state.annotations.manual_platforms = [];
   state.annotations.layer_alignment_pairs = [];
   state.annotations.polygon_axis_corrections = {};
   state.annotations.scale_calibration = null;
@@ -3930,6 +4384,7 @@ function resetToInitialPolygons() {
   resetSplitPolygon();
   resetStairConnection();
   resetSubwayPlacement();
+  resetPlatformLine();
   resetLayerAlign();
   resetLocalAxisCorrection();
   resetScaleCalibration();
@@ -4177,10 +4632,13 @@ function loadProject() {
       state.annotations = project.annotations || state.annotations;
       state.annotations.manual_connections = state.annotations.manual_connections || [];
       state.annotations.manual_assets = state.annotations.manual_assets || [];
+      state.annotations.manual_platforms = state.annotations.manual_platforms || [];
       state.annotations.scale_calibration = state.annotations.scale_calibration || null;
       state.annotations.polygon_z_offsets = state.annotations.polygon_z_offsets || {};
       state.annotations.polygon_z_values = state.annotations.polygon_z_values || {};
       state.annotations.polygon_axis_corrections = state.annotations.polygon_axis_corrections || {};
+      state.annotations.station_metadata = state.annotations.station_metadata || {};
+      populateStationInputs(state.annotations.station_metadata);
       state.manualPolygons = state.annotations.manual_polygons || [];
       const image = new Image();
       image.onload = () => {
@@ -4232,9 +4690,11 @@ function resetProjectWorkingState(message) {
     manual_connections: [],
     manual_walls: [],
     manual_assets: [],
+    manual_platforms: [],
     layer_alignment_pairs: [],
     polygon_axis_corrections: {},
     scale_calibration: null,
+    station_metadata: {},
   };
   state.marker.points = [];
   state.crop = {active: false, start: null, current: null, rect: null};
@@ -4243,7 +4703,9 @@ function resetProjectWorkingState(message) {
   state.selectedIds = [];
   state.selectedStairId = null;
   state.selectedStairIds = [];
+  state.selectedPlatformId = null;
   pipelineStatus.textContent = message;
+  populateStationInputs(state.annotations.station_metadata);
   updateScaleCalibrationStatus();
   updateLocalAxisStatus();
 }
@@ -4643,6 +5105,7 @@ function togglePreviewFinal() {
     resetSimpleKeep();
     resetStairConnection();
     resetSubwayPlacement();
+    resetPlatformLine();
     resetLayerAlign();
     resetScaleCalibration();
   }
@@ -4678,10 +5141,13 @@ function applyExportedFinalPayload(data, sourceLabel = null) {
     manual_connections: data.connections || [],
     manual_walls: data.walls || [],
     manual_assets: state.annotations.manual_assets || [],
+    manual_platforms: state.annotations.manual_platforms || [],
     layer_alignment_pairs: state.annotations.layer_alignment_pairs || [],
     polygon_axis_corrections: state.annotations.polygon_axis_corrections || {},
     scale_calibration: state.annotations.scale_calibration || null,
+    station_metadata: data.station_metadata || state.annotations.station_metadata || {},
   };
+  populateStationInputs(state.annotations.station_metadata);
   state.tool = "select";
   state.selectedId = null;
   state.selectedIds = [];
@@ -4698,6 +5164,7 @@ function applyExportedFinalPayload(data, sourceLabel = null) {
   resetSplitPolygon();
   resetStairConnection();
   resetSubwayPlacement();
+  resetPlatformLine();
   resetLayerAlign();
   resetLocalAxisCorrection();
   resetScaleCalibration();
@@ -5009,6 +5476,10 @@ canvas.addEventListener("click", (event) => {
     addSubwayAsset(world, poly);
     return;
   }
+  if (state.tool === "platform") {
+    addPlatformPoint(world, poly);
+    return;
+  }
   if (state.tool === "stair") {
     addStairPoint(world, poly);
     return;
@@ -5023,6 +5494,7 @@ canvas.addEventListener("click", (event) => {
   }
   if (selectLayerAlignPair(world)) return;
   if (selectSubwayAsset(world)) return;
+  if (selectPlatform(world)) return;
   if (selectStairConnection(world, event)) return;
   if (event.ctrlKey || event.metaKey) {
     toggleMultiSelectedPolygon(poly);
@@ -5033,6 +5505,7 @@ canvas.addEventListener("click", (event) => {
   state.selectedStairId = null;
   state.selectedStairIds = [];
   state.selectedSubwayId = null;
+  state.selectedPlatformId = null;
   state.selectedLayerAlignIndex = null;
   updateSelectedInfo();
   updateLayerAlignStatus();
@@ -5189,6 +5662,13 @@ document.getElementById("deleteSubwayBtn").addEventListener("click", deleteSelec
 document.getElementById("deleteAllSubwayBtn").addEventListener("click", deleteAllSubwayAssets);
 document.getElementById("undoSubwayBtn").addEventListener("click", undoLastSubwayAsset);
 document.getElementById("resetSubwayBtn").addEventListener("click", resetSubwayPlacement);
+document.getElementById("startPlatformBtn").addEventListener("click", startPlatformLine);
+document.getElementById("savePlatformBtn").addEventListener("click", savePlatformAnchors);
+document.getElementById("undoPlatformAnchorBtn").addEventListener("click", undoPlatformAnchor);
+document.getElementById("deletePlatformBtn").addEventListener("click", deleteSelectedPlatform);
+document.getElementById("deleteAllPlatformsBtn").addEventListener("click", deleteAllPlatforms);
+document.getElementById("undoPlatformBtn").addEventListener("click", undoLastPlatform);
+document.getElementById("resetPlatformBtn").addEventListener("click", resetPlatformLine);
 document.getElementById("refreshImagesBtn").addEventListener("click", refreshImages);
 document.getElementById("loadImageBtn").addEventListener("click", loadSelectedImage);
 document.getElementById("uploadImageBtn").addEventListener("click", uploadImageFile);
@@ -5206,6 +5686,7 @@ document.getElementById("extractPolygonsBtn").addEventListener("click", extractP
 document.getElementById("runPipelineBtn").addEventListener("click", runPipelineFromUi);
 document.getElementById("loadClustersBtn").addEventListener("click", loadClusters);
 document.getElementById("runEditedGroupingBtn").addEventListener("click", runEditedGroupingFromUi);
+document.getElementById("saveStationInfoBtn").addEventListener("click", saveStationInfo);
 document.getElementById("resetAllBtn").addEventListener("click", resetToInitialPolygons);
 document.getElementById("saveBtn").addEventListener("click", () => {
   saveAnnotations().then((result) => {
@@ -5311,6 +5792,9 @@ document.addEventListener("keydown", (event) => {
   } else if (key === "u") {
     event.preventDefault();
     startStairConnection();
+  } else if (key === "p") {
+    event.preventDefault();
+    startPlatformLine();
   } else if (key === "o") {
     event.preventDefault();
     startSubwayPlacement();
@@ -5344,6 +5828,7 @@ document.addEventListener("keydown", (event) => {
   } else if (event.key === "Delete") {
     event.preventDefault();
     if (state.selectedSubwayId) deleteSelectedSubwayAsset();
+    else if (state.selectedPlatformId) deleteSelectedPlatform();
     else if (state.selectedLayerAlignIndex !== null) deleteSelectedLayerAlignPair();
     else if (state.selectedStairId) deleteSelectedStairConnection();
     else deleteSelectedPolygon();
@@ -5374,6 +5859,7 @@ document.addEventListener("keydown", (event) => {
     else if (state.tool === "layerAlign") resetLayerAlign();
     else if (state.tool === "localAxis") resetLocalAxisCorrection();
     else if (state.tool === "subway") resetSubwayPlacement();
+    else if (state.tool === "platform") resetPlatformLine();
     else if (state.tool === "scaleCalibration") resetScaleCalibration();
     else if (state.tool === "marker") {
       state.tool = "select";
@@ -5407,5 +5893,8 @@ updateSplitPolygonStatus();
 updateLayerAlignStatus();
 updateScaleCalibrationStatus();
 updateSubwayStatus();
+updateStairStatus();
+updatePlatformStatus();
+updateStationStatus();
 updateKeepStatus();
 loadProject();
