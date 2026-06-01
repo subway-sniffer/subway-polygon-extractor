@@ -153,11 +153,44 @@ def validate_image_path(path):
     return dimensions
 
 
+def create_placeholder_image(output_root):
+    """Create a temporary startup image used until the user selects/uploads one."""
+    placeholder_dir = Path(output_root) / "_placeholder"
+    placeholder_dir.mkdir(parents=True, exist_ok=True)
+    placeholder_path = placeholder_dir / "select_image.png"
+    if not placeholder_path.exists():
+        image = np.full((720, 1280, 3), 245, dtype=np.uint8)
+        cv2.putText(
+            image,
+            "Select or upload an image",
+            (330, 350),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1.4,
+            (60, 60, 60),
+            3,
+            cv2.LINE_AA,
+        )
+        cv2.putText(
+            image,
+            "Use the image list or file picker in the sidebar",
+            (285, 410),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.8,
+            (100, 100, 100),
+            2,
+            cv2.LINE_AA,
+        )
+        cv2.imwrite(str(placeholder_path), image)
+    return placeholder_path
+
+
 def create_app(args):
     """Create the polygon editor Flask app."""
     app = Flask(__name__)
     store = ProjectStore(args)
     layer_z = parse_layer_z(args.layer_z)
+    if not store.active["image_path"].exists() and args.allow_missing_image:
+        store.activate_image(create_placeholder_image(store.output_root))
     validate_image_path(store.active["image_path"])
     source_image = cv2.imread(str(store.active["image_path"]))
     if source_image is None:
@@ -312,6 +345,38 @@ def create_app(args):
                 "source_image": str(source_path),
                 "crop_image": str(crop_path),
                 "crop_rect": [x1, y1, x2 - x1, y2 - y1],
+                "image": str(project_data["image_path"]),
+                "output_dir": str(project_data["output_dir"]),
+                "polygons_file": str(project_data["polygons_path"]),
+                "marker_config_file": str(project_data["marker_config_path"]),
+            }
+        )
+
+    @app.route("/api/image/crop/revert", methods=["POST"])
+    def revert_cropped_image():
+        """Switch back to the previous image and delete the generated crop image."""
+        data = request.get_json(force=True)
+        previous_image = Path(data.get("previous_image", "")).resolve()
+        if not previous_image.exists():
+            return jsonify({"error": f"previous image does not exist: {previous_image}"}), 404
+        try:
+            validate_image_path(previous_image)
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+
+        crop_image = store.active["image_path"]
+        try:
+            deleted_crop = store.delete_generated_crop_image(crop_image)
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+        except OSError as exc:
+            return jsonify({"error": f"crop 이미지를 삭제하지 못했습니다: {exc}"}), 500
+
+        project_data = store.activate_image(previous_image)
+        return jsonify(
+            {
+                "reverted": True,
+                "deleted_crop_image": str(deleted_crop),
                 "image": str(project_data["image_path"]),
                 "output_dir": str(project_data["output_dir"]),
                 "polygons_file": str(project_data["polygons_path"]),
@@ -1330,6 +1395,7 @@ def parse_args():
     parser.add_argument("--marker-config", help="Marker config with perspective_matrix for transformed export.")
     parser.add_argument("--image-root", help="Directory scanned by the web image picker. Defaults to the initial image directory.")
     parser.add_argument("--project-output-root", help="Directory for web-created per-image outputs.")
+    parser.add_argument("--allow-missing-image", action="store_true", help="Start with a placeholder when --image does not exist.")
     parser.add_argument("--plane-scale", type=float, default=0.01)
     parser.add_argument("--default-z", type=float, default=0.0)
     parser.add_argument("--floor-height", type=float, default=5.0, help="Default floor height multiplier for layer indices.")

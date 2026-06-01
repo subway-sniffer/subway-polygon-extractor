@@ -27,6 +27,7 @@ services:
       - /data/images
       - --project-output-root
       - /data/projects
+      - --allow-missing-image
       - --host
       - 0.0.0.0
       - --port

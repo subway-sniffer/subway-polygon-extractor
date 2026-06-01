@@ -28,6 +28,7 @@ CMD ["python", "editor/app.py", \
      "--marker-config", "/data/projects/test1/marker_config.json", \
      "--image-root", "/data/images", \
      "--project-output-root", "/data/projects", \
+     "--allow-missing-image", \
      "--host", "0.0.0.0", \
      "--port", "5050", \
      "--invert-x"]

@@ -5351,17 +5351,19 @@ function uploadImageFile() {
 
 function startCrop() {
   state.tool = "crop";
+  const previousImagePath = state.crop.previousImagePath || null;
   state.crop = {
     active: true,
     start: null,
     current: null,
     rect: null,
+    previousImagePath,
   };
   pipelineStatus.textContent = "crop: drag a rectangle on the image";
   draw();
 }
 
-function resetCrop() {
+function clearCropState(message = "crop cancelled") {
   if (state.tool === "crop") state.tool = "select";
   const previousImagePath = state.crop.previousImagePath || null;
   state.crop = {
@@ -5371,8 +5373,20 @@ function resetCrop() {
     rect: null,
     previousImagePath,
   };
-  pipelineStatus.textContent = "crop cancelled";
+  pipelineStatus.textContent = message;
   draw();
+}
+
+function resetCrop() {
+  if (state.crop.active || state.crop.rect) {
+    clearCropState("crop cancelled");
+    return;
+  }
+  if (state.crop.previousImagePath) {
+    backToPreviousCropImage();
+    return;
+  }
+  clearCropState("no previous crop source image.");
 }
 
 function applyCrop() {
@@ -5396,7 +5410,7 @@ function applyCrop() {
     .then(({ok, data}) => {
       if (!ok) throw new Error(data.error || "crop failed");
       const previous = data.source_image || state.crop.previousImagePath || null;
-      resetCrop();
+      clearCropState("crop applied");
       state.crop.previousImagePath = previous;
       pipelineStatus.textContent = JSON.stringify(data, null, 2);
       loadProject();
@@ -5413,9 +5427,18 @@ function backToPreviousCropImage() {
     pipelineStatus.textContent = "no previous crop source image.";
     return;
   }
-  selectImagePath(previous, "back")
-    .then(() => {
+  fetch("/api/image/crop/revert", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({previous_image: previous}),
+  })
+    .then((response) => response.json().then((data) => ({ok: response.ok, data})))
+    .then(({ok, data}) => {
+      if (!ok) throw new Error(data.error || "failed to revert crop");
       state.crop.previousImagePath = null;
+      resetProjectWorkingState(`reverted crop: ${data.image}\ndeleted: ${data.deleted_crop_image}`);
+      loadProject();
+      refreshImages();
     })
     .catch((error) => {
       pipelineStatus.textContent = String(error);
@@ -6304,7 +6327,6 @@ uploadImageInput.addEventListener("change", uploadImageFile);
 addClickListener("setupLoadExportedFinalBtn", loadExportedFinal);
 document.getElementById("startCropBtn").addEventListener("click", startCrop);
 document.getElementById("resetCropBtn").addEventListener("click", resetCrop);
-document.getElementById("backCropBtn").addEventListener("click", backToPreviousCropImage);
 document.getElementById("startMarkerBtn").addEventListener("click", startManualMarker);
 document.getElementById("undoMarkerBtn").addEventListener("click", undoManualMarkerPoint);
 document.getElementById("saveMarkerBtn").addEventListener("click", saveManualMarker);

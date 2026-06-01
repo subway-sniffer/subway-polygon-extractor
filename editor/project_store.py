@@ -100,6 +100,28 @@ class ProjectStore:
             index += 1
         return candidate
 
+    def is_generated_crop_image(self, path):
+        """Return True when path is a generated crop image under the output root."""
+        path = Path(path).resolve()
+        crop_root = (self.output_root / "_cropped_images").resolve()
+        return path.is_file() and (path == crop_root or crop_root in path.parents)
+
+    def delete_generated_crop_image(self, path):
+        """Delete a generated crop image, refusing paths outside _cropped_images."""
+        path = Path(path).resolve()
+        crop_root = (self.output_root / "_cropped_images").resolve()
+        if not self.is_generated_crop_image(path):
+            raise ValueError(f"not a generated crop image: {path}")
+        path.unlink()
+        parent = path.parent
+        while parent != crop_root and crop_root in parent.parents:
+            try:
+                parent.rmdir()
+            except OSError:
+                break
+            parent = parent.parent
+        return path
+
     def uploaded_image_path(self, filename):
         """Return a unique normalized upload path for a browser-selected image."""
         upload_root = self.output_root / "_uploads"

@@ -70,6 +70,8 @@ http://127.0.0.1:5050
 
 기본 입력 이미지는 컨테이너 기준 /data/images/test1.png 이다.
 즉 현재 저장소 루트에 있는 test1.png를 기본으로 연다.
+이 파일이 없어도 Docker 서버는 placeholder 화면으로 시작된다.
+이후 에디터의 이미지 목록이나 파일 선택으로 실제 이미지를 열면 된다.
 
 다른 이미지 폴더를 쓰고 싶으면 아래처럼 실행한다.
 
@@ -77,6 +79,9 @@ EDITOR_IMAGE_ROOT=/d/capstone2/station_images \
 EDITOR_IMAGE=/data/images/432_총신대입구.png \
 EDITOR_OUTPUT_ROOT=/d/capstone2/test_image_output/web_projects \
 docker compose up --build
+
+처음 열 이미지가 정해져 있지 않으면 EDITOR_IMAGE는 생략해도 된다.
+이 경우 서버가 placeholder 화면으로 뜨고, 에디터에서 이미지를 선택하면 된다.
 
 주의:
 EDITOR_IMAGE는 호스트 경로가 아니라 컨테이너 내부 경로로 적는다.
