@@ -11,18 +11,20 @@
       <header>
         <h1>Polygon Editor</h1>
         <div id="status">Loading...</div>
+        <div id="modeBadge">Mode: select</div>
+        <div id="selectionSummary">Selected: -</div>
       </header>
+      <nav id="sidebarTabs" class="sidebar-tabs"></nav>
 
       <section>
         <h2>Batch Pipeline</h2>
         <button id="refreshImagesBtn">Refresh Images</button>
         <select id="imageSelect"></select>
-        <button id="loadImageBtn">Load Selected Image</button>
+        <button id="setupLoadExportedFinalBtn">Load Exported Final</button>
         <input id="uploadImageInput" type="file" accept="image/*">
-        <button id="uploadImageBtn">Load Image File</button>
         <button id="startCropBtn">Start Crop</button>
-        <button id="applyCropBtn">Apply Crop</button>
-        <button id="resetCropBtn">Reset Crop</button>
+        <button id="resetCropBtn">Cancel Crop</button>
+        <button id="backCropBtn">Back to Previous Image</button>
         <button id="startMarkerBtn">Start Manual Marker (M)</button>
         <button id="undoMarkerBtn">Undo Marker Point</button>
         <button id="saveMarkerBtn">Save Marker</button>
@@ -175,20 +177,6 @@
       </section>
 
       <section>
-        <h2>Manual Merge</h2>
-        <button id="startAutoMergeBtn">Start Auto Merge (R)</button>
-        <button id="applyAutoMergeBtn">Apply Auto Merge (Shift)</button>
-        <button id="resetAutoMergeBtn">Reset Auto Merge (Esc)</button>
-        <div id="autoMergeStatus">inactive</div>
-        <button id="startMergeBtn">Start Merge (Q)</button>
-        <button id="removeOrangePathBtn" class="path-one">Remove Orange Path (F)</button>
-        <button id="applyMergeBtn">Apply Merge (Shift)</button>
-        <button id="undoMergeBtn">Undo Last Merge (Z)</button>
-        <button id="resetMergeBtn">Reset Merge (Esc)</button>
-        <div id="mergeStatus">inactive</div>
-      </section>
-
-      <section>
         <h2>Straighten Edge</h2>
         <button id="startStraightenBtn">Start Straighten (W)</button>
         <button id="straightenOrangePathBtn" class="path-one">Remove Orange Path (F)</button>
@@ -200,7 +188,7 @@
 
       <section>
         <h2>Move Vertex</h2>
-        <button id="startMoveBtn">Start Move Vertex (E)</button>
+        <button id="startMoveBtn">Start Move Vertex (R)</button>
         <button id="resetMoveBtn">Reset Move (Esc)</button>
         <div id="moveStatus">inactive</div>
       </section>
@@ -211,18 +199,6 @@
         <button id="undoInsertVertexBtn">Undo Last Insert</button>
         <button id="resetInsertVertexBtn">Reset Insert (Esc)</button>
         <div id="insertVertexStatus">inactive</div>
-      </section>
-
-      <section>
-        <h2>Shared Edge</h2>
-        <button id="startSharedEdgeBtn">Start Shared Edge (T)</button>
-        <button id="toggleSharedEdgeADirectionBtn">Toggle A Range Direction</button>
-        <button id="toggleSharedEdgeBDirectionBtn">Toggle B Range Direction</button>
-        <button id="cycleSharedEdgeOrderBtn">Replace Order: Auto / Keep / Reverse</button>
-        <button id="applySharedEdgeBtn">Apply Shared Edge (Shift)</button>
-        <button id="undoSharedEdgeBtn">Undo Last Shared Edge</button>
-        <button id="resetSharedEdgeBtn">Reset Shared Edge (Esc)</button>
-        <div id="sharedEdgeStatus">inactive</div>
       </section>
 
       <section>
@@ -333,7 +309,7 @@
           Label
           <input id="subwayLabelInput" placeholder="auto">
         </label>
-        <button id="startSubwayBtn">Start Linear Asset</button>
+        <button id="startSubwayBtn">Start Linear Asset (T)</button>
         <button id="deleteSubwayBtn">Delete Selected Asset</button>
         <button id="deleteAllSubwayBtn">Delete All Linear Assets</button>
         <button id="undoSubwayBtn">Undo Last Linear Asset</button>
@@ -342,43 +318,58 @@
       </section>
 
       <section>
-        <h2>Platform Direction</h2>
+        <h2>Platform Point</h2>
+        <label>
+          Station
+          <input id="platformStationInput" placeholder="총신대입구">
+        </label>
         <label>
           Line
-          <input id="platformLineInput" placeholder="4">
+          <input id="platformLineInput" placeholder="4호선">
         </label>
         <label>
           Direction
           <input id="platformDirectionInput" placeholder="사당 방면">
         </label>
         <label>
-          Cars
-          <input id="platformCarCountInput" type="number" value="10" min="1" max="20">
-        </label>
-        <label>
-          Doors / car
-          <input id="platformDoorsInput" type="number" value="4" min="1" max="8">
-        </label>
-        <label>
-          Anchor car
-          <input id="platformAnchorCarInput" type="number" value="1" min="1" max="20">
-        </label>
-        <label>
-          Anchor door
-          <input id="platformAnchorDoorInput" type="number" value="1" min="1" max="8">
+          Car range
+          <input id="platformCarRangeInput" placeholder="3-1~4-4">
         </label>
         <label>
           Label
           <input id="platformLabelInput" placeholder="auto">
         </label>
-        <button id="startPlatformBtn">Start Platform Anchors (P)</button>
-        <button id="savePlatformBtn">Save Platform Anchors</button>
-        <button id="undoPlatformAnchorBtn">Undo Anchor</button>
+        <button id="startPlatformBtn">Start Platform Point (Q)</button>
+        <button id="applyPlatformMetadataBtn">Apply Metadata to Selected</button>
+        <button id="clearPlatformSelectionBtn">Clear Platform Selection</button>
         <button id="deletePlatformBtn">Delete Selected Platform</button>
         <button id="deleteAllPlatformsBtn">Delete All Platforms</button>
         <button id="undoPlatformBtn">Undo Last Platform</button>
         <button id="resetPlatformBtn">Reset Platform</button>
         <div id="platformStatus">inactive</div>
+      </section>
+
+      <section>
+        <h2>Elevator Point</h2>
+        <label>
+          Elevator group
+          <input id="elevatorIdInput" placeholder="auto or existing EV_001">
+        </label>
+        <label>
+          Label
+          <input id="elevatorLabelInput" placeholder="auto">
+        </label>
+        <button id="startElevatorBtn">Start Elevator Point (E)</button>
+        <button id="startElevatorLinkBtn">Start Elevator Link (O)</button>
+        <button id="applyElevatorLinkBtn">Create/Update Link</button>
+        <button id="selectSameElevatorBtn">Select Same Link</button>
+        <button id="clearElevatorLinkBtn">Clear Link From Selected</button>
+        <button id="clearElevatorSelectionBtn">Clear Elevator Selection</button>
+        <button id="deleteElevatorBtn">Delete Selected Elevator Point</button>
+        <button id="deleteAllElevatorsBtn">Delete All Elevator Points</button>
+        <button id="undoElevatorBtn">Undo Last Elevator Point</button>
+        <button id="resetElevatorBtn">Reset Elevator Point</button>
+        <div id="elevatorStatus">inactive</div>
       </section>
 
       <section>
@@ -389,6 +380,8 @@
         <button id="loadExportedFinalBtn">Load Exported Final</button>
         <input id="loadFinalFileInput" type="file" accept="application/json,.json">
         <button id="exportFinalBtn">Export Final Polygons</button>
+        <button id="validateSceneBtn">Validate Scene</button>
+        <div id="validateStatus">inactive</div>
         <label class="row">
           <input id="renderScenePreviewToggle" type="checkbox">
           render scene preview

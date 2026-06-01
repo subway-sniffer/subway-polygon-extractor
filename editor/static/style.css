@@ -107,6 +107,60 @@ dd {
   color: #666;
 }
 
+#modeBadge {
+  margin: 10px 0 4px;
+  padding: 8px 10px;
+  border: 1px solid #1f6feb;
+  border-radius: 6px;
+  background: #eaf3ff;
+  color: #0b4ea2;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+#selectionSummary {
+  margin-bottom: 10px;
+  padding: 6px 8px;
+  border: 1px solid #dddddd;
+  border-radius: 6px;
+  background: #fafafa;
+  font-size: 12px;
+  color: #444444;
+  overflow-wrap: anywhere;
+}
+
+.sidebar-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 8px 0;
+  background: #ffffff;
+}
+
+.sidebar-tabs button {
+  margin: 0;
+  padding: 7px 5px;
+  font-size: 12px;
+}
+
+.sidebar-tabs button.active {
+  border-color: #1f6feb;
+  background: #1f6feb;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.sidebar section {
+  display: none;
+}
+
+.sidebar section.active-panel {
+  display: block;
+}
+
 #mergeStatus,
 #autoMergeStatus,
 #straightenStatus,
@@ -120,7 +174,14 @@ dd {
 #layerAlignStatus,
 #localAxisStatus,
 #pipelineStatus,
-#keepStatus {
+#keepStatus,
+#stationStatus,
+#scaleStatus,
+#stairStatus,
+#subwayStatus,
+#platformStatus,
+#elevatorStatus,
+#validateStatus {
   min-height: 44px;
   padding: 8px;
   border: 1px solid #d6d6d6;

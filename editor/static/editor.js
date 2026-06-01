@@ -15,6 +15,7 @@ const state = {
     manual_walls: [],
     manual_assets: [],
     manual_platforms: [],
+    manual_elevator_points: [],
     layer_alignment_pairs: [],
     polygon_axis_corrections: {},
     scale_calibration: null,
@@ -32,6 +33,9 @@ const state = {
   selectedStairIds: [],
   selectedSubwayId: null,
   selectedPlatformId: null,
+  selectedPlatformIds: [],
+  selectedElevatorPointId: null,
+  selectedElevatorPointIds: [],
   showIds: false,
   showConnections: false,
   showIcons: false,
@@ -51,6 +55,7 @@ const state = {
     start: null,
     current: null,
     rect: null,
+    previousImagePath: null,
   },
   merge: {
     active: false,
@@ -157,14 +162,27 @@ const state = {
   },
   platform: {
     active: false,
-    anchors: [],
+    point: null,
+    facingPoint: null,
+    stationName: "",
     lineId: "",
     direction: "",
-    carCount: 10,
-    doorsPerCar: 4,
+    carRange: "",
     label: "",
     polygonId: null,
     layer: null,
+  },
+  elevatorPoint: {
+    active: false,
+    elevatorId: "",
+    label: "",
+    point: null,
+    facingPoint: null,
+    polygonId: null,
+    layer: null,
+  },
+  elevatorLink: {
+    active: false,
   },
   sharedEdge: {
     active: false,
@@ -188,6 +206,9 @@ const state = {
 const canvas = document.getElementById("editorCanvas");
 const ctx = canvas.getContext("2d");
 const statusEl = document.getElementById("status");
+const modeBadge = document.getElementById("modeBadge");
+const selectionSummary = document.getElementById("selectionSummary");
+const sidebarTabs = document.getElementById("sidebarTabs");
 const selectedInfo = document.getElementById("selectedInfo");
 const layerInput = document.getElementById("layerInput");
 const zOverrideInput = document.getElementById("zOverrideInput");
@@ -217,13 +238,14 @@ const subwayStatus = document.getElementById("subwayStatus");
 const subwayLabelInput = document.getElementById("subwayLabelInput");
 const manualAssetTypeInput = document.getElementById("manualAssetTypeInput");
 const platformStatus = document.getElementById("platformStatus");
+const platformStationInput = document.getElementById("platformStationInput");
 const platformLineInput = document.getElementById("platformLineInput");
 const platformDirectionInput = document.getElementById("platformDirectionInput");
-const platformCarCountInput = document.getElementById("platformCarCountInput");
-const platformDoorsInput = document.getElementById("platformDoorsInput");
-const platformAnchorCarInput = document.getElementById("platformAnchorCarInput");
-const platformAnchorDoorInput = document.getElementById("platformAnchorDoorInput");
+const platformCarRangeInput = document.getElementById("platformCarRangeInput");
 const platformLabelInput = document.getElementById("platformLabelInput");
+const elevatorStatus = document.getElementById("elevatorStatus");
+const elevatorIdInput = document.getElementById("elevatorIdInput");
+const elevatorLabelInput = document.getElementById("elevatorLabelInput");
 const keepStatus = document.getElementById("keepStatus");
 const imageSelect = document.getElementById("imageSelect");
 const uploadImageInput = document.getElementById("uploadImageInput");
@@ -245,7 +267,61 @@ const stationLinesInput = document.getElementById("stationLinesInput");
 const stationFloorsInput = document.getElementById("stationFloorsInput");
 const stationMapIdInput = document.getElementById("stationMapIdInput");
 const stationStatus = document.getElementById("stationStatus");
+const validateStatus = document.getElementById("validateStatus");
 const MANUAL_ASSET_TYPES = ["subway", "moving_walkway", "ticket_gate"];
+const SIDEBAR_PANELS = [
+  {id: "setup", label: "Setup", titles: new Set(["Batch Pipeline", "Station Info", "View"])},
+  {id: "polygons", label: "Polygons", titles: new Set(["Selected", "Layer Grouping", "Simple Keep", "Straighten Edge", "Move Vertex", "Insert Vertex", "Add Polygon", "Cut Hole", "Split Polygon"])},
+  {id: "calibrate", label: "Calibrate", titles: new Set(["XY Correction", "Scale Calibration", "Local Axis Correction"])},
+  {id: "nav", label: "Navigation", titles: new Set(["Vertical Connection", "Linear Asset", "Platform Point", "Elevator Point"])},
+  {id: "export", label: "Export", titles: new Set(["Save"])},
+];
+
+function sectionTitle(section) {
+  return section.querySelector("h2")?.textContent?.trim() || "";
+}
+
+function setActiveSidebarPanel(panelId) {
+  document.querySelectorAll(".sidebar section").forEach((section) => {
+    section.classList.toggle("active-panel", section.dataset.panel === panelId);
+  });
+  sidebarTabs?.querySelectorAll("button").forEach((button) => {
+    button.classList.toggle("active", button.dataset.panel === panelId);
+  });
+  try {
+    localStorage.setItem("subwayEditorPanel", panelId);
+  } catch {
+    // Ignore storage errors in restricted browser contexts.
+  }
+}
+
+function setupSidebarTabs() {
+  if (!sidebarTabs) return;
+  const panelForTitle = new Map();
+  SIDEBAR_PANELS.forEach((panel) => {
+    panel.titles.forEach((title) => panelForTitle.set(title, panel.id));
+  });
+  document.querySelectorAll(".sidebar section").forEach((section) => {
+    section.dataset.panel = panelForTitle.get(sectionTitle(section)) || "setup";
+  });
+  sidebarTabs.innerHTML = "";
+  SIDEBAR_PANELS.forEach((panel) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.panel = panel.id;
+    button.textContent = panel.label;
+    button.addEventListener("click", () => setActiveSidebarPanel(panel.id));
+    sidebarTabs.appendChild(button);
+  });
+  let initialPanel = "setup";
+  try {
+    initialPanel = localStorage.getItem("subwayEditorPanel") || initialPanel;
+  } catch {
+    initialPanel = "setup";
+  }
+  if (!SIDEBAR_PANELS.some((panel) => panel.id === initialPanel)) initialPanel = "setup";
+  setActiveSidebarPanel(initialPanel);
+}
 
 function resizeCanvas() {
   const rect = canvas.getBoundingClientRect();
@@ -260,6 +336,51 @@ function canvasSize() {
     width: canvas.width / window.devicePixelRatio,
     height: canvas.height / window.devicePixelRatio,
   };
+}
+
+function currentModeLabel() {
+  const labels = {
+    select: "Select",
+    marker: "Manual Marker",
+    crop: "Crop",
+    keep: "Simple Keep",
+    straighten: "Straighten",
+    move: "Move Vertex",
+    insertVertex: "Insert Vertex",
+    addPolygon: "Add Polygon",
+    cutHole: "Cut Hole",
+    splitPolygon: "Split Polygon",
+    layerAlign: "XY Correction",
+    localAxis: "Local Axis",
+    scaleCalibration: "Scale Calibration",
+    stair: "Vertical Connection",
+    subway: "Linear Asset",
+    platform: "Platform Point",
+    elevatorPoint: "Elevator Point",
+    elevatorLink: "Elevator Link",
+  };
+  return labels[state.tool] || state.tool || "Select";
+}
+
+function selectionSummaryText() {
+  const parts = [];
+  if (state.selectedId) parts.push(`polygon ${state.selectedId}`);
+  if ((state.selectedIds || []).length > 1) parts.push(`${state.selectedIds.length} polygons`);
+  if (state.selectedStairId) parts.push(`connection ${state.selectedStairId}`);
+  if (state.selectedSubwayId) parts.push(`asset ${state.selectedSubwayId}`);
+  const platformIds = typeof selectedPlatformIds === "function" ? selectedPlatformIds() : [];
+  if (platformIds.length) parts.push(`${platformIds.length} platform point(s)`);
+  const elevatorIds = typeof selectedElevatorPointIds === "function" ? selectedElevatorPointIds() : [];
+  if (elevatorIds.length) parts.push(`${elevatorIds.length} elevator point(s)`);
+  if (state.selectedLayerAlignIndex !== null && state.selectedLayerAlignIndex !== undefined) {
+    parts.push(`xy correction ${state.selectedLayerAlignIndex + 1}`);
+  }
+  return parts.length ? parts.join(" | ") : "-";
+}
+
+function updateModeSummary() {
+  if (modeBadge) modeBadge.textContent = `Mode: ${currentModeLabel()}`;
+  if (selectionSummary) selectionSummary.textContent = `Selected: ${selectionSummaryText()}`;
 }
 
 function screenToWorld(x, y) {
@@ -515,44 +636,43 @@ function drawManualAssets() {
 
 function drawPlatforms() {
   ctx.save();
+  const selectedIds = new Set(selectedPlatformIds());
   for (const platform of state.annotations.manual_platforms || []) {
-    const anchors = platformAnchors(platform);
-    if (anchors.length < 1) continue;
-    const selected = (platform.platform_id || platform.label) === state.selectedPlatformId;
+    const points = platformDisplayPoints(platform);
+    if (points.length < 1) continue;
+    const platformId = platform.platform_id || platform.label;
+    const selected = selectedIds.has(platformId);
     const color = selected ? "rgba(255, 210, 0, 0.95)" : "rgba(155, 80, 255, 0.9)";
-    const points = anchors.map((anchor) => anchor.point_source);
     if (points.length >= 2) {
       drawPath(points, color, selected ? 6 : 4);
       drawPathArrow(points, color);
     }
-    for (const anchor of anchors) {
-      const screen = worldToScreen(anchor.point_source);
+    points.forEach((point, index) => {
+      const screen = worldToScreen(point);
       ctx.beginPath();
       ctx.arc(screen.x, screen.y, selected ? 7 : 5, 0, Math.PI * 2);
-      ctx.fillStyle = selected ? "#ffd200" : "#7b2cff";
+      ctx.fillStyle = selected ? "#ffd200" : (index === 0 ? "#7b2cff" : "#c49cff");
       ctx.strokeStyle = "#111111";
       ctx.lineWidth = 1;
       ctx.fill();
       ctx.stroke();
-      drawCanvasLabel(anchor.point_source, `${anchor.car}-${anchor.door}`, selected ? "#ffd200" : "#7b2cff", 8, 16);
-    }
-    const labelPoint = points[Math.floor((points.length - 1) / 2)];
+    });
+    const labelPoint = points[0];
     drawCanvasLabel(
       labelPoint,
-      platform.label || `${platform.line_id || "-"} ${platform.direction || ""}`.trim(),
+      platform.label || [platform.station_name, platform.line_id, platform.direction, platform.car_range].filter(Boolean).join(" "),
       selected ? "#ffd200" : "#7b2cff",
       10,
       -10,
     );
   }
   if (state.platform.active) {
-    const points = (state.platform.anchors || []).map((anchor) => anchor.point_source);
+    const points = [state.platform.point, state.platform.facingPoint].filter(Boolean);
     if (points.length >= 2) {
       drawPath(points, "rgba(155, 80, 255, 0.95)", 4);
       drawPathArrow(points, "rgba(155, 80, 255, 0.95)");
     }
-    (state.platform.anchors || []).forEach((anchor, index) => {
-      const point = anchor.point_source;
+    points.forEach((point, index) => {
       const screen = worldToScreen(point);
       ctx.beginPath();
       ctx.arc(screen.x, screen.y, 7, 0, Math.PI * 2);
@@ -561,7 +681,85 @@ function drawPlatforms() {
       ctx.lineWidth = 1;
       ctx.fill();
       ctx.stroke();
-      drawCanvasLabel(point, `${anchor.car}-${anchor.door}`, "#7b2cff", 8, 16);
+      drawCanvasLabel(point, index === 0 ? "platform" : "facing", "#7b2cff", 8, 16);
+    });
+  }
+  ctx.restore();
+}
+
+function nextElevatorPointId() {
+  const numbers = (state.annotations.manual_elevator_points || [])
+    .map((point) => {
+      const match = String(point.elevator_point_id || "").match(/^elevator_point_(\d+)$/);
+      return match ? Number(match[1]) : 0;
+    });
+  const next = Math.max(0, ...numbers) + 1;
+  return `elevator_point_${String(next).padStart(3, "0")}`;
+}
+
+function nextElevatorId() {
+  const numbers = (state.annotations.manual_elevator_points || [])
+    .map((point) => {
+      const match = String(point.elevator_id || "").match(/^EV_(\d+)$/);
+      return match ? Number(match[1]) : 0;
+    });
+  const next = Math.max(0, ...numbers) + 1;
+  return `EV_${String(next).padStart(3, "0")}`;
+}
+
+function selectedElevatorPointIds() {
+  const ids = new Set(state.selectedElevatorPointIds || []);
+  if (state.selectedElevatorPointId) ids.add(state.selectedElevatorPointId);
+  return Array.from(ids);
+}
+
+function drawElevatorPoints() {
+  ctx.save();
+  const selectedIds = new Set(selectedElevatorPointIds());
+  for (const item of state.annotations.manual_elevator_points || []) {
+    if (!item.point_source) continue;
+    const itemId = item.elevator_point_id || item.label;
+    const selected = selectedIds.has(itemId);
+    const color = selected ? "rgba(255, 210, 0, 0.95)" : "rgba(20, 170, 255, 0.9)";
+    const points = [item.point_source, item.facing_point_source].filter(Boolean);
+    if (points.length >= 2) {
+      drawPath(points, color, selected ? 6 : 4);
+      drawPathArrow(points, color);
+    }
+    points.forEach((point, index) => {
+      const screen = worldToScreen(point);
+      ctx.beginPath();
+      ctx.rect(screen.x - 6, screen.y - 6, 12, 12);
+      ctx.fillStyle = selected ? "#ffd200" : (index === 0 ? "#14aaff" : "#8bdcff");
+      ctx.strokeStyle = "#111111";
+      ctx.lineWidth = selected ? 3 : 1;
+      ctx.fill();
+      ctx.stroke();
+    });
+    drawCanvasLabel(
+      item.point_source,
+      [item.elevator_id, item.label || item.elevator_point_id].filter(Boolean).join(" "),
+      selected ? "#ffd200" : "#14aaff",
+      10,
+      -10,
+    );
+  }
+  if (state.elevatorPoint.active) {
+    const points = [state.elevatorPoint.point, state.elevatorPoint.facingPoint].filter(Boolean);
+    if (points.length >= 2) {
+      drawPath(points, "rgba(20, 170, 255, 0.95)", 4);
+      drawPathArrow(points, "rgba(20, 170, 255, 0.95)");
+    }
+    points.forEach((point, index) => {
+      const screen = worldToScreen(point);
+      ctx.beginPath();
+      ctx.rect(screen.x - 7, screen.y - 7, 14, 14);
+      ctx.fillStyle = index === 0 ? "#14aaff" : "#8bdcff";
+      ctx.strokeStyle = "#111111";
+      ctx.lineWidth = 1;
+      ctx.fill();
+      ctx.stroke();
+      drawCanvasLabel(point, index === 0 ? "elevator" : "facing", "#14aaff", 8, 16);
     });
   }
   ctx.restore();
@@ -1341,6 +1539,7 @@ function drawLocalAxisCorrections() {
 }
 
 function draw() {
+  updateModeSummary();
   const size = canvasSize();
   ctx.clearRect(0, 0, size.width, size.height);
   if (!state.image) return;
@@ -1362,6 +1561,7 @@ function draw() {
   drawStairConnections();
   drawManualAssets();
   drawPlatforms();
+  drawElevatorPoints();
   drawManualMarkerPreview();
   drawCropPreview();
   drawMergePreview();
@@ -1443,6 +1643,7 @@ function toggleMultiSelectedPolygon(poly) {
   state.selectedStairId = null;
   state.selectedStairIds = [];
   state.selectedPlatformId = null;
+  state.selectedPlatformIds = [];
   state.selectedSubwayId = null;
   state.selectedLayerAlignIndex = null;
   updateSelectedInfo();
@@ -1524,6 +1725,66 @@ function saveAnnotations() {
 
 function workingPolygonsPayload() {
   return finalWorkingPolygons();
+}
+
+function validateScene() {
+  const issues = [];
+  const warnings = [];
+  const visiblePolygons = workingPolygonsPayload().filter((poly) => !(state.annotations.hidden_polygon_ids || []).includes(poly.polygon_id));
+  const polygonIds = new Set(visiblePolygons.map((poly) => poly.polygon_id));
+  const layerByPolygon = new Map(visiblePolygons.map((poly) => [poly.polygon_id, polygonLayerValue(poly)]));
+
+  if (!visiblePolygons.length) issues.push("No visible polygons in the working set.");
+  visiblePolygons.forEach((poly) => {
+    if (!polygonLayerValue(poly)) warnings.push(`${poly.polygon_id}: layer is missing.`);
+    if (!poly.points_source || poly.points_source.length < 3) issues.push(`${poly.polygon_id}: polygon has fewer than 3 points.`);
+  });
+
+  (state.annotations.manual_connections || []).forEach((connection) => {
+    const id = connection.connection_id || connection.label || "connection";
+    if (!connection.from_polygon_id || !polygonIds.has(connection.from_polygon_id)) warnings.push(`${id}: from polygon is missing or hidden.`);
+    if (!connection.to_polygon_id || !polygonIds.has(connection.to_polygon_id)) warnings.push(`${id}: to polygon is missing or hidden.`);
+    if (!connection.from_layer || !connection.to_layer) warnings.push(`${id}: layer is missing.`);
+    if (!connection.from_point_source || !connection.to_point_source) issues.push(`${id}: endpoint point is missing.`);
+  });
+
+  const elevatorGroups = new Map();
+  (state.annotations.manual_elevator_points || []).forEach((point) => {
+    const id = point.elevator_point_id || point.label || "elevator point";
+    if (!point.point_source) issues.push(`${id}: point is missing.`);
+    if (!point.facing_point_source) warnings.push(`${id}: facing direction is missing.`);
+    if (!point.layer) warnings.push(`${id}: layer is missing.`);
+    if (!point.polygon_id || !polygonIds.has(point.polygon_id)) warnings.push(`${id}: polygon is missing or hidden.`);
+    if (point.elevator_id) {
+      elevatorGroups.set(point.elevator_id, (elevatorGroups.get(point.elevator_id) || 0) + 1);
+    } else {
+      warnings.push(`${id}: elevator link is not assigned.`);
+    }
+  });
+  elevatorGroups.forEach((count, elevatorId) => {
+    if (count < 2) warnings.push(`${elevatorId}: only one elevator point is linked.`);
+  });
+
+  (state.annotations.manual_platforms || []).forEach((platform) => {
+    const id = platform.platform_id || platform.label || "platform";
+    if (platform.type === "platform_point" || platform.point_source) {
+      if (!platform.point_source) issues.push(`${id}: platform point is missing.`);
+      if (!platform.facing_point_source) warnings.push(`${id}: facing direction is missing.`);
+      if (!platform.layer) warnings.push(`${id}: layer is missing.`);
+      if (!platform.station_name) warnings.push(`${id}: station name is missing.`);
+      if (!platform.line_id) warnings.push(`${id}: line is missing.`);
+      if (!platform.direction) warnings.push(`${id}: direction is missing.`);
+    }
+  });
+
+  const lines = [
+    issues.length ? `Errors: ${issues.length}` : "Errors: 0",
+    warnings.length ? `Warnings: ${warnings.length}` : "Warnings: 0",
+    ...issues.map((item) => `ERROR ${item}`),
+    ...warnings.map((item) => `WARN ${item}`),
+  ];
+  validateStatus.textContent = lines.join("\n");
+  saveResult.textContent = JSON.stringify({valid: issues.length === 0, errors: issues, warnings}, null, 2);
 }
 
 function remainingHiddenSourceIds() {
@@ -1657,6 +1918,7 @@ function updateSharedEdgeButtons() {
 
 function updateSharedEdgeStatus(message = null) {
   updateSharedEdgeButtons();
+  if (!sharedEdgeStatus) return;
   if (!state.sharedEdge.active) {
     sharedEdgeStatus.textContent = "inactive";
     return;
@@ -2451,6 +2713,7 @@ function selectLayerAlignPair(world) {
   state.selectedStairId = null;
   state.selectedStairIds = [];
   state.selectedPlatformId = null;
+  state.selectedPlatformIds = [];
   state.selectedId = null;
   updateSelectedInfo();
   updateLayerAlignStatus(`Selected correction pair ${hit.index + 1}.`);
@@ -2966,6 +3229,7 @@ function selectStairConnection(world, event = null) {
   }
   state.selectedId = null;
   state.selectedPlatformId = null;
+  state.selectedPlatformIds = [];
   updateSelectedInfo();
   updateStairStatus(`Selected ${selectedStairConnectionIds().length} connection(s).`);
   draw();
@@ -3253,6 +3517,7 @@ function selectSubwayAsset(world) {
   }
   state.selectedSubwayId = hit.assetId;
   state.selectedPlatformId = null;
+  state.selectedPlatformIds = [];
   state.selectedStairId = null;
   state.selectedStairIds = [];
   state.selectedLayerAlignIndex = null;
@@ -3326,11 +3591,10 @@ function nextPlatformId() {
   return `platform_${String(next).padStart(3, "0")}`;
 }
 
-function platformOrdinal(car, door, doorsPerCar) {
-  return (Number(car) - 1) * Number(doorsPerCar) + Number(door);
-}
-
-function platformAnchors(platform) {
+function platformDisplayPoints(platform) {
+  if (platform.point_source) {
+    return [platform.point_source, platform.facing_point_source].filter(Boolean);
+  }
   const doorsPerCar = Number(platform.doors_per_car || platform.doorsPerCar || 4);
   let anchors = (platform.anchors || [])
     .filter((anchor) => anchor.point_source && anchor.car && anchor.door)
@@ -3338,7 +3602,7 @@ function platformAnchors(platform) {
       car: Number(anchor.car),
       door: Number(anchor.door),
       point_source: anchor.point_source,
-      ordinal: platformOrdinal(anchor.car, anchor.door, doorsPerCar),
+      ordinal: (Number(anchor.car) - 1) * doorsPerCar + Number(anchor.door),
       near_connection_id: anchor.near_connection_id || null,
     }));
   if (!anchors.length && platform.start_point_source && platform.end_point_source) {
@@ -3349,34 +3613,41 @@ function platformAnchors(platform) {
         car: carCount,
         door: doorsPerCar,
         point_source: platform.end_point_source,
-        ordinal: platformOrdinal(carCount, doorsPerCar, doorsPerCar),
+        ordinal: (carCount - 1) * doorsPerCar + doorsPerCar,
         near_connection_id: null,
       },
     ];
   }
-  return anchors.sort((a, b) => a.ordinal - b.ordinal);
+  return anchors.sort((a, b) => a.ordinal - b.ordinal).map((anchor) => anchor.point_source);
+}
+
+function selectedPlatformIds() {
+  const ids = new Set(state.selectedPlatformIds || []);
+  if (state.selectedPlatformId) ids.add(state.selectedPlatformId);
+  return Array.from(ids);
 }
 
 function updatePlatformStatus(message = null) {
   const count = (state.annotations.manual_platforms || []).length;
+  const selectedIds = selectedPlatformIds();
   if (!state.platform.active) {
     platformStatus.textContent = [
       message,
       `platforms: ${count}`,
-      state.selectedPlatformId ? `selected: ${state.selectedPlatformId}` : null,
+      selectedIds.length ? `selected ${selectedIds.length}: ${selectedIds.join(", ")}` : null,
     ].filter(Boolean).join("\n") || "inactive";
     return;
   }
   platformStatus.textContent = [
     message,
-    `mode: platform direction`,
+    `mode: platform point`,
+    `station: ${state.platform.stationName || "-"}`,
     `line: ${state.platform.lineId || "-"}`,
     `direction: ${state.platform.direction || "-"}`,
-    `cars: ${state.platform.carCount}`,
-    `doors/car: ${state.platform.doorsPerCar}`,
-    `anchors: ${(state.platform.anchors || []).length}`,
-    `next anchor: ${platformAnchorCarInput.value || "-"}-${platformAnchorDoorInput.value || "-"}`,
-    "Set car/door, click point, repeat. Save when 2+ anchors.",
+    `car range: ${state.platform.carRange || "-"}`,
+    `point: ${state.platform.point ? "set" : "-"}`,
+    `facing: ${state.platform.facingPoint ? "set" : "-"}`,
+    state.platform.point ? "Click facing direction." : "Click platform point.",
   ].filter(Boolean).join("\n");
 }
 
@@ -3385,11 +3656,12 @@ function startPlatformLine() {
   state.tool = "platform";
   state.platform = {
     active: true,
-    anchors: [],
+    point: null,
+    facingPoint: null,
+    stationName: platformStationInput.value.trim(),
     lineId: platformLineInput.value.trim(),
     direction: platformDirectionInput.value.trim(),
-    carCount: Number(platformCarCountInput.value) || 10,
-    doorsPerCar: Number(platformDoorsInput.value) || 4,
+    carRange: platformCarRangeInput.value.trim(),
     label: platformLabelInput.value.trim(),
     polygonId: null,
     layer: null,
@@ -3402,11 +3674,12 @@ function resetPlatformLine() {
   state.tool = "select";
   state.platform = {
     active: false,
-    anchors: [],
+    point: null,
+    facingPoint: null,
+    stationName: platformStationInput.value.trim(),
     lineId: platformLineInput.value.trim(),
     direction: platformDirectionInput.value.trim(),
-    carCount: Number(platformCarCountInput.value) || 10,
-    doorsPerCar: Number(platformDoorsInput.value) || 4,
+    carRange: platformCarRangeInput.value.trim(),
     label: platformLabelInput.value.trim(),
     polygonId: null,
     layer: null,
@@ -3417,72 +3690,43 @@ function resetPlatformLine() {
 
 function addPlatformPoint(world, poly) {
   if (!state.platform.active) return;
-  if (!poly) {
+  if (!state.platform.point && !poly) {
     updatePlatformStatus("Click inside a platform polygon.");
     return;
   }
-  const layer = polygonLayerValue(poly);
-  if (!layer) {
+  const layer = poly ? polygonLayerValue(poly) : state.platform.layer;
+  if (!state.platform.point && !layer) {
     updatePlatformStatus(`Set layer first: ${poly.polygon_id}`);
     return;
   }
   const point = [Number(world.x.toFixed(2)), Number(world.y.toFixed(2))];
-  const car = Number(platformAnchorCarInput.value);
-  const door = Number(platformAnchorDoorInput.value);
-  if (!Number.isFinite(car) || car < 1 || car > state.platform.carCount) {
-    updatePlatformStatus("Anchor car is out of range.");
-    return;
-  }
-  if (!Number.isFinite(door) || door < 1 || door > state.platform.doorsPerCar) {
-    updatePlatformStatus("Anchor door is out of range.");
-    return;
-  }
-  const ordinal = platformOrdinal(car, door, state.platform.doorsPerCar);
-  const existingIndex = (state.platform.anchors || []).findIndex((anchor) => anchor.ordinal === ordinal);
-  const anchor = {car, door, point_source: point, ordinal};
-  if (existingIndex >= 0) {
-    state.platform.anchors[existingIndex] = anchor;
-  } else {
-    state.platform.anchors.push(anchor);
-  }
-  state.platform.anchors.sort((a, b) => a.ordinal - b.ordinal);
-  if (!state.platform.polygonId) {
+  if (!state.platform.point) {
+    state.platform.point = point;
     state.platform.polygonId = poly.polygon_id;
     state.platform.layer = layer;
-  }
-  updatePlatformStatus(`Anchor ${car}-${door} added.`);
-  draw();
-}
-
-function savePlatformAnchors() {
-  if (!state.platform.active) {
-    updatePlatformStatus("Start Platform Anchors first.");
+    updatePlatformStatus("Platform point set. Click facing direction.");
+    draw();
     return;
   }
-  if ((state.platform.anchors || []).length < 2) {
-    updatePlatformStatus("Add at least 2 anchors.");
-    return;
-  }
+  state.platform.facingPoint = point;
   const platformId = nextPlatformId();
+  const dx = state.platform.facingPoint[0] - state.platform.point[0];
+  const dy = state.platform.facingPoint[1] - state.platform.point[1];
+  const facingAngleDeg = Number((Math.atan2(dy, dx) * 180 / Math.PI).toFixed(6));
   state.annotations.manual_platforms = state.annotations.manual_platforms || [];
   state.annotations.manual_platforms.push({
     platform_id: platformId,
-    type: "platform_direction",
+    type: "platform_point",
     label: state.platform.label || platformId,
+    station_name: state.platform.stationName || null,
     line_id: state.platform.lineId || null,
     direction: state.platform.direction || null,
-    car_count: state.platform.carCount,
-    doors_per_car: state.platform.doorsPerCar,
+    car_range: state.platform.carRange || null,
     polygon_id: state.platform.polygonId,
     layer: state.platform.layer,
-    anchors: state.platform.anchors.map((anchor) => ({
-      car: anchor.car,
-      door: anchor.door,
-      point_source: anchor.point_source,
-      ordinal: anchor.ordinal,
-    })),
-    start_point_source: state.platform.anchors[0].point_source,
-    end_point_source: state.platform.anchors[state.platform.anchors.length - 1].point_source,
+    point_source: state.platform.point,
+    facing_point_source: state.platform.facingPoint,
+    facing_angle_deg: facingAngleDeg,
     bidirectional: false,
   });
   saveAnnotations().then((result) => {
@@ -3492,13 +3736,31 @@ function savePlatformAnchors() {
   });
 }
 
-function undoPlatformAnchor() {
-  if (!state.platform.active || !(state.platform.anchors || []).length) {
-    updatePlatformStatus("No anchor to undo.");
+function applyPlatformMetadataToSelected() {
+  const ids = selectedPlatformIds();
+  if (!ids.length) {
+    updatePlatformStatus("Select platform point(s) first.");
     return;
   }
-  const removed = state.platform.anchors.pop();
-  updatePlatformStatus(`Removed anchor ${removed.car}-${removed.door}.`);
+  const idSet = new Set(ids);
+  for (const platform of state.annotations.manual_platforms || []) {
+    const id = platform.platform_id || platform.label;
+    if (!idSet.has(id)) continue;
+    platform.station_name = platformStationInput.value.trim() || platform.station_name || null;
+    platform.line_id = platformLineInput.value.trim() || platform.line_id || null;
+    platform.direction = platformDirectionInput.value.trim() || platform.direction || null;
+  }
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updatePlatformStatus(`Updated ${ids.length} platform point(s).`);
+    draw();
+  });
+}
+
+function clearPlatformSelection() {
+  state.selectedPlatformId = null;
+  state.selectedPlatformIds = [];
+  updatePlatformStatus();
   draw();
 }
 
@@ -3506,14 +3768,14 @@ function nearestPlatform(world, maxScreenDistance = 14) {
   const mouseScreen = worldToScreen([world.x, world.y]);
   let best = null;
   (state.annotations.manual_platforms || []).forEach((platform, index) => {
-    const anchors = platformAnchors(platform);
-    if (anchors.length < 1) return;
-    for (let anchorIndex = 0; anchorIndex < anchors.length; anchorIndex += 1) {
-      const anchor = anchors[anchorIndex];
-      const screen = worldToScreen(anchor.point_source);
+    const points = platformDisplayPoints(platform);
+    if (points.length < 1) return;
+    for (let pointIndex = 0; pointIndex < points.length; pointIndex += 1) {
+      const point = points[pointIndex];
+      const screen = worldToScreen(point);
       let distance = Math.hypot(screen.x - mouseScreen.x, screen.y - mouseScreen.y);
-      if (anchorIndex < anchors.length - 1) {
-        const projected = projectPointToSegment(world, anchor.point_source, anchors[anchorIndex + 1].point_source);
+      if (pointIndex < points.length - 1) {
+        const projected = projectPointToSegment(world, point, points[pointIndex + 1]);
         const projectedScreen = worldToScreen(projected);
         distance = Math.min(distance, Math.hypot(projectedScreen.x - mouseScreen.x, projectedScreen.y - mouseScreen.y));
       }
@@ -3525,45 +3787,55 @@ function nearestPlatform(world, maxScreenDistance = 14) {
   return best;
 }
 
-function selectPlatform(world) {
+function selectPlatform(world, additive = false) {
   const hit = nearestPlatform(world);
   if (!hit) {
-    state.selectedPlatformId = null;
+    if (!additive) {
+      state.selectedPlatformId = null;
+      state.selectedPlatformIds = [];
+    }
     updatePlatformStatus();
     draw();
     return false;
   }
-  state.selectedPlatformId = hit.platformId;
+  if (additive) {
+    const ids = new Set(state.selectedPlatformIds || []);
+    if (ids.has(hit.platformId)) ids.delete(hit.platformId);
+    else ids.add(hit.platformId);
+    state.selectedPlatformIds = Array.from(ids);
+    state.selectedPlatformId = state.selectedPlatformIds[state.selectedPlatformIds.length - 1] || null;
+  } else {
+    state.selectedPlatformId = hit.platformId;
+    state.selectedPlatformIds = [hit.platformId];
+  }
   state.selectedId = null;
   state.selectedSubwayId = null;
   state.selectedStairId = null;
   state.selectedStairIds = [];
   updateSelectedInfo();
-  updatePlatformStatus(`Selected ${hit.platformId}.`);
+  updatePlatformStatus(`Selected ${selectedPlatformIds().length} platform point(s).`);
   draw();
   return true;
 }
 
 function deleteSelectedPlatform() {
-  if (!state.selectedPlatformId) {
+  const ids = selectedPlatformIds();
+  if (!ids.length) {
     updatePlatformStatus("Select a platform first.");
     return;
   }
   state.annotations.manual_platforms = state.annotations.manual_platforms || [];
-  const index = state.annotations.manual_platforms.findIndex(
-    (platform) => (platform.platform_id || platform.label) === state.selectedPlatformId,
+  const idSet = new Set(ids);
+  const before = state.annotations.manual_platforms.length;
+  state.annotations.manual_platforms = state.annotations.manual_platforms.filter(
+    (platform) => !idSet.has(platform.platform_id || platform.label),
   );
-  if (index < 0) {
-    state.selectedPlatformId = null;
-    updatePlatformStatus("Selected platform is missing.");
-    draw();
-    return;
-  }
-  const removed = state.annotations.manual_platforms.splice(index, 1)[0];
+  const removed = before - state.annotations.manual_platforms.length;
   state.selectedPlatformId = null;
+  state.selectedPlatformIds = [];
   saveAnnotations().then((result) => {
     saveResult.textContent = JSON.stringify(result, null, 2);
-    updatePlatformStatus(`Deleted ${removed.platform_id || removed.label}.`);
+    updatePlatformStatus(`Deleted ${removed} platform point(s).`);
     draw();
   });
 }
@@ -3573,6 +3845,7 @@ function deleteAllPlatforms() {
   const removed = state.annotations.manual_platforms.length;
   state.annotations.manual_platforms = [];
   state.selectedPlatformId = null;
+  state.selectedPlatformIds = [];
   saveAnnotations().then((result) => {
     saveResult.textContent = JSON.stringify(result, null, 2);
     updatePlatformStatus(`Deleted ${removed} platform(s).`);
@@ -3588,11 +3861,316 @@ function undoLastPlatform() {
     return;
   }
   state.selectedPlatformId = null;
+  state.selectedPlatformIds = [];
   saveAnnotations().then((result) => {
     saveResult.textContent = JSON.stringify(result, null, 2);
     updatePlatformStatus(`Removed ${removed.platform_id || removed.label}.`);
     draw();
   });
+}
+
+function updateElevatorStatus(message = null) {
+  const count = (state.annotations.manual_elevator_points || []).length;
+  const selectedIds = selectedElevatorPointIds();
+  if (state.elevatorLink.active) {
+    elevatorStatus.textContent = [
+      message,
+      "mode: elevator link",
+      `selected: ${selectedIds.length}`,
+      selectedIds.length ? selectedIds.join(", ") : null,
+      "Click elevator points, then Create/Update Link.",
+    ].filter(Boolean).join("\n");
+    return;
+  }
+  if (!state.elevatorPoint.active) {
+    elevatorStatus.textContent = [
+      message,
+      `elevator points: ${count}`,
+      selectedIds.length ? `selected ${selectedIds.length}: ${selectedIds.join(", ")}` : null,
+    ].filter(Boolean).join("\n") || "inactive";
+    return;
+  }
+  elevatorStatus.textContent = [
+    message,
+    "mode: elevator point",
+    `elevator: ${state.elevatorPoint.elevatorId || "-"}`,
+    `point: ${state.elevatorPoint.point ? "set" : "-"}`,
+    `facing: ${state.elevatorPoint.facingPoint ? "set" : "-"}`,
+    state.elevatorPoint.point ? "Click facing direction. It can be outside polygons." : "Click elevator access point inside a polygon.",
+  ].filter(Boolean).join("\n");
+}
+
+function startElevatorPoint() {
+  if (!canEdit()) return;
+  state.tool = "elevatorPoint";
+  state.elevatorPoint = {
+    active: true,
+    elevatorId: elevatorIdInput.value.trim(),
+    label: elevatorLabelInput.value.trim(),
+    point: null,
+    facingPoint: null,
+    polygonId: null,
+    layer: null,
+  };
+  updateElevatorStatus();
+  draw();
+}
+
+function resetElevatorPoint() {
+  state.tool = "select";
+  state.elevatorPoint = {
+    active: false,
+    elevatorId: elevatorIdInput.value.trim(),
+    label: elevatorLabelInput.value.trim(),
+    point: null,
+    facingPoint: null,
+    polygonId: null,
+    layer: null,
+  };
+  updateElevatorStatus();
+  draw();
+}
+
+function startElevatorLink() {
+  if (!canEdit()) return;
+  state.tool = "elevatorLink";
+  state.elevatorLink = {active: true};
+  updateElevatorStatus();
+  draw();
+}
+
+function resetElevatorLink() {
+  state.tool = "select";
+  state.elevatorLink = {active: false};
+  updateElevatorStatus();
+  draw();
+}
+
+function addElevatorPoint(world, poly) {
+  if (!state.elevatorPoint.active) return;
+  const point = [Number(world.x.toFixed(2)), Number(world.y.toFixed(2))];
+  if (!state.elevatorPoint.point) {
+    if (!poly) {
+      updateElevatorStatus("Click the access point inside a polygon.");
+      return;
+    }
+    const layer = polygonLayerValue(poly);
+    if (!layer) {
+      updateElevatorStatus(`Set layer first: ${poly.polygon_id}`);
+      return;
+    }
+    state.elevatorPoint.point = point;
+    state.elevatorPoint.polygonId = poly.polygon_id;
+    state.elevatorPoint.layer = layer;
+    updateElevatorStatus("Elevator point set. Click facing direction.");
+    draw();
+    return;
+  }
+  state.elevatorPoint.facingPoint = point;
+  const elevatorPointId = nextElevatorPointId();
+  const dx = state.elevatorPoint.facingPoint[0] - state.elevatorPoint.point[0];
+  const dy = state.elevatorPoint.facingPoint[1] - state.elevatorPoint.point[1];
+  const facingAngleDeg = Number((Math.atan2(dy, dx) * 180 / Math.PI).toFixed(6));
+  state.annotations.manual_elevator_points = state.annotations.manual_elevator_points || [];
+  state.annotations.manual_elevator_points.push({
+    elevator_point_id: elevatorPointId,
+    elevator_id: state.elevatorPoint.elevatorId || null,
+    label: state.elevatorPoint.label || elevatorPointId,
+    polygon_id: state.elevatorPoint.polygonId,
+    layer: state.elevatorPoint.layer,
+    point_source: state.elevatorPoint.point,
+    facing_point_source: state.elevatorPoint.facingPoint,
+    facing_angle_deg: facingAngleDeg,
+  });
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    resetElevatorPoint();
+    updateElevatorStatus(`${elevatorPointId} saved.`);
+  });
+}
+
+function nearestElevatorPoint(world, maxScreenDistance = 14) {
+  const mouseScreen = worldToScreen([world.x, world.y]);
+  let best = null;
+  (state.annotations.manual_elevator_points || []).forEach((item, index) => {
+    if (!item.point_source) return;
+    const points = [item.point_source, item.facing_point_source].filter(Boolean);
+    for (let pointIndex = 0; pointIndex < points.length; pointIndex += 1) {
+      const point = points[pointIndex];
+      const screen = worldToScreen(point);
+      let distance = Math.hypot(screen.x - mouseScreen.x, screen.y - mouseScreen.y);
+      if (pointIndex < points.length - 1) {
+        const projected = projectPointToSegment(world, point, points[pointIndex + 1]);
+        const projectedScreen = worldToScreen(projected);
+        distance = Math.min(distance, Math.hypot(projectedScreen.x - mouseScreen.x, projectedScreen.y - mouseScreen.y));
+      }
+      if (distance <= maxScreenDistance && (!best || distance < best.distance)) {
+        best = {index, elevatorPointId: item.elevator_point_id || item.label || `elevator_point_${index + 1}`, distance};
+      }
+    }
+  });
+  return best;
+}
+
+function selectElevatorPoint(world, additive = false) {
+  const hit = nearestElevatorPoint(world);
+  if (!hit) {
+    if (!additive) {
+      state.selectedElevatorPointId = null;
+      state.selectedElevatorPointIds = [];
+    }
+    updateElevatorStatus();
+    draw();
+    return false;
+  }
+  if (additive) {
+    const ids = new Set(state.selectedElevatorPointIds || []);
+    if (ids.has(hit.elevatorPointId)) ids.delete(hit.elevatorPointId);
+    else ids.add(hit.elevatorPointId);
+    state.selectedElevatorPointIds = Array.from(ids);
+    state.selectedElevatorPointId = state.selectedElevatorPointIds[state.selectedElevatorPointIds.length - 1] || null;
+  } else {
+    state.selectedElevatorPointId = hit.elevatorPointId;
+    state.selectedElevatorPointIds = [hit.elevatorPointId];
+  }
+  state.selectedId = null;
+  state.selectedSubwayId = null;
+  state.selectedPlatformId = null;
+  state.selectedPlatformIds = [];
+  state.selectedStairId = null;
+  state.selectedStairIds = [];
+  state.selectedLayerAlignIndex = null;
+  updateSelectedInfo();
+  updateElevatorStatus(`Selected ${selectedElevatorPointIds().length} elevator point(s).`);
+  draw();
+  return true;
+}
+
+function deleteSelectedElevatorPoint() {
+  const ids = selectedElevatorPointIds();
+  if (!ids.length) {
+    updateElevatorStatus("Select an elevator point first.");
+    return;
+  }
+  state.annotations.manual_elevator_points = state.annotations.manual_elevator_points || [];
+  const idSet = new Set(ids);
+  const before = state.annotations.manual_elevator_points.length;
+  state.annotations.manual_elevator_points = state.annotations.manual_elevator_points.filter(
+    (item) => !idSet.has(item.elevator_point_id || item.label),
+  );
+  const removed = before - state.annotations.manual_elevator_points.length;
+  state.selectedElevatorPointId = null;
+  state.selectedElevatorPointIds = [];
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateElevatorStatus(`Deleted ${removed} elevator point(s).`);
+    draw();
+  });
+}
+
+function deleteAllElevatorPoints() {
+  state.annotations.manual_elevator_points = state.annotations.manual_elevator_points || [];
+  const removed = state.annotations.manual_elevator_points.length;
+  state.annotations.manual_elevator_points = [];
+  state.selectedElevatorPointId = null;
+  state.selectedElevatorPointIds = [];
+  state.selectedElevatorPointId = null;
+  state.selectedElevatorPointIds = [];
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateElevatorStatus(`Deleted ${removed} elevator point(s).`);
+    draw();
+  });
+}
+
+function undoLastElevatorPoint() {
+  state.annotations.manual_elevator_points = state.annotations.manual_elevator_points || [];
+  const removed = state.annotations.manual_elevator_points.pop();
+  if (!removed) {
+    updateElevatorStatus("No elevator point to undo.");
+    return;
+  }
+  state.selectedElevatorPointId = null;
+  state.selectedElevatorPointIds = [];
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateElevatorStatus(`Removed ${removed.elevator_point_id || removed.label}.`);
+    draw();
+  });
+}
+
+function applyElevatorLink() {
+  const ids = selectedElevatorPointIds();
+  if (ids.length < 2) {
+    updateElevatorStatus("Select at least two elevator points.");
+    return;
+  }
+  const idSet = new Set(ids);
+  const typedId = elevatorIdInput.value.trim();
+  const existingId = (state.annotations.manual_elevator_points || [])
+    .map((item) => idSet.has(item.elevator_point_id || item.label) ? item.elevator_id : null)
+    .find(Boolean);
+  const elevatorId = typedId || existingId || nextElevatorId();
+  for (const item of state.annotations.manual_elevator_points || []) {
+    if (idSet.has(item.elevator_point_id || item.label)) {
+      item.elevator_id = elevatorId;
+    }
+  }
+  elevatorIdInput.value = elevatorId;
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateElevatorStatus(`Linked ${ids.length} point(s) as ${elevatorId}.`);
+    draw();
+  });
+}
+
+function clearElevatorLinkFromSelected() {
+  const ids = selectedElevatorPointIds();
+  if (!ids.length) {
+    updateElevatorStatus("Select elevator point(s) first.");
+    return;
+  }
+  const idSet = new Set(ids);
+  for (const item of state.annotations.manual_elevator_points || []) {
+    if (idSet.has(item.elevator_point_id || item.label)) {
+      item.elevator_id = null;
+    }
+  }
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateElevatorStatus(`Cleared link from ${ids.length} point(s).`);
+    draw();
+  });
+}
+
+function selectSameElevatorLink() {
+  const selectedId = selectedElevatorPointIds()[0];
+  if (!selectedId) {
+    updateElevatorStatus("Select one elevator point first.");
+    return;
+  }
+  const source = (state.annotations.manual_elevator_points || []).find(
+    (item) => (item.elevator_point_id || item.label) === selectedId,
+  );
+  if (!source?.elevator_id) {
+    updateElevatorStatus("Selected point has no elevator link.");
+    return;
+  }
+  state.selectedElevatorPointIds = (state.annotations.manual_elevator_points || [])
+    .filter((item) => item.elevator_id === source.elevator_id)
+    .map((item) => item.elevator_point_id || item.label)
+    .filter(Boolean);
+  state.selectedElevatorPointId = state.selectedElevatorPointIds[state.selectedElevatorPointIds.length - 1] || null;
+  elevatorIdInput.value = source.elevator_id;
+  updateElevatorStatus(`Selected ${state.selectedElevatorPointIds.length} point(s) for ${source.elevator_id}.`);
+  draw();
+}
+
+function clearElevatorSelection() {
+  state.selectedElevatorPointId = null;
+  state.selectedElevatorPointIds = [];
+  updateElevatorStatus();
+  draw();
 }
 
 function startSimpleKeep() {
@@ -3715,6 +4293,7 @@ function applySimpleKeep() {
 }
 
 function updateAutoMergeStatus(message = null) {
+  if (!autoMergeStatus) return;
   if (!state.autoMerge.active) {
     autoMergeStatus.textContent = "inactive";
     return;
@@ -3809,6 +4388,7 @@ function applyAutoMerge() {
 }
 
 function updateMergeStatus(message = null) {
+  if (!mergeStatus) return;
   if (!state.merge.active) {
     mergeStatus.textContent = "inactive";
     return;
@@ -4170,7 +4750,8 @@ function undoLastMerge() {
   resetMerge();
   saveAnnotations().then((result) => {
     saveResult.textContent = JSON.stringify(result, null, 2);
-    mergeStatus.textContent = `Undid ${removedMerge.merge_id || removedPolygonId}.`;
+    const statusTarget = mergeStatus || autoMergeStatus;
+    if (statusTarget) statusTarget.textContent = `Undid ${removedMerge.merge_id || removedPolygonId}.`;
     draw();
   });
 }
@@ -4367,6 +4948,7 @@ function resetToInitialPolygons() {
   state.annotations.manual_walls = [];
   state.annotations.manual_assets = [];
   state.annotations.manual_platforms = [];
+  state.annotations.manual_elevator_points = [];
   state.annotations.layer_alignment_pairs = [];
   state.annotations.polygon_axis_corrections = {};
   state.annotations.scale_calibration = null;
@@ -4385,6 +4967,8 @@ function resetToInitialPolygons() {
   resetStairConnection();
   resetSubwayPlacement();
   resetPlatformLine();
+  resetElevatorPoint();
+  resetElevatorLink();
   resetLayerAlign();
   resetLocalAxisCorrection();
   resetScaleCalibration();
@@ -4633,6 +5217,7 @@ function loadProject() {
       state.annotations.manual_connections = state.annotations.manual_connections || [];
       state.annotations.manual_assets = state.annotations.manual_assets || [];
       state.annotations.manual_platforms = state.annotations.manual_platforms || [];
+  state.annotations.manual_elevator_points = state.annotations.manual_elevator_points || [];
       state.annotations.scale_calibration = state.annotations.scale_calibration || null;
       state.annotations.polygon_z_offsets = state.annotations.polygon_z_offsets || {};
       state.annotations.polygon_z_values = state.annotations.polygon_z_values || {};
@@ -4691,29 +5276,30 @@ function resetProjectWorkingState(message) {
     manual_walls: [],
     manual_assets: [],
     manual_platforms: [],
+    manual_elevator_points: [],
     layer_alignment_pairs: [],
     polygon_axis_corrections: {},
     scale_calibration: null,
     station_metadata: {},
   };
   state.marker.points = [];
-  state.crop = {active: false, start: null, current: null, rect: null};
+  state.crop = {active: false, start: null, current: null, rect: null, previousImagePath: state.crop.previousImagePath || null};
   state.loadedFinalWorkingSet = false;
   state.selectedId = null;
   state.selectedIds = [];
   state.selectedStairId = null;
   state.selectedStairIds = [];
   state.selectedPlatformId = null;
+  state.selectedPlatformIds = [];
   pipelineStatus.textContent = message;
   populateStationInputs(state.annotations.station_metadata);
   updateScaleCalibrationStatus();
   updateLocalAxisStatus();
 }
 
-function loadSelectedImage() {
-  const imagePath = imageSelect.value;
-  if (!imagePath) return;
-  fetch("/api/project/select", {
+function selectImagePath(imagePath, messagePrefix = "selected") {
+  if (!imagePath) return Promise.resolve(null);
+  return fetch("/api/project/select", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
     body: JSON.stringify({image_path: imagePath}),
@@ -4721,10 +5307,17 @@ function loadSelectedImage() {
     .then((response) => response.json().then((data) => ({ok: response.ok, data})))
     .then(({ok, data}) => {
       if (!ok) throw new Error(data.error || "failed to select image");
-      resetProjectWorkingState(`selected: ${data.image}\noutput: ${data.output_dir}`);
+      resetProjectWorkingState(`${messagePrefix}: ${data.image}\noutput: ${data.output_dir}`);
       loadProject();
       refreshImages();
-    })
+      return data;
+    });
+}
+
+function loadSelectedImage() {
+  const imagePath = imageSelect.value;
+  if (!imagePath) return;
+  selectImagePath(imagePath)
     .catch((error) => {
       pipelineStatus.textContent = String(error);
     });
@@ -4770,13 +5363,15 @@ function startCrop() {
 
 function resetCrop() {
   if (state.tool === "crop") state.tool = "select";
+  const previousImagePath = state.crop.previousImagePath || null;
   state.crop = {
     active: false,
     start: null,
     current: null,
     rect: null,
+    previousImagePath,
   };
-  pipelineStatus.textContent = "crop reset";
+  pipelineStatus.textContent = "crop cancelled";
   draw();
 }
 
@@ -4800,7 +5395,9 @@ function applyCrop() {
     .then((response) => response.json().then((data) => ({ok: response.ok, data})))
     .then(({ok, data}) => {
       if (!ok) throw new Error(data.error || "crop failed");
+      const previous = data.source_image || state.crop.previousImagePath || null;
       resetCrop();
+      state.crop.previousImagePath = previous;
       pipelineStatus.textContent = JSON.stringify(data, null, 2);
       loadProject();
       refreshImages();
@@ -4808,6 +5405,26 @@ function applyCrop() {
     .catch((error) => {
       pipelineStatus.textContent = String(error);
     });
+}
+
+function backToPreviousCropImage() {
+  const previous = state.crop.previousImagePath;
+  if (!previous) {
+    pipelineStatus.textContent = "no previous crop source image.";
+    return;
+  }
+  selectImagePath(previous, "back")
+    .then(() => {
+      state.crop.previousImagePath = null;
+    })
+    .catch((error) => {
+      pipelineStatus.textContent = String(error);
+    });
+}
+
+function addClickListener(id, handler) {
+  const element = document.getElementById(id);
+  if (element) element.addEventListener("click", handler);
 }
 
 function startManualMarker() {
@@ -5142,6 +5759,7 @@ function applyExportedFinalPayload(data, sourceLabel = null) {
     manual_walls: data.walls || [],
     manual_assets: state.annotations.manual_assets || [],
     manual_platforms: state.annotations.manual_platforms || [],
+    manual_elevator_points: state.annotations.manual_elevator_points || [],
     layer_alignment_pairs: state.annotations.layer_alignment_pairs || [],
     polygon_axis_corrections: state.annotations.polygon_axis_corrections || {},
     scale_calibration: state.annotations.scale_calibration || null,
@@ -5165,6 +5783,8 @@ function applyExportedFinalPayload(data, sourceLabel = null) {
   resetStairConnection();
   resetSubwayPlacement();
   resetPlatformLine();
+  resetElevatorPoint();
+  resetElevatorLink();
   resetLayerAlign();
   resetLocalAxisCorrection();
   resetScaleCalibration();
@@ -5391,10 +6011,12 @@ canvas.addEventListener("mouseup", () => {
     state.crop.rect = rect;
     state.crop.start = null;
     state.crop.current = null;
-    pipelineStatus.textContent = rect && rect.width >= 10 && rect.height >= 10
-      ? `crop ready: ${Math.round(rect.width)} x ${Math.round(rect.height)}. Apply Crop to create a new image.`
-      : "crop: selected area is too small";
-    draw();
+    if (rect && rect.width >= 10 && rect.height >= 10) {
+      applyCrop();
+    } else {
+      pipelineStatus.textContent = "crop: selected area is too small";
+      draw();
+    }
     return;
   }
   if (state.tool === "sharedEdge" && state.sharedEdge.active && state.sharedEdge.dragStart) {
@@ -5480,6 +6102,14 @@ canvas.addEventListener("click", (event) => {
     addPlatformPoint(world, poly);
     return;
   }
+  if (state.tool === "elevatorPoint") {
+    addElevatorPoint(world, poly);
+    return;
+  }
+  if (state.tool === "elevatorLink") {
+    selectElevatorPoint(world, true);
+    return;
+  }
   if (state.tool === "stair") {
     addStairPoint(world, poly);
     return;
@@ -5494,7 +6124,8 @@ canvas.addEventListener("click", (event) => {
   }
   if (selectLayerAlignPair(world)) return;
   if (selectSubwayAsset(world)) return;
-  if (selectPlatform(world)) return;
+  if (selectPlatform(world, event.shiftKey || event.ctrlKey || event.metaKey)) return;
+  if (selectElevatorPoint(world, event.shiftKey || event.ctrlKey || event.metaKey)) return;
   if (selectStairConnection(world, event)) return;
   if (event.ctrlKey || event.metaKey) {
     toggleMultiSelectedPolygon(poly);
@@ -5506,6 +6137,9 @@ canvas.addEventListener("click", (event) => {
   state.selectedStairIds = [];
   state.selectedSubwayId = null;
   state.selectedPlatformId = null;
+  state.selectedPlatformIds = [];
+  state.selectedElevatorPointId = null;
+  state.selectedElevatorPointIds = [];
   state.selectedLayerAlignIndex = null;
   updateSelectedInfo();
   updateLayerAlignStatus();
@@ -5599,14 +6233,6 @@ document.getElementById("undoDeletePolygonBtn").addEventListener("click", undoLa
 document.getElementById("startKeepBtn").addEventListener("click", startSimpleKeep);
 document.getElementById("applyKeepBtn").addEventListener("click", applySimpleKeep);
 document.getElementById("resetKeepBtn").addEventListener("click", resetSimpleKeep);
-document.getElementById("startAutoMergeBtn").addEventListener("click", startAutoMerge);
-document.getElementById("applyAutoMergeBtn").addEventListener("click", applyAutoMerge);
-document.getElementById("resetAutoMergeBtn").addEventListener("click", resetAutoMerge);
-document.getElementById("startMergeBtn").addEventListener("click", startMerge);
-document.getElementById("removeOrangePathBtn").addEventListener("click", () => chooseRemovePath("forward"));
-document.getElementById("resetMergeBtn").addEventListener("click", resetMerge);
-document.getElementById("applyMergeBtn").addEventListener("click", applyMerge);
-document.getElementById("undoMergeBtn").addEventListener("click", undoLastMerge);
 document.getElementById("startStraightenBtn").addEventListener("click", startStraighten);
 document.getElementById("straightenOrangePathBtn").addEventListener("click", chooseStraightenOrangePath);
 document.getElementById("applyStraightenBtn").addEventListener("click", applyStraighten);
@@ -5617,13 +6243,6 @@ document.getElementById("resetMoveBtn").addEventListener("click", resetMoveVerte
 document.getElementById("startInsertVertexBtn").addEventListener("click", startInsertVertex);
 document.getElementById("undoInsertVertexBtn").addEventListener("click", undoLastInsertVertex);
 document.getElementById("resetInsertVertexBtn").addEventListener("click", resetInsertVertex);
-document.getElementById("startSharedEdgeBtn").addEventListener("click", startSharedEdge);
-document.getElementById("toggleSharedEdgeADirectionBtn").addEventListener("click", () => toggleSharedEdgeDirection("polygon_a"));
-document.getElementById("toggleSharedEdgeBDirectionBtn").addEventListener("click", () => toggleSharedEdgeDirection("polygon_b"));
-document.getElementById("cycleSharedEdgeOrderBtn").addEventListener("click", cycleSharedEdgeReplacementOrder);
-document.getElementById("applySharedEdgeBtn").addEventListener("click", applySharedEdge);
-document.getElementById("undoSharedEdgeBtn").addEventListener("click", undoLastSharedEdge);
-document.getElementById("resetSharedEdgeBtn").addEventListener("click", resetSharedEdge);
 document.getElementById("startAddPolygonBtn").addEventListener("click", startAddPolygon);
 document.getElementById("applyAddPolygonBtn").addEventListener("click", applyAddPolygon);
 document.getElementById("undoAddPointBtn").addEventListener("click", undoAddPolygonPoint);
@@ -5663,18 +6282,29 @@ document.getElementById("deleteAllSubwayBtn").addEventListener("click", deleteAl
 document.getElementById("undoSubwayBtn").addEventListener("click", undoLastSubwayAsset);
 document.getElementById("resetSubwayBtn").addEventListener("click", resetSubwayPlacement);
 document.getElementById("startPlatformBtn").addEventListener("click", startPlatformLine);
-document.getElementById("savePlatformBtn").addEventListener("click", savePlatformAnchors);
-document.getElementById("undoPlatformAnchorBtn").addEventListener("click", undoPlatformAnchor);
+document.getElementById("applyPlatformMetadataBtn").addEventListener("click", applyPlatformMetadataToSelected);
+document.getElementById("clearPlatformSelectionBtn").addEventListener("click", clearPlatformSelection);
 document.getElementById("deletePlatformBtn").addEventListener("click", deleteSelectedPlatform);
 document.getElementById("deleteAllPlatformsBtn").addEventListener("click", deleteAllPlatforms);
 document.getElementById("undoPlatformBtn").addEventListener("click", undoLastPlatform);
 document.getElementById("resetPlatformBtn").addEventListener("click", resetPlatformLine);
+document.getElementById("startElevatorBtn").addEventListener("click", startElevatorPoint);
+document.getElementById("startElevatorLinkBtn").addEventListener("click", startElevatorLink);
+document.getElementById("applyElevatorLinkBtn").addEventListener("click", applyElevatorLink);
+document.getElementById("selectSameElevatorBtn").addEventListener("click", selectSameElevatorLink);
+document.getElementById("clearElevatorLinkBtn").addEventListener("click", clearElevatorLinkFromSelected);
+document.getElementById("clearElevatorSelectionBtn").addEventListener("click", clearElevatorSelection);
+document.getElementById("deleteElevatorBtn").addEventListener("click", deleteSelectedElevatorPoint);
+document.getElementById("deleteAllElevatorsBtn").addEventListener("click", deleteAllElevatorPoints);
+document.getElementById("undoElevatorBtn").addEventListener("click", undoLastElevatorPoint);
+document.getElementById("resetElevatorBtn").addEventListener("click", resetElevatorPoint);
 document.getElementById("refreshImagesBtn").addEventListener("click", refreshImages);
-document.getElementById("loadImageBtn").addEventListener("click", loadSelectedImage);
-document.getElementById("uploadImageBtn").addEventListener("click", uploadImageFile);
+imageSelect.addEventListener("change", loadSelectedImage);
+uploadImageInput.addEventListener("change", uploadImageFile);
+addClickListener("setupLoadExportedFinalBtn", loadExportedFinal);
 document.getElementById("startCropBtn").addEventListener("click", startCrop);
-document.getElementById("applyCropBtn").addEventListener("click", applyCrop);
 document.getElementById("resetCropBtn").addEventListener("click", resetCrop);
+document.getElementById("backCropBtn").addEventListener("click", backToPreviousCropImage);
 document.getElementById("startMarkerBtn").addEventListener("click", startManualMarker);
 document.getElementById("undoMarkerBtn").addEventListener("click", undoManualMarkerPoint);
 document.getElementById("saveMarkerBtn").addEventListener("click", saveManualMarker);
@@ -5714,6 +6344,7 @@ document.getElementById("exportFinalBtn").addEventListener("click", () => {
       saveResult.textContent = JSON.stringify(result, null, 2);
     });
 });
+document.getElementById("validateSceneBtn").addEventListener("click", validateScene);
 document.getElementById("exportPlanesBtn").addEventListener("click", () => {
   saveAnnotations()
     .then(() => fetch("/api/export/planes", {
@@ -5758,13 +6389,13 @@ document.addEventListener("keydown", (event) => {
     startSimpleKeep();
   } else if (key === "q") {
     event.preventDefault();
-    startMerge();
+    startPlatformLine();
   } else if (key === "w") {
     event.preventDefault();
     startStraighten();
   } else if (key === "e") {
     event.preventDefault();
-    startMoveVertex();
+    startElevatorPoint();
   } else if (key === "x") {
     event.preventDefault();
     startInsertVertex();
@@ -5776,10 +6407,10 @@ document.addEventListener("keydown", (event) => {
     startCutHole();
   } else if (key === "r") {
     event.preventDefault();
-    startAutoMerge();
+    startMoveVertex();
   } else if (key === "t") {
     event.preventDefault();
-    startSharedEdge();
+    startSubwayPlacement();
   } else if (key === "y") {
     event.preventDefault();
     startLayerAlign();
@@ -5794,16 +6425,13 @@ document.addEventListener("keydown", (event) => {
     startStairConnection();
   } else if (key === "p") {
     event.preventDefault();
-    startPlatformLine();
+    startCrop();
   } else if (key === "o") {
     event.preventDefault();
-    startSubwayPlacement();
+    startElevatorLink();
   } else if (key === "m") {
     event.preventDefault();
     startManualMarker();
-  } else if (key === "p") {
-    event.preventDefault();
-    startCrop();
   } else if (key === "g") {
     event.preventDefault();
     toggleSharedEdgeDirection("polygon_a");
@@ -5815,10 +6443,7 @@ document.addEventListener("keydown", (event) => {
     cycleSharedEdgeReplacementOrder();
   } else if (key === "f") {
     event.preventDefault();
-    if (state.tool === "merge") {
-      chooseRemovePath("forward");
-      if (isMergeReady()) applyMerge();
-    } else if (state.tool === "straighten") {
+    if (state.tool === "straighten") {
       chooseStraightenOrangePath();
       if (isStraightenReady()) applyStraighten();
     }
@@ -5828,7 +6453,8 @@ document.addEventListener("keydown", (event) => {
   } else if (event.key === "Delete") {
     event.preventDefault();
     if (state.selectedSubwayId) deleteSelectedSubwayAsset();
-    else if (state.selectedPlatformId) deleteSelectedPlatform();
+    else if (selectedPlatformIds().length) deleteSelectedPlatform();
+    else if (selectedElevatorPointIds().length) deleteSelectedElevatorPoint();
     else if (state.selectedLayerAlignIndex !== null) deleteSelectedLayerAlignPair();
     else if (state.selectedStairId) deleteSelectedStairConnection();
     else deleteSelectedPolygon();
@@ -5844,11 +6470,8 @@ document.addEventListener("keydown", (event) => {
     if (state.tool === "keep") applySimpleKeep();
     else if (state.tool === "addPolygon") applyAddPolygon();
     else if (state.tool === "cutHole") applyCutHole();
-    else if (state.tool === "sharedEdge") applySharedEdge();
-    else if (state.tool === "autoMerge") applyAutoMerge();
     else if (state.tool === "scaleCalibration") applyScaleCalibration();
     else if (state.tool === "crop") applyCrop();
-    else if (state.tool === "merge") applyMerge();
     else if (state.tool === "straighten") applyStraighten();
   } else if (event.key === "Escape") {
     event.preventDefault();
@@ -5860,6 +6483,8 @@ document.addEventListener("keydown", (event) => {
     else if (state.tool === "localAxis") resetLocalAxisCorrection();
     else if (state.tool === "subway") resetSubwayPlacement();
     else if (state.tool === "platform") resetPlatformLine();
+    else if (state.tool === "elevatorPoint") resetElevatorPoint();
+    else if (state.tool === "elevatorLink") resetElevatorLink();
     else if (state.tool === "scaleCalibration") resetScaleCalibration();
     else if (state.tool === "marker") {
       state.tool = "select";
@@ -5868,9 +6493,6 @@ document.addEventListener("keydown", (event) => {
     }
     else if (state.tool === "crop") resetCrop();
     else if (state.tool === "stair") resetStairConnection();
-    else if (state.tool === "sharedEdge") resetSharedEdge();
-    else if (state.tool === "autoMerge") resetAutoMerge();
-    else if (state.tool === "merge") resetMerge();
     else if (state.tool === "straighten") resetStraighten();
     else if (state.tool === "move") resetMoveVertex();
     else if (state.tool === "insertVertex") resetInsertVertex();
@@ -5886,6 +6508,8 @@ updateStraightenStatus();
 updateMoveStatus();
 updateInsertVertexStatus();
 updateDeleteStatus();
+setupSidebarTabs();
+updateModeSummary();
 updateSharedEdgeStatus();
 updateAddPolygonStatus();
 updateCutHoleStatus();
@@ -5895,6 +6519,7 @@ updateScaleCalibrationStatus();
 updateSubwayStatus();
 updateStairStatus();
 updatePlatformStatus();
+updateElevatorStatus();
 updateStationStatus();
 updateKeepStatus();
 loadProject();

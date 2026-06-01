@@ -234,7 +234,15 @@ def build_final_polygons_payload(polygons_path, annotations, transform_metadata=
 
 def build_working_final_payload(polygons_path, working_polygons, annotations, transform_metadata=None):
     """Build final_polygons.json directly from the editor working polygon set."""
-    polygon_data = load_json(polygons_path)
+    polygon_path = Path(polygons_path) if polygons_path else None
+    if polygon_path and polygon_path.exists():
+        polygon_data = load_json(polygon_path)
+    else:
+        polygon_data = {
+            "image": {},
+            "extraction": {"source": "editor_working_polygons"},
+            "polygons": working_polygons,
+        }
     polygons = [dict(poly) for poly in working_polygons]
     layers = annotations.get("polygon_layers", {})
     for poly in polygons:
@@ -251,7 +259,7 @@ def build_working_final_payload(polygons_path, working_polygons, annotations, tr
             for poly in source_polygons
             if poly.get("points_source")
         ]
-        shift = calculate_auto_center_shift_from_points(raw_transformed)
+        shift = calculate_auto_center_shift_from_points(raw_transformed) if raw_transformed else [0.0, 0.0]
         for poly in polygons:
             if poly.get("points_source"):
                 poly["points_transformed"] = transform_source_points(poly["points_source"], matrix, shift=shift)
@@ -588,6 +596,67 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
     return assets
 
 
+def build_elevator_point_records(annotations=None, transform_metadata=None, transform_info=None, scale=0.01, layer_z=None, floor_height=5.0, default_z=0.0, invert_x=False, invert_y=False, alignment_transforms=None):
+    """Build scene elevator access points grouped by manual elevator_id."""
+    records = []
+    for item in (annotations or {}).get("manual_elevator_points", []):
+        point_source = item.get("point_source")
+        if not point_source:
+            continue
+        layer = item.get("layer")
+        polygon_id = item.get("polygon_id")
+        z_value = polygon_id_z_value(
+            polygon_id,
+            layer,
+            annotations=annotations,
+            layer_z=layer_z,
+            default_z=default_z,
+            floor_height=floor_height,
+        )
+        xy = scene_xy_for_connection_point(
+            point_source,
+            layer,
+            alignment_transforms=alignment_transforms,
+            transform_metadata=transform_metadata,
+            transform_info=transform_info,
+            scale=scale,
+            invert_x=invert_x,
+            invert_y=invert_y,
+        )
+        position = [float(xy[0]), float(xy[1]), float(z_value)]
+        facing_position = None
+        facing_angle_deg = item.get("facing_angle_deg")
+        if item.get("facing_point_source"):
+            facing_xy = scene_xy_for_connection_point(
+                item["facing_point_source"],
+                layer,
+                alignment_transforms=alignment_transforms,
+                transform_metadata=transform_metadata,
+                transform_info=transform_info,
+                scale=scale,
+                invert_x=invert_x,
+                invert_y=invert_y,
+            )
+            facing_position = [float(facing_xy[0]), float(facing_xy[1]), float(z_value)]
+            facing_angle_deg = float(np.degrees(np.arctan2(facing_position[1] - position[1], facing_position[0] - position[0])))
+        records.append(
+            {
+                "elevator_point_id": item.get("elevator_point_id"),
+                "elevator_id": item.get("elevator_id"),
+                "type": "elevator_point",
+                "label": item.get("label"),
+                "polygon_id": polygon_id,
+                "layer": layer,
+                "point_source": point_source,
+                "facing_point_source": item.get("facing_point_source"),
+                "position": position,
+                "facing_position": facing_position,
+                "facing_angle_deg": facing_angle_deg,
+            }
+        )
+    return records
+
+
 def navigation_node(node_id, node_type, layer, position, polygon_id=None, **extra):
     """Build one navigation node record."""
     record = {
@@ -638,6 +707,68 @@ def build_platform_records(annotations=None, transform_metadata=None, transform_
             default_z=default_z,
             floor_height=floor_height,
         )
+        if platform.get("type") == "platform_point" or platform.get("point_source"):
+            point_source = platform.get("point_source")
+            if not point_source:
+                continue
+            xy = scene_xy_for_connection_point(
+                point_source,
+                layer,
+                alignment_transforms=alignment_transforms,
+                transform_metadata=transform_metadata,
+                transform_info=transform_info,
+                scale=scale,
+                invert_x=invert_x,
+                invert_y=invert_y,
+            )
+            position = [float(xy[0]), float(xy[1]), float(z_value)]
+            facing_position = None
+            facing_angle_deg = platform.get("facing_angle_deg")
+            if platform.get("facing_point_source"):
+                facing_xy = scene_xy_for_connection_point(
+                    platform["facing_point_source"],
+                    layer,
+                    alignment_transforms=alignment_transforms,
+                    transform_metadata=transform_metadata,
+                    transform_info=transform_info,
+                    scale=scale,
+                    invert_x=invert_x,
+                    invert_y=invert_y,
+                )
+                facing_position = [float(facing_xy[0]), float(facing_xy[1]), float(z_value)]
+                facing_angle_deg = float(np.degrees(np.arctan2(facing_position[1] - position[1], facing_position[0] - position[0])))
+            nodes = [
+                {
+                    "node_id": platform_id,
+                    "type": "platform_position",
+                    "station_name": platform.get("station_name"),
+                    "line_id": platform.get("line_id"),
+                    "direction": platform.get("direction"),
+                    "car_range": platform.get("car_range"),
+                    "position": position,
+                    "facing_angle_deg": facing_angle_deg,
+                }
+            ]
+            records.append(
+                {
+                    "platform_id": platform_id,
+                    "type": "platform_point",
+                    "label": platform.get("label"),
+                    "station_name": platform.get("station_name"),
+                    "line_id": platform.get("line_id"),
+                    "direction": platform.get("direction"),
+                    "car_range": platform.get("car_range"),
+                    "layer": layer,
+                    "polygon_id": polygon_id,
+                    "point_source": point_source,
+                    "facing_point_source": platform.get("facing_point_source"),
+                    "position": position,
+                    "facing_position": facing_position,
+                    "facing_angle_deg": facing_angle_deg,
+                    "nodes": nodes,
+                }
+            )
+            continue
         car_count = max(1, int(platform.get("car_count") or 1))
         doors_per_car = max(1, int(platform.get("doors_per_car") or 1))
         total_positions = car_count * doors_per_car
@@ -755,7 +886,7 @@ def build_platform_records(annotations=None, transform_metadata=None, transform_
     return records
 
 
-def build_navigation_graph(connection_records, icon_records=None, manual_assets=None, platform_records=None):
+def build_navigation_graph(connection_records, icon_records=None, manual_assets=None, platform_records=None, elevator_point_records=None):
     """Build a lightweight graph for Unity NavMesh-assisted routing."""
     nodes = []
     edges = []
@@ -874,8 +1005,11 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
                     position,
                     polygon_id=platform.get("polygon_id"),
                     platform_id=platform.get("platform_id"),
+                    station_name=platform.get("station_name") or platform_node.get("station_name"),
                     line_id=platform.get("line_id"),
                     direction=platform.get("direction"),
+                    car_range=platform.get("car_range") or platform_node.get("car_range"),
+                    facing_angle_deg=platform_node.get("facing_angle_deg"),
                     car=platform_node.get("car"),
                     door=platform_node.get("door"),
                     car_door=platform_node.get("car_door"),
@@ -895,6 +1029,44 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
                 )
             previous_node_id = node_id
             previous_position = position
+
+    elevator_groups = {}
+    for elevator in elevator_point_records or []:
+        elevator_point_id = elevator.get("elevator_point_id")
+        position = elevator.get("position")
+        if not elevator_point_id or not position:
+            continue
+        node_id = f"{elevator_point_id}_node"
+        add_node(
+            navigation_node(
+                node_id,
+                "elevator",
+                elevator.get("layer"),
+                position,
+                polygon_id=elevator.get("polygon_id"),
+                elevator_id=elevator.get("elevator_id"),
+                elevator_point_id=elevator_point_id,
+                label=elevator.get("label"),
+                facing_angle_deg=elevator.get("facing_angle_deg"),
+            )
+        )
+        elevator_groups.setdefault(elevator.get("elevator_id") or "elevator", []).append((node_id, position))
+    for elevator_id, items in elevator_groups.items():
+        for index in range(len(items)):
+            for next_index in range(index + 1, len(items)):
+                from_node, from_position = items[index]
+                to_node, to_position = items[next_index]
+                edges.append(
+                    navigation_edge(
+                        f"{elevator_id}_{index + 1}_to_{next_index + 1}",
+                        from_node,
+                        to_node,
+                        "elevator",
+                        cost=distance_3d(from_position, to_position),
+                        bidirectional=True,
+                        elevator_id=elevator_id,
+                    )
+                )
 
     return {
         "metadata": {
@@ -1144,31 +1316,14 @@ def synthesize_connection_line(center, other_center, width=1.0):
 
 
 def order_vertical_connection_lines_for_blender(start_line, end_line):
-    """Return low-to-high line pairs normalized for the existing Blender asset scripts."""
+    """Return connection line pairs ordered from low z to high z."""
     if not start_line or not end_line:
         return start_line, end_line
     start_z = sum(float(point[2]) for point in start_line) / len(start_line)
     end_z = sum(float(point[2]) for point in end_line) / len(end_line)
     if start_z > end_z:
         start_line, end_line = end_line, start_line
-
-    # Layer alignment can scale each floor differently, so a line pair that was
-    # parallel in editor/source space may no longer be parallel in scene space.
-    # The Blender stair/escalator scripts use start_line as the asset width and
-    # start_center -> end_center as the run direction, so normalize end_line to
-    # the same width vector after every export transform has been applied.
-    dx = float(start_line[1][0]) - float(start_line[0][0])
-    dy = float(start_line[1][1]) - float(start_line[0][1])
-    end_center = [
-        (float(end_line[0][0]) + float(end_line[1][0])) / 2.0,
-        (float(end_line[0][1]) + float(end_line[1][1])) / 2.0,
-        (float(end_line[0][2]) + float(end_line[1][2])) / 2.0,
-    ]
-    normalized_end_line = [
-        [end_center[0] - dx / 2.0, end_center[1] - dy / 2.0, end_center[2]],
-        [end_center[0] + dx / 2.0, end_center[1] + dy / 2.0, end_center[2]],
-    ]
-    return start_line, normalized_end_line
+    return start_line, end_line
 
 
 def estimate_xy_transform(source_points, target_points):
@@ -1558,6 +1713,18 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         invert_y=invert_y,
         alignment_transforms=alignment_transforms,
     )
+    elevator_point_records = build_elevator_point_records(
+        annotations=annotations,
+        transform_metadata=transform_metadata,
+        transform_info=transform_info,
+        scale=effective_scale,
+        layer_z=layer_z,
+        floor_height=floor_height,
+        default_z=default_z,
+        invert_x=invert_x,
+        invert_y=invert_y,
+        alignment_transforms=alignment_transforms,
+    )
     platform_records = build_platform_records(
         annotations=annotations,
         transform_metadata=transform_metadata,
@@ -1628,6 +1795,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         "walls": wall_records,
         "connections": connection_records,
         "platforms": platform_records,
+        "elevator_points": elevator_point_records,
         "icons": icon_records,
         "manual_assets": manual_assets,
     }
@@ -1637,6 +1805,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         icon_records=icon_records,
         manual_assets=manual_assets,
         platform_records=platform_records,
+        elevator_point_records=elevator_point_records,
     )
     return payload
 
