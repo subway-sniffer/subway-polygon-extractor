@@ -214,6 +214,12 @@ Export Final Polygons
 필요하면 render scene preview 체크
 Export Scene Planes
 
+출구까지 이어지는 마지막 계단/에스컬레이터는 Vertical Connection에서 type을 exit_stair 또는 exit_escalator로 선택한다.
+사용 순서는 시작선 2점을 내부 폴리곤 위에 찍고, 세 번째 점으로 출구 방향을 찍는다.
+Exit number에는 출구 번호를 입력한다.
+Exit length px는 도착 폴리곤이 없을 때 자동으로 만든 끝선까지의 기본 길이다.
+Exit rise는 출구 방향 계단의 z 상승값이며 기본값은 5다.
+
 
 6. 주요 결과 파일 위치
 

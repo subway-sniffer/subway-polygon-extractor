@@ -153,6 +153,113 @@ def validate_image_path(path):
     return dimensions
 
 
+def odd_kernel_size(value):
+    """Return a non-negative odd morphology kernel size."""
+    size = max(0, int(round(float(value or 0))))
+    if size > 0 and size % 2 == 0:
+        size += 1
+    return size
+
+
+def draw_seed_strokes_mask(shape, strokes, brush_size):
+    """Draw region-pick brush strokes into a binary seed mask."""
+    height, width = shape[:2]
+    mask = np.zeros((height, width), dtype=np.uint8)
+    radius = max(1, int(round(float(brush_size) / 2.0)))
+    line_width = max(1, int(round(float(brush_size))))
+    for stroke in strokes or []:
+        points = []
+        for point in stroke or []:
+            if not isinstance(point, (list, tuple)) or len(point) < 2:
+                continue
+            x = int(round(float(point[0])))
+            y = int(round(float(point[1])))
+            if 0 <= x < width and 0 <= y < height:
+                points.append((x, y))
+        if not points:
+            continue
+        if len(points) == 1:
+            cv2.circle(mask, points[0], radius, 255, -1, lineType=cv2.LINE_AA)
+            continue
+        for start, end in zip(points, points[1:]):
+            cv2.line(mask, start, end, 255, line_width, lineType=cv2.LINE_AA)
+            cv2.circle(mask, start, radius, 255, -1, lineType=cv2.LINE_AA)
+            cv2.circle(mask, end, radius, 255, -1, lineType=cv2.LINE_AA)
+    return mask
+
+
+def contour_to_points(contour, epsilon_ratio):
+    """Simplify one contour into editor polygon points."""
+    perimeter = cv2.arcLength(contour, True)
+    epsilon = max(0.5, float(epsilon_ratio) * perimeter)
+    approx = cv2.approxPolyDP(contour, epsilon, True)
+    points = approx.reshape(-1, 2).astype(float).tolist()
+    return [[float(x), float(y)] for x, y in points]
+
+
+def extract_region_polygon_from_strokes(image, strokes, brush_size=34, lab_tolerance=18, close_kernel=7, open_kernel=3, epsilon_ratio=0.003):
+    """Extract one polygon from rough brush strokes using LAB color similarity."""
+    seed_mask = draw_seed_strokes_mask(image.shape, strokes, brush_size)
+    if cv2.countNonZero(seed_mask) == 0:
+        raise ValueError("브러쉬로 선택된 seed 영역이 없습니다.")
+
+    lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+    seed_pixels = lab[seed_mask > 0]
+    if seed_pixels.size == 0:
+        raise ValueError("seed 색상을 샘플링하지 못했습니다.")
+    center = np.median(seed_pixels.astype(np.float32), axis=0)
+    diff = lab.astype(np.float32) - center.reshape(1, 1, 3)
+    distance = np.linalg.norm(diff, axis=2)
+    color_mask = (distance <= float(lab_tolerance)).astype(np.uint8) * 255
+
+    num_labels, labels = cv2.connectedComponents(color_mask)
+    seed_labels = np.unique(labels[seed_mask > 0])
+    connected_mask = np.isin(labels, seed_labels[seed_labels > 0]).astype(np.uint8) * 255
+    if cv2.countNonZero(connected_mask) == 0:
+        connected_mask = seed_mask.copy()
+
+    close_size = odd_kernel_size(close_kernel)
+    if close_size:
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (close_size, close_size))
+        connected_mask = cv2.morphologyEx(connected_mask, cv2.MORPH_CLOSE, kernel)
+    open_size = odd_kernel_size(open_kernel)
+    if open_size:
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (open_size, open_size))
+        connected_mask = cv2.morphologyEx(connected_mask, cv2.MORPH_OPEN, kernel)
+
+    contours, _ = cv2.findContours(connected_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours = [contour for contour in contours if abs(cv2.contourArea(contour)) > 20]
+    if not contours:
+        raise ValueError("region pick contour를 찾지 못했습니다.")
+    seed_overlap = []
+    for contour in contours:
+        contour_mask = np.zeros_like(connected_mask)
+        cv2.drawContours(contour_mask, [contour], -1, 255, -1)
+        overlap = cv2.countNonZero(cv2.bitwise_and(contour_mask, seed_mask))
+        seed_overlap.append((overlap, abs(cv2.contourArea(contour)), contour))
+    seed_overlap.sort(key=lambda item: (item[0], item[1]), reverse=True)
+    contour = seed_overlap[0][2]
+    points = contour_to_points(contour, epsilon_ratio)
+    if len(points) < 3:
+        raise ValueError("region pick 결과 polygon의 점이 부족합니다.")
+
+    contour_mask = np.zeros_like(connected_mask)
+    cv2.drawContours(contour_mask, [contour], -1, 255, -1)
+    bgr_pixels = image[contour_mask > 0]
+    color_rgb = [180, 180, 180]
+    if bgr_pixels.size:
+        median_bgr = np.median(bgr_pixels.astype(np.float32), axis=0)
+        color_rgb = [int(round(float(median_bgr[2]))), int(round(float(median_bgr[1]))), int(round(float(median_bgr[0])))]
+
+    return points, color_rgb, {
+        "seed_pixels": int(cv2.countNonZero(seed_mask)),
+        "mask_pixels": int(cv2.countNonZero(connected_mask)),
+        "contour_area": float(abs(cv2.contourArea(contour))),
+        "point_count": int(len(points)),
+        "lab_center": [float(value) for value in center.tolist()],
+    }
+
+
 def create_placeholder_image(output_root):
     """Create a temporary startup image used until the user selects/uploads one."""
     placeholder_dir = Path(output_root) / "_placeholder"
@@ -279,7 +386,7 @@ def create_app(args):
 
     @app.route("/api/marker/manual", methods=["POST"])
     def save_manual_marker():
-        """Save four manually clicked marker points for the active image."""
+        """Save manually clicked marker points for the active image."""
         data = request.get_json(force=True)
         try:
             config = save_manual_marker_config(
@@ -1335,6 +1442,56 @@ def create_app(args):
             "point_count": len(added_points),
         }
         return jsonify({"added_polygon": added_polygon, "edit_record": edit_record})
+
+    @app.route("/api/region_pick", methods=["POST"])
+    def region_pick():
+        """Create one polygon from rough brush strokes using local LAB segmentation."""
+        data = request.get_json(force=True)
+        image = cv2.imread(str(store.active["image_path"]))
+        if image is None:
+            return jsonify({"error": f"이미지를 불러올 수 없습니다: {store.active['image_path']}"}), 500
+        annotations = load_annotations(store.active["annotations_path"])
+        polygon_lookup = build_polygon_lookup(store.active["polygons_path"], annotations, data.get("working_polygons"))
+        source_polygon_id = data.get("source_polygon_id")
+        source_poly = polygon_lookup.get(source_polygon_id) if source_polygon_id else None
+        try:
+            region_points, detected_color_rgb, debug = extract_region_polygon_from_strokes(
+                image,
+                data.get("strokes", []),
+                brush_size=data.get("brush_size", 34),
+                lab_tolerance=data.get("lab_tolerance", 18),
+                close_kernel=data.get("close_kernel", 7),
+                open_kernel=data.get("open_kernel", 3),
+                epsilon_ratio=data.get("epsilon_ratio", 0.003),
+            )
+            added_points = build_added_polygon(region_points)
+        except (TypeError, ValueError) as exc:
+            return jsonify({"error": str(exc)}), 400
+
+        metrics = polygon_metrics(added_points)
+        added_id = next_added_polygon_id(annotations, data.get("working_polygons"))
+        color_rgb = detected_color_rgb or data.get("color_rgb") or (source_poly.get("color_rgb") if source_poly else [180, 180, 180])
+        added_polygon = {
+            "polygon_id": added_id,
+            "type": "region_pick_polygon",
+            "source_polygon_ids": [source_polygon_id] if source_polygon_id else [],
+            "color_cluster": source_poly.get("color_cluster") if source_poly else None,
+            "color_rgb": color_rgb,
+            "points_source": added_points,
+            "area_source": metrics["area_source"],
+            "bbox_source": metrics["bbox_source"],
+            "centroid_source": metrics["centroid_source"],
+            "semantic": source_poly.get("semantic") if source_poly and source_poly.get("semantic") else dict(DEFAULT_SEMANTIC),
+        }
+        edit_record = {
+            "edit_id": f"edit_{len(annotations.get('manual_edits', [])) + 1:03d}",
+            "type": "region_pick_polygon",
+            "source_polygon_id": source_polygon_id,
+            "created_polygon_id": added_id,
+            "point_count": len(added_points),
+            "debug": debug,
+        }
+        return jsonify({"added_polygon": added_polygon, "edit_record": edit_record, "debug": debug})
 
     @app.route("/api/cut_hole", methods=["POST"])
     def cut_hole():

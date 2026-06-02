@@ -67,6 +67,38 @@
       </section>
 
       <section>
+        <h2>Region Pick</h2>
+        <p class="hint">
+          Brush over a floor region. The editor samples LAB color under the brush, keeps the connected matching area, and adds one simplified polygon.
+        </p>
+        <button id="startRegionPickBtn">Start Region Pick</button>
+        <label>
+          Brush size
+          <input id="regionBrushSizeInput" type="number" value="34" min="4" max="160">
+        </label>
+        <label>
+          LAB tolerance
+          <input id="regionToleranceInput" type="number" value="18" min="1" max="80">
+        </label>
+        <label>
+          Close kernel
+          <input id="regionCloseKernelInput" type="number" value="7" min="0" step="1">
+        </label>
+        <label>
+          Open kernel
+          <input id="regionOpenKernelInput" type="number" value="3" min="0" step="1">
+        </label>
+        <label>
+          Epsilon ratio
+          <input id="regionEpsilonInput" type="number" value="0.003" min="0" max="0.05" step="0.001">
+        </label>
+        <button id="applyRegionPickBtn">Apply Region Pick (Shift)</button>
+        <button id="undoRegionStrokeBtn">Undo Stroke (Backspace)</button>
+        <button id="resetRegionPickBtn">Reset Region Pick (Esc)</button>
+        <div id="regionPickStatus">inactive</div>
+      </section>
+
+      <section>
         <h2>Station Info</h2>
         <label>
           Station ID
@@ -279,11 +311,25 @@
           <select id="connectionTypeInput">
             <option value="stair">stair</option>
             <option value="escalator">escalator</option>
+            <option value="exit_stair">exit stair</option>
+            <option value="exit_escalator">exit escalator</option>
           </select>
         </label>
         <label>
           Label
           <input id="stairLabelInput" placeholder="auto">
+        </label>
+        <label>
+          Exit number
+          <input id="exitNumberInput" placeholder="auto">
+        </label>
+        <label>
+          Exit length px
+          <input id="exitLengthInput" type="number" value="100" min="20" step="10">
+        </label>
+        <label>
+          Exit z rise
+          <input id="exitRiseInput" type="number" value="5" step="0.5">
         </label>
         <button id="startStairBtn">Start Connection (U)</button>
         <button id="setConnectionTypeBtn">Set Selected Type</button>
@@ -295,24 +341,45 @@
       </section>
 
       <section>
-        <h2>Linear Asset</h2>
+        <h2>Wall Path</h2>
+        <label>
+          Label
+          <input id="wallLabelInput" placeholder="auto">
+        </label>
+        <label>
+          Height
+          <input id="wallHeightInput" type="number" value="1" min="0" step="0.1">
+        </label>
+        <button id="startWallBtn">Start Wall Path (B)</button>
+        <button id="applyWallBtn">Apply Wall Path (Shift)</button>
+        <button id="undoWallPointBtn">Undo Wall Point (Backspace)</button>
+        <button id="deleteWallBtn">Delete Selected Wall</button>
+        <button id="deleteAllWallsBtn">Delete All Walls</button>
+        <button id="undoWallBtn">Undo Last Wall</button>
+        <button id="resetWallBtn">Reset Wall Path (Esc)</button>
+        <div id="wallStatus">inactive</div>
+      </section>
+
+      <section>
+        <h2>Map Asset</h2>
         <label>
           Type
           <select id="manualAssetTypeInput">
             <option value="subway">subway</option>
             <option value="moving_walkway">moving walkway</option>
             <option value="ticket_gate">ticket gate</option>
+            <option value="exit">exit point</option>
           </select>
         </label>
         <label>
           Label
           <input id="subwayLabelInput" placeholder="auto">
         </label>
-        <button id="startSubwayBtn">Start Linear Asset (T)</button>
+        <button id="startSubwayBtn">Start Map Asset (T)</button>
         <button id="deleteSubwayBtn">Delete Selected Asset</button>
-        <button id="deleteAllSubwayBtn">Delete All Linear Assets</button>
-        <button id="undoSubwayBtn">Undo Last Linear Asset</button>
-        <button id="resetSubwayBtn">Reset Linear Asset (Esc)</button>
+        <button id="deleteAllSubwayBtn">Delete All Map Assets</button>
+        <button id="undoSubwayBtn">Undo Last Map Asset</button>
+        <button id="resetSubwayBtn">Reset Map Asset (Esc)</button>
         <div id="subwayStatus">inactive</div>
       </section>
 

@@ -32,6 +32,7 @@ const state = {
   selectedStairId: null,
   selectedStairIds: [],
   selectedSubwayId: null,
+  selectedWallId: null,
   selectedPlatformId: null,
   selectedPlatformIds: [],
   selectedElevatorPointId: null,
@@ -49,6 +50,7 @@ const state = {
   marker: {
     active: false,
     points: [],
+    autoPoint: null,
   },
   crop: {
     active: false,
@@ -56,6 +58,14 @@ const state = {
     current: null,
     rect: null,
     previousImagePath: null,
+  },
+  regionPick: {
+    active: false,
+    drawing: false,
+    strokes: [],
+    currentStroke: [],
+    brushSize: 34,
+    sourcePolygonId: null,
   },
   merge: {
     active: false,
@@ -152,6 +162,15 @@ const state = {
     toPolygonId: null,
     hoverVertex: null,
   },
+  wall: {
+    active: false,
+    label: "",
+    height: 1.0,
+    points: [],
+    layer: null,
+    polygonId: null,
+    hoverSnap: null,
+  },
   subway: {
     active: false,
     label: "",
@@ -234,6 +253,12 @@ const localAxisStatus = document.getElementById("localAxisStatus");
 const stairStatus = document.getElementById("stairStatus");
 const stairLabelInput = document.getElementById("stairLabelInput");
 const connectionTypeInput = document.getElementById("connectionTypeInput");
+const exitNumberInput = document.getElementById("exitNumberInput");
+const exitLengthInput = document.getElementById("exitLengthInput");
+const exitRiseInput = document.getElementById("exitRiseInput");
+const wallStatus = document.getElementById("wallStatus");
+const wallLabelInput = document.getElementById("wallLabelInput");
+const wallHeightInput = document.getElementById("wallHeightInput");
 const subwayStatus = document.getElementById("subwayStatus");
 const subwayLabelInput = document.getElementById("subwayLabelInput");
 const manualAssetTypeInput = document.getElementById("manualAssetTypeInput");
@@ -268,12 +293,20 @@ const stationFloorsInput = document.getElementById("stationFloorsInput");
 const stationMapIdInput = document.getElementById("stationMapIdInput");
 const stationStatus = document.getElementById("stationStatus");
 const validateStatus = document.getElementById("validateStatus");
-const MANUAL_ASSET_TYPES = ["subway", "moving_walkway", "ticket_gate"];
+const regionPickStatus = document.getElementById("regionPickStatus");
+const regionBrushSizeInput = document.getElementById("regionBrushSizeInput");
+const regionToleranceInput = document.getElementById("regionToleranceInput");
+const regionCloseKernelInput = document.getElementById("regionCloseKernelInput");
+const regionOpenKernelInput = document.getElementById("regionOpenKernelInput");
+const regionEpsilonInput = document.getElementById("regionEpsilonInput");
+const MANUAL_ASSET_TYPES = ["subway", "moving_walkway", "ticket_gate", "exit"];
+const VERTICAL_CONNECTION_TYPES = ["stair", "escalator", "exit_stair", "exit_escalator"];
 const SIDEBAR_PANELS = [
-  {id: "setup", label: "Setup", titles: new Set(["Batch Pipeline", "Station Info", "View"])},
+  {id: "setup", label: "Setup", titles: new Set(["Station Info", "View"])},
+  {id: "extract", label: "Extract", titles: new Set(["Batch Pipeline", "Region Pick"])},
   {id: "polygons", label: "Polygons", titles: new Set(["Selected", "Layer Grouping", "Simple Keep", "Straighten Edge", "Move Vertex", "Insert Vertex", "Add Polygon", "Cut Hole", "Split Polygon"])},
   {id: "calibrate", label: "Calibrate", titles: new Set(["XY Correction", "Scale Calibration", "Local Axis Correction"])},
-  {id: "nav", label: "Navigation", titles: new Set(["Vertical Connection", "Linear Asset", "Platform Point", "Elevator Point"])},
+  {id: "nav", label: "Navigation", titles: new Set(["Vertical Connection", "Wall Path", "Map Asset", "Platform Point", "Elevator Point"])},
   {id: "export", label: "Export", titles: new Set(["Save"])},
 ];
 
@@ -343,6 +376,7 @@ function currentModeLabel() {
     select: "Select",
     marker: "Manual Marker",
     crop: "Crop",
+    regionPick: "Region Pick",
     keep: "Simple Keep",
     straighten: "Straighten",
     move: "Move Vertex",
@@ -354,7 +388,8 @@ function currentModeLabel() {
     localAxis: "Local Axis",
     scaleCalibration: "Scale Calibration",
     stair: "Vertical Connection",
-    subway: "Linear Asset",
+    wall: "Wall Path",
+    subway: "Map Asset",
     platform: "Platform Point",
     elevatorPoint: "Elevator Point",
     elevatorLink: "Elevator Link",
@@ -367,6 +402,7 @@ function selectionSummaryText() {
   if (state.selectedId) parts.push(`polygon ${state.selectedId}`);
   if ((state.selectedIds || []).length > 1) parts.push(`${state.selectedIds.length} polygons`);
   if (state.selectedStairId) parts.push(`connection ${state.selectedStairId}`);
+  if (state.selectedWallId) parts.push(`wall ${state.selectedWallId}`);
   if (state.selectedSubwayId) parts.push(`asset ${state.selectedSubwayId}`);
   const platformIds = typeof selectedPlatformIds === "function" ? selectedPlatformIds() : [];
   if (platformIds.length) parts.push(`${platformIds.length} platform point(s)`);
@@ -520,11 +556,23 @@ function drawStairConnections() {
   ctx.save();
   const selectedStairIds = new Set([state.selectedStairId, ...(state.selectedStairIds || [])].filter(Boolean));
   for (const conn of state.annotations.manual_connections || []) {
-    if (!["stair", "escalator"].includes(conn.type) || !conn.from_point_source || !conn.to_point_source) continue;
+    if (!VERTICAL_CONNECTION_TYPES.includes(conn.type) || !conn.from_point_source || !conn.to_point_source) continue;
     const connectionId = conn.connection_id || conn.label;
     const isSelected = selectedStairIds.has(connectionId);
-    const baseColor = conn.type === "escalator" ? "rgba(0, 180, 120, 0.95)" : "rgba(255, 132, 0, 0.95)";
-    const pointColor = conn.type === "escalator" ? "#00b878" : "#ff8400";
+    const baseColor = conn.type === "escalator"
+      ? "rgba(0, 180, 120, 0.95)"
+      : conn.type === "exit_escalator"
+        ? "rgba(0, 120, 255, 0.95)"
+        : conn.type === "exit_stair"
+          ? "rgba(150, 70, 255, 0.95)"
+        : "rgba(255, 132, 0, 0.95)";
+    const pointColor = conn.type === "escalator"
+      ? "#00b878"
+      : conn.type === "exit_escalator"
+        ? "#0078ff"
+        : conn.type === "exit_stair"
+          ? "#9646ff"
+          : "#ff8400";
     const lineColor = isSelected ? "rgba(0, 92, 255, 0.95)" : baseColor;
     const startLine = connectionLinePoints(conn, "from");
     const endLine = connectionLinePoints(conn, "to");
@@ -551,7 +599,10 @@ function drawStairConnections() {
       ctx.stroke();
     }
     const labelPoint = midpoint(conn.from_point_source, conn.to_point_source);
-    drawCanvasLabel(labelPoint, conn.connection_id || conn.label || conn.type, isSelected ? "#005cff" : pointColor, 8, -8);
+    const label = isExitConnectionType(conn.type) && conn.exit_number
+      ? `exit ${conn.exit_number}`
+      : conn.connection_id || conn.label || conn.type;
+    drawCanvasLabel(labelPoint, label, isSelected ? "#005cff" : pointColor, 8, -8);
   }
   if (state.stair.active) {
     const fromPoints = state.stair.fromPoints || [];
@@ -595,6 +646,53 @@ function drawStairConnections() {
   ctx.restore();
 }
 
+function drawWallPaths() {
+  ctx.save();
+  for (const wall of state.annotations.manual_walls || []) {
+    const points = wall.points_source || [];
+    if (points.length < 2) continue;
+    const selected = (wall.wall_id || wall.label) === state.selectedWallId;
+    drawPath(points, selected ? "rgba(255, 210, 0, 0.95)" : "rgba(92, 52, 28, 0.95)", selected ? 7 : 5);
+    points.forEach((point) => {
+      const screen = worldToScreen(point);
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = selected ? "#ffd200" : "#5c341c";
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = selected ? 2 : 1;
+      ctx.fill();
+      ctx.stroke();
+    });
+    drawCanvasLabel(points[Math.floor(points.length / 2)], wall.label || wall.wall_id || "wall", selected ? "#b88600" : "#5c341c", 8, -8);
+  }
+  if (state.wall.active) {
+    const points = state.wall.points || [];
+    if (points.length > 1) drawPath(points, "rgba(255, 120, 0, 0.95)", 4);
+    points.forEach((point, index) => {
+      const screen = worldToScreen(point);
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = index === 0 ? "#ff7800" : "#ffb15c";
+      ctx.strokeStyle = "#111111";
+      ctx.lineWidth = 1;
+      ctx.fill();
+      ctx.stroke();
+    });
+    if (state.wall.hoverSnap) {
+      const screen = worldToScreen(state.wall.hoverSnap.point);
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, state.wall.hoverSnap.source === "vertex" ? 9 : 7, 0, Math.PI * 2);
+      ctx.fillStyle = state.wall.hoverSnap.source === "vertex" ? "rgba(0, 180, 255, 0.35)" : "rgba(255, 180, 0, 0.35)";
+      ctx.strokeStyle = state.wall.hoverSnap.source === "vertex" ? "#00b4ff" : "#ffb000";
+      ctx.lineWidth = 3;
+      ctx.fill();
+      ctx.stroke();
+      drawCanvasLabel(state.wall.hoverSnap.point, state.wall.hoverSnap.source, ctx.strokeStyle, 8, -10);
+    }
+  }
+  ctx.restore();
+}
+
 function drawManualAssets() {
   ctx.save();
   for (const asset of state.annotations.manual_assets || []) {
@@ -608,7 +706,11 @@ function drawManualAssets() {
     }
     const screen = worldToScreen(asset.point_source);
     ctx.beginPath();
-    ctx.rect(screen.x - 9, screen.y - 5, 18, 10);
+    if (asset.type === "exit") {
+      ctx.arc(screen.x, screen.y, 8, 0, Math.PI * 2);
+    } else {
+      ctx.rect(screen.x - 9, screen.y - 5, 18, 10);
+    }
     ctx.fillStyle = selected ? selectedColor : baseColor;
     ctx.strokeStyle = "#111111";
     ctx.lineWidth = selected ? 3 : 1;
@@ -767,20 +869,22 @@ function drawElevatorPoints() {
 
 function drawManualMarkerPreview() {
   if (!state.showMarkers) return;
-  if (!state.marker.active && state.marker.points.length === 0) return;
+  if (!state.marker.active && state.marker.points.length === 0 && !state.marker.autoPoint) return;
   ctx.save();
   const labels = ["1", "2", "3", "4"];
-  if (state.marker.points.length > 1) drawPath(state.marker.points, "rgba(255, 0, 180, 0.9)", 3);
-  state.marker.points.forEach((point, index) => {
+  const markerPoints = manualMarkerPointsForSave();
+  if (markerPoints.length > 1) drawPath(markerPoints, "rgba(255, 0, 180, 0.9)", 3);
+  markerPoints.forEach((point, index) => {
     const screen = worldToScreen(point);
+    const isAuto = index === 3 && state.marker.autoPoint;
     ctx.beginPath();
     ctx.arc(screen.x, screen.y, 8, 0, Math.PI * 2);
-    ctx.fillStyle = "#ff00b4";
+    ctx.fillStyle = isAuto ? "#ffb3ec" : "#ff00b4";
     ctx.strokeStyle = "#111111";
     ctx.lineWidth = 2;
     ctx.fill();
     ctx.stroke();
-    drawCanvasLabel(point, `marker ${labels[index]}`, "#ff00b4", 10, -10);
+    drawCanvasLabel(point, `marker ${labels[index]}${isAuto ? " auto" : ""}`, "#ff00b4", 10, -10);
   });
   ctx.restore();
 }
@@ -834,6 +938,38 @@ function drawCropPreview() {
     topLeft.x + 8,
     Math.max(16, topLeft.y - 8),
   );
+  ctx.restore();
+}
+
+function drawRegionPickPreview() {
+  if (!state.regionPick.active && !(state.regionPick.strokes || []).length) return;
+  const strokes = [...(state.regionPick.strokes || [])];
+  if ((state.regionPick.currentStroke || []).length) strokes.push(state.regionPick.currentStroke);
+  if (!strokes.length) return;
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = "rgba(255, 0, 180, 0.38)";
+  ctx.fillStyle = "rgba(255, 0, 180, 0.24)";
+  const brushWidth = Math.max(1, Number(state.regionPick.brushSize || selectedRegionBrushSize()) * state.scale);
+  ctx.lineWidth = brushWidth;
+  for (const stroke of strokes) {
+    if (!stroke.length) continue;
+    if (stroke.length === 1) {
+      const screen = worldToScreen(stroke[0]);
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, brushWidth / 2, 0, Math.PI * 2);
+      ctx.fill();
+      continue;
+    }
+    ctx.beginPath();
+    stroke.forEach((point, index) => {
+      const screen = worldToScreen(point);
+      if (index === 0) ctx.moveTo(screen.x, screen.y);
+      else ctx.lineTo(screen.x, screen.y);
+    });
+    ctx.stroke();
+  }
   ctx.restore();
 }
 
@@ -1559,11 +1695,13 @@ function draw() {
   drawConnections();
   drawIcons();
   drawStairConnections();
+  drawWallPaths();
   drawManualAssets();
   drawPlatforms();
   drawElevatorPoints();
   drawManualMarkerPreview();
   drawCropPreview();
+  drawRegionPickPreview();
   drawMergePreview();
   drawStraightenPreview();
   drawMovePreview();
@@ -1645,6 +1783,7 @@ function toggleMultiSelectedPolygon(poly) {
   state.selectedPlatformId = null;
   state.selectedPlatformIds = [];
   state.selectedSubwayId = null;
+  state.selectedWallId = null;
   state.selectedLayerAlignIndex = null;
   updateSelectedInfo();
   updateLayerAlignStatus();
@@ -2280,6 +2419,151 @@ function applyAddPolygon() {
     })
     .catch((error) => {
       updateAddPolygonStatus(String(error));
+      draw();
+    });
+}
+
+function selectedRegionBrushSize() {
+  const value = Number(regionBrushSizeInput?.value || 34);
+  return Number.isFinite(value) && value > 0 ? value : 34;
+}
+
+function selectedRegionNumber(input, fallback) {
+  const value = Number(input?.value ?? fallback);
+  return Number.isFinite(value) ? value : fallback;
+}
+
+function updateRegionPickStatus(message = null) {
+  if (!state.regionPick.active) {
+    regionPickStatus.textContent = message || "inactive";
+    return;
+  }
+  const strokeCount = (state.regionPick.strokes || []).length + ((state.regionPick.currentStroke || []).length ? 1 : 0);
+  const pointCount = [...(state.regionPick.strokes || []), state.regionPick.currentStroke || []]
+    .reduce((total, stroke) => total + (stroke || []).length, 0);
+  regionPickStatus.textContent = [
+    message,
+    "mode: brush region pick",
+    `brush: ${state.regionPick.brushSize}px`,
+    `strokes: ${strokeCount}`,
+    `points: ${pointCount}`,
+    state.regionPick.sourcePolygonId ? `source: ${state.regionPick.sourcePolygonId}` : "source: auto",
+    "Paint the target floor. Shift applies.",
+  ].filter(Boolean).join("\n");
+}
+
+function startRegionPick() {
+  if (!canEdit()) return;
+  state.tool = "regionPick";
+  state.regionPick = {
+    active: true,
+    drawing: false,
+    strokes: [],
+    currentStroke: [],
+    brushSize: selectedRegionBrushSize(),
+    sourcePolygonId: state.selectedId,
+  };
+  updateRegionPickStatus();
+  draw();
+}
+
+function resetRegionPick() {
+  state.tool = "select";
+  state.regionPick = {
+    active: false,
+    drawing: false,
+    strokes: [],
+    currentStroke: [],
+    brushSize: selectedRegionBrushSize(),
+    sourcePolygonId: null,
+  };
+  updateRegionPickStatus();
+  draw();
+}
+
+function addRegionPickPoint(world) {
+  if (!state.regionPick.active || !state.regionPick.drawing) return;
+  const point = [Number(world.x.toFixed(2)), Number(world.y.toFixed(2))];
+  const stroke = state.regionPick.currentStroke || [];
+  const last = stroke[stroke.length - 1];
+  if (!last || Math.hypot(last[0] - point[0], last[1] - point[1]) >= 1.5) {
+    stroke.push(point);
+    state.regionPick.currentStroke = stroke;
+    updateRegionPickStatus();
+    draw();
+  }
+}
+
+function finishRegionPickStroke() {
+  if (!state.regionPick.active || !state.regionPick.drawing) return;
+  state.regionPick.drawing = false;
+  if ((state.regionPick.currentStroke || []).length) {
+    state.regionPick.strokes = state.regionPick.strokes || [];
+    state.regionPick.strokes.push(state.regionPick.currentStroke);
+  }
+  state.regionPick.currentStroke = [];
+  updateRegionPickStatus();
+  draw();
+}
+
+function undoRegionStroke() {
+  if (!state.regionPick.active) return;
+  if ((state.regionPick.currentStroke || []).length) {
+    state.regionPick.currentStroke = [];
+  } else if ((state.regionPick.strokes || []).length) {
+    state.regionPick.strokes.pop();
+  } else {
+    updateRegionPickStatus("No stroke to undo.");
+    return;
+  }
+  updateRegionPickStatus();
+  draw();
+}
+
+function regionPickColor() {
+  const source = allPolygons().find((poly) => poly.polygon_id === state.regionPick.sourcePolygonId);
+  return source?.color_rgb || [180, 180, 180];
+}
+
+function applyRegionPick() {
+  if (!canEdit()) return;
+  if (!state.regionPick.active || !(state.regionPick.strokes || []).length) {
+    updateRegionPickStatus("Paint at least one stroke.");
+    return;
+  }
+  updateRegionPickStatus("extracting region...");
+  fetch("/api/region_pick", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      strokes: state.regionPick.strokes,
+      brush_size: state.regionPick.brushSize,
+      lab_tolerance: selectedRegionNumber(regionToleranceInput, 18),
+      close_kernel: selectedRegionNumber(regionCloseKernelInput, 7),
+      open_kernel: selectedRegionNumber(regionOpenKernelInput, 3),
+      epsilon_ratio: selectedRegionNumber(regionEpsilonInput, 0.003),
+      source_polygon_id: state.regionPick.sourcePolygonId,
+      color_rgb: regionPickColor(),
+      working_polygons: workingPolygonsPayload(),
+    }),
+  })
+    .then((response) => response.json().then((data) => ({ok: response.ok, data})))
+    .then(({ok, data}) => {
+      if (!ok) throw new Error(data.error || "region pick failed");
+      state.annotations.manual_polygons = state.annotations.manual_polygons || [];
+      state.annotations.manual_edits = state.annotations.manual_edits || [];
+      state.annotations.manual_polygons.push(data.added_polygon);
+      state.annotations.manual_edits.push(data.edit_record);
+      state.manualPolygons = state.annotations.manual_polygons;
+      state.selectedId = data.added_polygon.polygon_id;
+      updateSelectedInfo();
+      resetRegionPick();
+      saveAnnotations().then((result) => {
+        saveResult.textContent = JSON.stringify({...result, region_pick: data.debug}, null, 2);
+      });
+    })
+    .catch((error) => {
+      updateRegionPickStatus(String(error));
       draw();
     });
 }
@@ -2993,6 +3277,38 @@ function selectedConnectionType() {
   return connectionTypeInput?.value || "stair";
 }
 
+function selectedExitNumber() {
+  return exitNumberInput?.value?.trim() || "";
+}
+
+function isExitConnectionType(type) {
+  return type === "exit_stair" || type === "exit_escalator";
+}
+
+function nextExitNumber() {
+  const numbers = (state.annotations.manual_connections || [])
+    .filter((conn) => isExitConnectionType(conn.type))
+    .map((conn) => {
+      const match = String(conn.exit_number || "").match(/(\d+)/);
+      return match ? Number(match[1]) : 0;
+    });
+  return String(Math.max(0, ...numbers) + 1);
+}
+
+function selectedOrNextExitNumber() {
+  return selectedExitNumber() || nextExitNumber();
+}
+
+function selectedExitLength() {
+  const value = Number(exitLengthInput?.value || 100);
+  return Number.isFinite(value) && value > 0 ? value : 100;
+}
+
+function selectedExitRise() {
+  const value = Number(exitRiseInput?.value || 5);
+  return Number.isFinite(value) ? value : 5;
+}
+
 function stairConnectionId(conn, fallbackIndex = 0) {
   return conn.connection_id || conn.label || `connection_${fallbackIndex + 1}`;
 }
@@ -3034,6 +3350,23 @@ function parallelLineThroughCenter(referenceLine, centerPoint) {
   ];
 }
 
+function exitLineFromDirection(referenceLine, directionPoint, length) {
+  const center = midpoint(referenceLine[0], referenceLine[1]);
+  const dx = Number(directionPoint[0]) - Number(center[0]);
+  const dy = Number(directionPoint[1]) - Number(center[1]);
+  const distance = Math.hypot(dx, dy);
+  if (!Number.isFinite(distance) || distance < 1e-6) return null;
+  const endCenter = [
+    Number((Number(center[0]) + (dx / distance) * Number(length)).toFixed(2)),
+    Number((Number(center[1]) + (dy / distance) * Number(length)).toFixed(2)),
+  ];
+  return {
+    center,
+    endCenter,
+    endLine: parallelLineThroughCenter(referenceLine, endCenter),
+  };
+}
+
 function nextTypedConnectionId(type) {
   const prefix = type || "stair";
   const numbers = (state.annotations.manual_connections || [])
@@ -3049,6 +3382,8 @@ function nextTypedConnectionId(type) {
 function updateStairStatus(message = null) {
   const stairCount = (state.annotations.manual_connections || []).filter((conn) => conn.type === "stair").length;
   const escalatorCount = (state.annotations.manual_connections || []).filter((conn) => conn.type === "escalator").length;
+  const exitStairCount = (state.annotations.manual_connections || []).filter((conn) => conn.type === "exit_stair").length;
+  const exitEscalatorCount = (state.annotations.manual_connections || []).filter((conn) => conn.type === "exit_escalator").length;
   const currentType = state.stair.active ? state.stair.connectionType : selectedConnectionType();
   const selectedIds = selectedStairConnectionIds();
   if (!state.stair.active) {
@@ -3056,6 +3391,8 @@ function updateStairStatus(message = null) {
       message,
       `stairs: ${stairCount}`,
       `escalators: ${escalatorCount}`,
+      `exit stairs: ${exitStairCount}`,
+      `exit escalators: ${exitEscalatorCount}`,
       selectedIds.length ? `selected ${selectedIds.length}: ${selectedIds.join(", ")}` : null,
     ].filter(Boolean).join("\n") || "inactive";
     return;
@@ -3064,18 +3401,24 @@ function updateStairStatus(message = null) {
   const toCount = (state.stair.toPoints || []).length;
   const next = fromCount < 2
     ? `Click ${currentType} start line point ${fromCount + 1}/2`
-    : `Click ${currentType} end center point`;
+    : isExitConnectionType(currentType)
+      ? `Click exit direction point`
+      : `Click ${currentType} end center point`;
   stairStatus.textContent = [
     message,
     `mode: ${currentType} connection`,
-    "schema: start line + end center",
+    isExitConnectionType(currentType) ? "schema: start line + direction + length" : "schema: start line + end center",
     `start line: ${fromCount}/2`,
     `end line: ${toCount ? "auto" : "-"}`,
     `from: ${state.stair.fromLayer || "-"} (${state.stair.fromPolygonId || "-"})`,
     `to: ${state.stair.toLayer || "-"} (${state.stair.toPolygonId || "-"})`,
+    isExitConnectionType(currentType) ? `exit: ${state.stair.exitNumber || "auto"}` : null,
+    isExitConnectionType(currentType) ? `length px: ${state.stair.exitLength}` : null,
     `label: ${state.stair.label || "auto"}`,
     `stairs: ${stairCount}`,
     `escalators: ${escalatorCount}`,
+    `exit stairs: ${exitStairCount}`,
+    `exit escalators: ${exitEscalatorCount}`,
     next,
   ].filter(Boolean).join("\n");
 }
@@ -3087,6 +3430,9 @@ function startStairConnection() {
     active: true,
     label: stairLabelInput.value.trim(),
     connectionType: selectedConnectionType(),
+    exitNumber: selectedOrNextExitNumber(),
+    exitLength: selectedExitLength(),
+    exitRise: selectedExitRise(),
     fromPoints: [],
     toPoints: [],
     fromPoint: null,
@@ -3107,6 +3453,9 @@ function resetStairConnection() {
     active: false,
     label: stairLabelInput.value.trim(),
     connectionType: selectedConnectionType(),
+    exitNumber: selectedOrNextExitNumber(),
+    exitLength: selectedExitLength(),
+    exitRise: selectedExitRise(),
     fromPoints: [],
     toPoints: [],
     fromPoint: null,
@@ -3123,24 +3472,25 @@ function resetStairConnection() {
 
 function addStairPoint(world, poly) {
   if (!state.stair.active) return;
+  const connectionType = state.stair.connectionType || selectedConnectionType();
   const snap = nearestConnectionVertex(world, poly, 14);
   if (snap) {
     poly = snap.poly;
-  }
-  if (!poly) {
-    updateStairStatus("Click inside a polygon.");
-    return;
-  }
-  const layer = polygonLayerValue(poly);
-  if (!layer) {
-    updateStairStatus(`Set layer first: ${poly.polygon_id}`);
-    return;
   }
   const rawPoint = snap ? snap.point : [world.x, world.y];
   const point = [Number(rawPoint[0].toFixed(2)), Number(rawPoint[1].toFixed(2))];
   state.stair.fromPoints = state.stair.fromPoints || [];
   state.stair.toPoints = state.stair.toPoints || [];
   if (state.stair.fromPoints.length < 2) {
+    if (!poly) {
+      updateStairStatus("Click start line points inside a polygon.");
+      return;
+    }
+    const layer = polygonLayerValue(poly);
+    if (!layer) {
+      updateStairStatus(`Set layer first: ${poly.polygon_id}`);
+      return;
+    }
     state.stair.fromPoints.push(point);
     state.stair.fromPoint = state.stair.fromPoints.length === 2
       ? midpoint(state.stair.fromPoints[0], state.stair.fromPoints[1])
@@ -3151,30 +3501,74 @@ function addStairPoint(world, poly) {
     draw();
     return;
   }
-  const connectionType = state.stair.connectionType || selectedConnectionType();
   const connectionId = nextTypedConnectionId(connectionType);
-  state.stair.toLayer = layer;
-  state.stair.toPolygonId = poly.polygon_id;
-  state.stair.toPoint = point;
-  state.stair.toPoints = parallelLineThroughCenter(state.stair.fromPoints, point);
+  let record = null;
+  if (isExitConnectionType(connectionType)) {
+    const generated = exitLineFromDirection(state.stair.fromPoints, point, state.stair.exitLength || selectedExitLength());
+    if (!generated) {
+      updateStairStatus("Click a direction point away from the start line.");
+      return;
+    }
+    state.stair.toLayer = "OUTSIDE";
+    state.stair.toPolygonId = null;
+    state.stair.toPoint = generated.endCenter;
+    state.stair.toPoints = generated.endLine;
+    const exitNumber = state.stair.exitNumber || selectedOrNextExitNumber();
+    record = {
+      connection_id: connectionId,
+      type: connectionType,
+      asset_type: connectionType === "exit_escalator" ? "escalator" : "stair",
+      connection_schema: "start_line_direction_length_v1",
+      label: state.stair.label || (exitNumber ? `exit_${exitNumber}` : connectionId),
+      exit_number: exitNumber || null,
+      exit_length_source: state.stair.exitLength || selectedExitLength(),
+      exit_rise: state.stair.exitRise ?? selectedExitRise(),
+      direction_point_source: point,
+      from_polygon_id: state.stair.fromPolygonId,
+      to_polygon_id: null,
+      from_layer: state.stair.fromLayer,
+      to_layer: "OUTSIDE",
+      from_point_source: state.stair.fromPoint,
+      to_point_source: state.stair.toPoint,
+      from_points_source: state.stair.fromPoints,
+      to_points_source: state.stair.toPoints,
+      to_point_mode: "direction_length_generated_parallel_line",
+      bidirectional: true,
+    };
+  } else {
+    if (!poly) {
+      updateStairStatus("Click end center inside a polygon.");
+      return;
+    }
+    const layer = polygonLayerValue(poly);
+    if (!layer) {
+      updateStairStatus(`Set layer first: ${poly.polygon_id}`);
+      return;
+    }
+    state.stair.toLayer = layer;
+    state.stair.toPolygonId = poly.polygon_id;
+    state.stair.toPoint = point;
+    state.stair.toPoints = parallelLineThroughCenter(state.stair.fromPoints, point);
+    record = {
+      connection_id: connectionId,
+      type: connectionType,
+      asset_type: connectionType,
+      connection_schema: "start_line_end_center_v3",
+      label: state.stair.label || connectionId,
+      from_polygon_id: state.stair.fromPolygonId,
+      to_polygon_id: state.stair.toPolygonId,
+      from_layer: state.stair.fromLayer,
+      to_layer: state.stair.toLayer,
+      from_point_source: state.stair.fromPoint,
+      to_point_source: state.stair.toPoint,
+      from_points_source: state.stair.fromPoints,
+      to_points_source: state.stair.toPoints,
+      to_point_mode: "center_generated_parallel_line",
+      bidirectional: true,
+    };
+  }
   state.annotations.manual_connections = state.annotations.manual_connections || [];
-  state.annotations.manual_connections.push({
-    connection_id: connectionId,
-    type: connectionType,
-    asset_type: connectionType,
-    connection_schema: "start_line_end_center_v3",
-    label: state.stair.label || connectionId,
-    from_polygon_id: state.stair.fromPolygonId,
-    to_polygon_id: state.stair.toPolygonId,
-    from_layer: state.stair.fromLayer,
-    to_layer: state.stair.toLayer,
-    from_point_source: state.stair.fromPoint,
-    to_point_source: state.stair.toPoint,
-    from_points_source: state.stair.fromPoints,
-    to_points_source: state.stair.toPoints,
-    to_point_mode: "center_generated_parallel_line",
-    bidirectional: true,
-  });
+  state.annotations.manual_connections.push(record);
   saveAnnotations().then((result) => {
     saveResult.textContent = JSON.stringify(result, null, 2);
     resetStairConnection();
@@ -3186,7 +3580,7 @@ function nearestStairConnection(world, maxScreenDistance = 12) {
   const mouseScreen = worldToScreen([world.x, world.y]);
   let best = null;
   (state.annotations.manual_connections || []).forEach((conn, index) => {
-    if (!["stair", "escalator"].includes(conn.type) || !conn.from_point_source || !conn.to_point_source) return;
+    if (!VERTICAL_CONNECTION_TYPES.includes(conn.type) || !conn.from_point_source || !conn.to_point_source) return;
     const projected = projectPointToSegment(world, conn.from_point_source, conn.to_point_source);
     const projectedScreen = worldToScreen(projected);
     const lineDistance = Math.hypot(projectedScreen.x - mouseScreen.x, projectedScreen.y - mouseScreen.y);
@@ -3246,7 +3640,7 @@ function deleteSelectedStairConnection() {
   const selected = new Set(selectedIds);
   const before = state.annotations.manual_connections.length;
   state.annotations.manual_connections = state.annotations.manual_connections.filter(
-    (conn, index) => !["stair", "escalator"].includes(conn.type) || !selected.has(stairConnectionId(conn, index)),
+    (conn, index) => !VERTICAL_CONNECTION_TYPES.includes(conn.type) || !selected.has(stairConnectionId(conn, index)),
   );
   const removedCount = before - state.annotations.manual_connections.length;
   state.selectedStairId = null;
@@ -3299,7 +3693,7 @@ function setSelectedStairConnectionType() {
 function deleteAllStairConnections() {
   state.annotations.manual_connections = state.annotations.manual_connections || [];
   const before = state.annotations.manual_connections.length;
-  state.annotations.manual_connections = state.annotations.manual_connections.filter((conn) => !["stair", "escalator"].includes(conn.type));
+  state.annotations.manual_connections = state.annotations.manual_connections.filter((conn) => !VERTICAL_CONNECTION_TYPES.includes(conn.type));
   const removed = before - state.annotations.manual_connections.length;
   state.selectedStairId = null;
   state.selectedStairIds = [];
@@ -3313,7 +3707,7 @@ function deleteAllStairConnections() {
 function undoLastStairConnection() {
   state.annotations.manual_connections = state.annotations.manual_connections || [];
   for (let index = state.annotations.manual_connections.length - 1; index >= 0; index -= 1) {
-    if (!["stair", "escalator"].includes(state.annotations.manual_connections[index].type)) continue;
+    if (!VERTICAL_CONNECTION_TYPES.includes(state.annotations.manual_connections[index].type)) continue;
     const removed = state.annotations.manual_connections.splice(index, 1)[0];
     saveAnnotations().then((result) => {
       saveResult.textContent = JSON.stringify(result, null, 2);
@@ -3323,6 +3717,228 @@ function undoLastStairConnection() {
     return;
   }
   updateStairStatus("No stair connection to undo.");
+}
+
+function nextWallId() {
+  const numbers = (state.annotations.manual_walls || [])
+    .map((wall) => {
+      const match = String(wall.wall_id || "").match(/^wall_(\d+)$/);
+      return match ? Number(match[1]) : 0;
+    });
+  return `wall_${String(Math.max(0, ...numbers) + 1).padStart(3, "0")}`;
+}
+
+function selectedWallHeight() {
+  const value = Number(wallHeightInput?.value || 1);
+  return Number.isFinite(value) && value >= 0 ? value : 1;
+}
+
+function updateWallStatus(message = null) {
+  const count = (state.annotations.manual_walls || []).length;
+  if (!state.wall.active) {
+    wallStatus.textContent = [
+      message,
+      `walls: ${count}`,
+    ].filter(Boolean).join("\n") || "inactive";
+    return;
+  }
+  wallStatus.textContent = [
+    message,
+    `label: ${state.wall.label || "auto"}`,
+    `height: ${state.wall.height}`,
+    `layer: ${state.wall.layer || "-"}`,
+    `points: ${(state.wall.points || []).length}`,
+    state.wall.lastSnap ? `snap: ${state.wall.lastSnap}` : null,
+    "Click points to continue the wall path.",
+  ].filter(Boolean).join("\n");
+}
+
+function startWallPath() {
+  if (!canEdit()) return;
+  state.tool = "wall";
+  state.wall = {
+    active: true,
+    label: wallLabelInput.value.trim(),
+    height: selectedWallHeight(),
+    points: [],
+    layer: null,
+    polygonId: null,
+    hoverSnap: null,
+  };
+  updateWallStatus();
+  draw();
+}
+
+function resetWallPath() {
+  state.tool = "select";
+  state.wall = {
+    active: false,
+    label: wallLabelInput.value.trim(),
+    height: selectedWallHeight(),
+    points: [],
+    layer: null,
+    polygonId: null,
+    hoverSnap: null,
+  };
+  updateWallStatus();
+  draw();
+}
+
+function addWallPoint(world, poly) {
+  if (!state.wall.active) return;
+  const snap = snapWallPoint(world, poly);
+  const point = [Number(snap.point[0].toFixed(2)), Number(snap.point[1].toFixed(2))];
+  poly = snap.poly || poly;
+  if ((state.wall.points || []).length === 0) {
+    if (!poly) {
+      updateWallStatus("First wall point must be inside a polygon.");
+      return;
+    }
+    const layer = polygonLayerValue(poly);
+    if (!layer) {
+      updateWallStatus(`Set layer first: ${poly.polygon_id}`);
+      return;
+    }
+    state.wall.layer = layer;
+    state.wall.polygonId = poly.polygon_id;
+  }
+  state.wall.points = state.wall.points || [];
+  state.wall.points.push(point);
+  state.wall.lastSnap = snap.source;
+  updateWallStatus();
+  draw();
+}
+
+function undoWallPoint() {
+  if (!state.wall.active || !(state.wall.points || []).length) return;
+  state.wall.points.pop();
+  if (state.wall.points.length === 0) {
+    state.wall.layer = null;
+    state.wall.polygonId = null;
+  }
+  updateWallStatus();
+  draw();
+}
+
+function applyWallPath() {
+  if (!state.wall.active) return;
+  if ((state.wall.points || []).length < 2) {
+    updateWallStatus("Wall path needs at least 2 points.");
+    return;
+  }
+  const wallId = nextWallId();
+  state.annotations.manual_walls = state.annotations.manual_walls || [];
+  state.annotations.manual_walls.push({
+    wall_id: wallId,
+    type: "manual_wall_path",
+    label: state.wall.label || wallId,
+    height: state.wall.height,
+    source_polygon_ids: state.wall.polygonId ? [state.wall.polygonId] : [],
+    points_source: state.wall.points,
+    semantic: {
+      layer: state.wall.layer || null,
+      line: null,
+      zone_type: "wall",
+      label: state.wall.label || wallId,
+      confidence: 1.0,
+    },
+  });
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    resetWallPath();
+    updateWallStatus(`${wallId} saved.`);
+  });
+}
+
+function deleteAllWalls() {
+  state.annotations.manual_walls = state.annotations.manual_walls || [];
+  const removed = state.annotations.manual_walls.length;
+  state.annotations.manual_walls = [];
+  state.selectedWallId = null;
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateWallStatus(`Deleted ${removed} walls.`);
+    draw();
+  });
+}
+
+function undoLastWall() {
+  state.annotations.manual_walls = state.annotations.manual_walls || [];
+  const removed = state.annotations.manual_walls.pop();
+  if (!removed) {
+    updateWallStatus("No wall to undo.");
+    return;
+  }
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateWallStatus(`Removed ${removed.wall_id || removed.label}.`);
+    draw();
+  });
+}
+
+function nearestWallPath(world, maxScreenDistance = 12) {
+  const mouseScreen = worldToScreen([world.x, world.y]);
+  let best = null;
+  (state.annotations.manual_walls || []).forEach((wall, index) => {
+    const points = wall.points_source || [];
+    if (points.length < 2) return;
+    points.slice(0, -1).forEach((point, pointIndex) => {
+      const projected = projectPointToSegment(world, point, points[pointIndex + 1]);
+      const projectedScreen = worldToScreen(projected);
+      const distance = Math.hypot(projectedScreen.x - mouseScreen.x, projectedScreen.y - mouseScreen.y);
+      if (distance <= maxScreenDistance && (!best || distance < best.distance)) {
+        best = {
+          index,
+          wallId: wall.wall_id || wall.label || `wall_${index + 1}`,
+          distance,
+        };
+      }
+    });
+  });
+  return best;
+}
+
+function selectWallPath(world) {
+  const hit = nearestWallPath(world);
+  if (!hit) {
+    state.selectedWallId = null;
+    updateWallStatus();
+    draw();
+    return false;
+  }
+  state.selectedWallId = hit.wallId;
+  state.selectedId = null;
+  state.selectedStairId = null;
+  state.selectedStairIds = [];
+  state.selectedSubwayId = null;
+  state.selectedPlatformId = null;
+  state.selectedPlatformIds = [];
+  state.selectedElevatorPointId = null;
+  state.selectedElevatorPointIds = [];
+  updateSelectedInfo();
+  updateWallStatus(`Selected ${hit.wallId}.`);
+  draw();
+  return true;
+}
+
+function deleteSelectedWallPath() {
+  if (!state.selectedWallId) {
+    updateWallStatus("Select a wall first.");
+    return;
+  }
+  state.annotations.manual_walls = state.annotations.manual_walls || [];
+  const before = state.annotations.manual_walls.length;
+  state.annotations.manual_walls = state.annotations.manual_walls.filter(
+    (wall, index) => (wall.wall_id || wall.label || `wall_${index + 1}`) !== state.selectedWallId,
+  );
+  const removed = before - state.annotations.manual_walls.length;
+  const removedId = state.selectedWallId;
+  state.selectedWallId = null;
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateWallStatus(`Deleted ${removedId} (${removed}).`);
+    draw();
+  });
 }
 
 function nextManualAssetId(type) {
@@ -3344,30 +3960,35 @@ function selectedManualAssetType() {
 function manualAssetBlend(type) {
   if (type === "ticket_gate") return "TicketGate.blend";
   if (type === "moving_walkway") return "MovingWalkway.blend";
+  if (type === "exit") return "ExitMarker.blend";
   return "Subway.blend";
 }
 
 function manualAssetDisplayName(type) {
   if (type === "ticket_gate") return "ticket gate";
   if (type === "moving_walkway") return "moving walkway";
+  if (type === "exit") return "exit point";
   return "subway train";
 }
 
 function manualAssetColor(type, alpha = 0.9) {
   if (type === "ticket_gate") return `rgba(210, 31, 60, ${alpha})`;
   if (type === "moving_walkway") return `rgba(0, 190, 140, ${alpha})`;
+  if (type === "exit") return `rgba(255, 176, 0, ${alpha})`;
   return `rgba(0, 120, 255, ${alpha})`;
 }
 
 function manualAssetLabelColor(type) {
   if (type === "ticket_gate") return "#d21f3c";
   if (type === "moving_walkway") return "#00a878";
+  if (type === "exit") return "#c47b00";
   return "#0078ff";
 }
 
 function manualAssetPointColor(type, index) {
   if (type === "ticket_gate") return index === 0 ? "#ff5a6f" : "#d21f3c";
   if (type === "moving_walkway") return index === 0 ? "#00d29a" : "#00a878";
+  if (type === "exit") return "#ffb000";
   return index === 0 ? "#00aaff" : "#0078ff";
 }
 
@@ -3375,6 +3996,7 @@ function updateSubwayStatus(message = null) {
   const subwayCount = (state.annotations.manual_assets || []).filter((asset) => asset.type === "subway").length;
   const walkwayCount = (state.annotations.manual_assets || []).filter((asset) => asset.type === "moving_walkway").length;
   const gateCount = (state.annotations.manual_assets || []).filter((asset) => asset.type === "ticket_gate").length;
+  const exitCount = (state.annotations.manual_assets || []).filter((asset) => asset.type === "exit").length;
   const currentType = state.subway.active ? state.subway.assetType : selectedManualAssetType();
   if (!state.subway.active) {
     subwayStatus.textContent = [
@@ -3382,16 +4004,20 @@ function updateSubwayStatus(message = null) {
       `subways: ${subwayCount}`,
       `moving walkways: ${walkwayCount}`,
       `ticket gates: ${gateCount}`,
+      `exits: ${exitCount}`,
       state.selectedSubwayId ? `selected: ${state.selectedSubwayId}` : null,
     ].filter(Boolean).join("\n") || "inactive";
     return;
   }
+  const pointOnly = currentType === "exit";
   subwayStatus.textContent = [
     message,
     `mode: ${manualAssetDisplayName(currentType)}`,
     `label: ${state.subway.label || "auto"}`,
-    `points: ${(state.subway.points || []).length}/2`,
-    (state.subway.points || []).length < 1 ? "Click asset start point" : "Click asset end point",
+    `points: ${(state.subway.points || []).length}/${pointOnly ? 1 : 2}`,
+    pointOnly
+      ? "Click exit point inside a polygon"
+      : ((state.subway.points || []).length < 1 ? "Click asset start point" : "Click asset end point"),
   ].filter(Boolean).join("\n");
 }
 
@@ -3437,6 +4063,31 @@ function addSubwayAsset(world, poly) {
   }
   const point = [Number(world.x.toFixed(2)), Number(world.y.toFixed(2))];
   state.subway.points = state.subway.points || [];
+  const assetType = state.subway.assetType || selectedManualAssetType();
+  if (assetType === "exit") {
+    const assetId = nextManualAssetId(assetType);
+    state.annotations.manual_assets = state.annotations.manual_assets || [];
+    state.annotations.manual_assets.push({
+      asset_id: assetId,
+      type: assetType,
+      blend: manualAssetBlend(assetType),
+      label: state.subway.label || assetId,
+      polygon_id: poly.polygon_id,
+      layer,
+      point_source: point,
+      start_point_source: null,
+      end_point_source: null,
+      rotation_z: 0.0,
+      scale: [1.0, 1.0, 1.0],
+      navigation: {node_type: "exit", access_transition: "outside", cost: 0},
+    });
+    saveAnnotations().then((result) => {
+      saveResult.textContent = JSON.stringify(result, null, 2);
+      resetSubwayPlacement();
+      updateSubwayStatus(`${assetId} saved.`);
+    });
+    return;
+  }
   if (state.subway.points.length < 1) {
     state.subway.points.push(point);
     state.subway.polygonId = poly.polygon_id;
@@ -3459,7 +4110,6 @@ function addSubwayAsset(world, poly) {
     Number(((start[0] + end[0]) / 2).toFixed(2)),
     Number(((start[1] + end[1]) / 2).toFixed(2)),
   ];
-  const assetType = state.subway.assetType || selectedManualAssetType();
   const assetId = nextManualAssetId(assetType);
   state.annotations.manual_assets = state.annotations.manual_assets || [];
   state.annotations.manual_assets.push({
@@ -3520,6 +4170,7 @@ function selectSubwayAsset(world) {
   state.selectedPlatformIds = [];
   state.selectedStairId = null;
   state.selectedStairIds = [];
+  state.selectedWallId = null;
   state.selectedLayerAlignIndex = null;
   state.selectedId = null;
   updateSelectedInfo();
@@ -3530,7 +4181,7 @@ function selectSubwayAsset(world) {
 
 function deleteSelectedSubwayAsset() {
   if (!state.selectedSubwayId) {
-    updateSubwayStatus("Select a linear asset first.");
+    updateSubwayStatus("Select a map asset first.");
     return;
   }
   state.annotations.manual_assets = state.annotations.manual_assets || [];
@@ -3539,7 +4190,7 @@ function deleteSelectedSubwayAsset() {
   );
   if (index < 0) {
     state.selectedSubwayId = null;
-    updateSubwayStatus("Selected linear asset is missing.");
+    updateSubwayStatus("Selected map asset is missing.");
     draw();
     return;
   }
@@ -3560,7 +4211,7 @@ function deleteAllSubwayAssets() {
   state.selectedSubwayId = null;
   saveAnnotations().then((result) => {
     saveResult.textContent = JSON.stringify(result, null, 2);
-    updateSubwayStatus(`Deleted ${removed} linear assets.`);
+    updateSubwayStatus(`Deleted ${removed} map assets.`);
     draw();
   });
 }
@@ -3578,7 +4229,7 @@ function undoLastSubwayAsset() {
     });
     return;
   }
-  updateSubwayStatus("No linear asset to undo.");
+  updateSubwayStatus("No map asset to undo.");
 }
 
 function nextPlatformId() {
@@ -3810,6 +4461,7 @@ function selectPlatform(world, additive = false) {
   }
   state.selectedId = null;
   state.selectedSubwayId = null;
+  state.selectedWallId = null;
   state.selectedStairId = null;
   state.selectedStairIds = [];
   updateSelectedInfo();
@@ -4035,6 +4687,7 @@ function selectElevatorPoint(world, additive = false) {
   }
   state.selectedId = null;
   state.selectedSubwayId = null;
+  state.selectedWallId = null;
   state.selectedPlatformId = null;
   state.selectedPlatformIds = [];
   state.selectedStairId = null;
@@ -4547,25 +5200,53 @@ function projectPointToSegment(point, segA, segB) {
 
 function nearestEdgeForPolygon(poly, world, maxScreenDistance = 14) {
   if (!poly) return null;
-  const points = poly.points_source || [];
-  if (points.length < 2) return null;
   let best = null;
   const mouseScreen = worldToScreen([world.x, world.y]);
-  points.forEach((point, index) => {
-    const next = points[(index + 1) % points.length];
-    const projected = projectPointToSegment(world, point, next);
-    const projectedScreen = worldToScreen(projected);
-    const distance = Math.hypot(projectedScreen.x - mouseScreen.x, projectedScreen.y - mouseScreen.y);
-    if (distance <= maxScreenDistance && (!best || distance < best.distance)) {
-      best = {
-        polygonId: poly.polygon_id,
-        index,
-        point: [Number(projected[0].toFixed(2)), Number(projected[1].toFixed(2))],
-        distance,
-      };
-    }
-  });
+  const visitRing = (points, holeIndex = null) => {
+    if (!points || points.length < 2) return;
+    points.forEach((point, index) => {
+      const next = points[(index + 1) % points.length];
+      const projected = projectPointToSegment(world, point, next);
+      const projectedScreen = worldToScreen(projected);
+      const distance = Math.hypot(projectedScreen.x - mouseScreen.x, projectedScreen.y - mouseScreen.y);
+      if (distance <= maxScreenDistance && (!best || distance < best.distance)) {
+        best = {
+          polygonId: poly.polygon_id,
+          holeIndex,
+          index,
+          point: [Number(projected[0].toFixed(2)), Number(projected[1].toFixed(2))],
+          distance,
+        };
+      }
+    });
+  };
+  visitRing(poly.points_source || [], null);
+  (poly.holes_source || []).forEach((hole, holeIndex) => visitRing(hole || [], holeIndex));
   return best;
+}
+
+function nearestPolygonEdge(world, preferredPoly = null, maxScreenDistance = 14) {
+  const candidates = preferredPoly ? [preferredPoly, ...allPolygons().filter((poly) => poly.polygon_id !== preferredPoly.polygon_id)] : allPolygons();
+  let best = null;
+  for (const poly of candidates) {
+    const edge = nearestEdgeForPolygon(poly, world, maxScreenDistance);
+    if (edge && (!best || edge.distance < best.distance)) {
+      best = {...edge, poly};
+    }
+  }
+  return best;
+}
+
+function snapWallPoint(world, preferredPoly = null) {
+  const vertex = nearestConnectionVertex(world, preferredPoly, 30);
+  if (vertex) {
+    return {point: vertex.point, poly: vertex.poly, source: "vertex"};
+  }
+  const edge = nearestPolygonEdge(world, preferredPoly, 22);
+  if (edge) {
+    return {point: edge.point, poly: edge.poly, source: "edge"};
+  }
+  return {point: [world.x, world.y], poly: preferredPoly || null, source: "free"};
 }
 
 function addMergeVertex(world, poly) {
@@ -5283,6 +5964,9 @@ function resetProjectWorkingState(message) {
     station_metadata: {},
   };
   state.marker.points = [];
+  state.marker.autoPoint = null;
+  state.regionPick = {active: false, drawing: false, strokes: [], currentStroke: [], brushSize: selectedRegionBrushSize(), sourcePolygonId: null};
+  state.wall = {active: false, label: "", height: selectedWallHeight(), points: [], layer: null, polygonId: null, hoverSnap: null};
   state.crop = {active: false, start: null, current: null, rect: null, previousImagePath: state.crop.previousImagePath || null};
   state.loadedFinalWorkingSet = false;
   state.selectedId = null;
@@ -5295,6 +5979,8 @@ function resetProjectWorkingState(message) {
   populateStationInputs(state.annotations.station_metadata);
   updateScaleCalibrationStatus();
   updateLocalAxisStatus();
+  updateRegionPickStatus();
+  updateWallStatus();
 }
 
 function selectImagePath(imagePath, messagePrefix = "selected") {
@@ -5455,35 +6141,53 @@ function startManualMarker() {
   state.marker = {
     active: true,
     points: [],
+    autoPoint: null,
   };
-  pipelineStatus.textContent = "manual marker: click 4 transform points";
+  pipelineStatus.textContent = "manual marker: click 3 adjacent transform points";
   draw();
+}
+
+function computeParallelogramMarkerPoint(points) {
+  if (!points || points.length !== 3) return null;
+  const [pointA, pointB, pointC] = points;
+  return [
+    Number((Number(pointA[0]) + Number(pointC[0]) - Number(pointB[0])).toFixed(2)),
+    Number((Number(pointA[1]) + Number(pointC[1]) - Number(pointB[1])).toFixed(2)),
+  ];
+}
+
+function manualMarkerPointsForSave() {
+  return state.marker.autoPoint ? [...state.marker.points, state.marker.autoPoint] : [...state.marker.points];
 }
 
 function addManualMarkerPoint(world) {
   if (!state.marker.active) return;
-  if (state.marker.points.length >= 4) return;
+  if (state.marker.points.length >= 3) return;
   state.marker.points.push([Number(world.x.toFixed(2)), Number(world.y.toFixed(2))]);
-  pipelineStatus.textContent = `manual marker: ${state.marker.points.length}/4`;
-  if (state.marker.points.length === 4) {
-    pipelineStatus.textContent = "manual marker ready: Save Marker";
+  state.marker.autoPoint = null;
+  pipelineStatus.textContent = `manual marker: ${state.marker.points.length}/3`;
+  if (state.marker.points.length === 3) {
+    state.marker.autoPoint = computeParallelogramMarkerPoint(state.marker.points);
+    pipelineStatus.textContent = "manual marker ready: auto point added, Save Marker";
   }
   draw();
 }
 
 function undoManualMarkerPoint() {
   if (state.marker.points.length > 0) {
+    state.marker.autoPoint = null;
     state.marker.points.pop();
-    pipelineStatus.textContent = `manual marker: ${state.marker.points.length}/4`;
+    pipelineStatus.textContent = `manual marker: ${state.marker.points.length}/3`;
     draw();
   }
 }
 
 function saveManualMarker() {
+  const points = manualMarkerPointsForSave();
   fetch("/api/marker/manual", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({points: state.marker.points}),
+    body: JSON.stringify({points}),
   })
     .then((response) => response.json().then((data) => ({ok: response.ok, data})))
     .then(({ok, data}) => {
@@ -5873,6 +6577,16 @@ canvas.addEventListener("mousedown", (event) => {
     draw();
     return;
   }
+  if (state.tool === "regionPick" && state.regionPick.active && event.button === 0) {
+    state.regionPick.drawing = true;
+    state.regionPick.currentStroke = [];
+    const poly = findPolygonAt(world);
+    if (!state.regionPick.sourcePolygonId && poly?.polygon_id) {
+      state.regionPick.sourcePolygonId = poly.polygon_id;
+    }
+    addRegionPickPoint(world);
+    return;
+  }
   if (state.tool === "move" && state.move.active && state.move.polygonId) {
     const vertex = nearestMoveVertexForPolygon(movePolygon(), world);
     if (vertex) {
@@ -5912,6 +6626,10 @@ canvas.addEventListener("mousemove", (event) => {
   if (state.tool === "crop" && state.crop.active && state.crop.start) {
     state.crop.current = world;
     draw();
+    return;
+  }
+  if (state.tool === "regionPick" && state.regionPick.active && state.regionPick.drawing) {
+    addRegionPickPoint(world);
     return;
   }
   if (state.tool === "sharedEdge" && state.sharedEdge.active && state.sharedEdge.dragStart) {
@@ -6019,6 +6737,20 @@ canvas.addEventListener("mousemove", (event) => {
     }
     return;
   }
+  if (state.tool === "wall" && state.wall.active) {
+    const hover = snapWallPoint(world, findPolygonAt(world));
+    const nextHover = hover ? {
+      point: [Number(hover.point[0].toFixed(2)), Number(hover.point[1].toFixed(2))],
+      polygonId: hover.poly?.polygon_id || null,
+      source: hover.source,
+    } : null;
+    const changed = JSON.stringify(nextHover) !== JSON.stringify(state.wall.hoverSnap);
+    if (changed) {
+      state.wall.hoverSnap = nextHover;
+      draw();
+    }
+    return;
+  }
 
   const poly = findPolygonAt(world);
   const nextHover = poly?.polygon_id || null;
@@ -6040,6 +6772,10 @@ canvas.addEventListener("mouseup", () => {
       pipelineStatus.textContent = "crop: selected area is too small";
       draw();
     }
+    return;
+  }
+  if (state.tool === "regionPick" && state.regionPick.active && state.regionPick.drawing) {
+    finishRegionPickStroke();
     return;
   }
   if (state.tool === "sharedEdge" && state.sharedEdge.active && state.sharedEdge.dragStart) {
@@ -6067,6 +6803,7 @@ canvas.addEventListener("click", (event) => {
   const rect = canvas.getBoundingClientRect();
   const world = screenToWorld(event.clientX - rect.left, event.clientY - rect.top);
   if (state.tool === "crop") return;
+  if (state.tool === "regionPick") return;
   if (state.tool === "marker") {
     addManualMarkerPoint(world);
     return;
@@ -6117,6 +6854,10 @@ canvas.addEventListener("click", (event) => {
     addScaleCalibrationPoint(world);
     return;
   }
+  if (state.tool === "wall") {
+    addWallPoint(world, poly);
+    return;
+  }
   if (state.tool === "subway") {
     addSubwayAsset(world, poly);
     return;
@@ -6147,6 +6888,7 @@ canvas.addEventListener("click", (event) => {
   }
   if (selectLayerAlignPair(world)) return;
   if (selectSubwayAsset(world)) return;
+  if (selectWallPath(world)) return;
   if (selectPlatform(world, event.shiftKey || event.ctrlKey || event.metaKey)) return;
   if (selectElevatorPoint(world, event.shiftKey || event.ctrlKey || event.metaKey)) return;
   if (selectStairConnection(world, event)) return;
@@ -6159,6 +6901,7 @@ canvas.addEventListener("click", (event) => {
   state.selectedStairId = null;
   state.selectedStairIds = [];
   state.selectedSubwayId = null;
+  state.selectedWallId = null;
   state.selectedPlatformId = null;
   state.selectedPlatformIds = [];
   state.selectedElevatorPointId = null;
@@ -6167,6 +6910,7 @@ canvas.addEventListener("click", (event) => {
   updateSelectedInfo();
   updateLayerAlignStatus();
   updateSubwayStatus();
+  updateWallStatus();
   updateStairStatus();
   updateDeleteStatus();
   draw();
@@ -6299,6 +7043,13 @@ document.getElementById("deleteStairBtn").addEventListener("click", deleteSelect
 document.getElementById("deleteAllConnectionsBtn").addEventListener("click", deleteAllStairConnections);
 document.getElementById("undoStairBtn").addEventListener("click", undoLastStairConnection);
 document.getElementById("resetStairBtn").addEventListener("click", resetStairConnection);
+document.getElementById("startWallBtn").addEventListener("click", startWallPath);
+document.getElementById("applyWallBtn").addEventListener("click", applyWallPath);
+document.getElementById("undoWallPointBtn").addEventListener("click", undoWallPoint);
+document.getElementById("deleteWallBtn").addEventListener("click", deleteSelectedWallPath);
+document.getElementById("deleteAllWallsBtn").addEventListener("click", deleteAllWalls);
+document.getElementById("undoWallBtn").addEventListener("click", undoLastWall);
+document.getElementById("resetWallBtn").addEventListener("click", resetWallPath);
 document.getElementById("startSubwayBtn").addEventListener("click", startSubwayPlacement);
 document.getElementById("deleteSubwayBtn").addEventListener("click", deleteSelectedSubwayAsset);
 document.getElementById("deleteAllSubwayBtn").addEventListener("click", deleteAllSubwayAssets);
@@ -6330,6 +7081,10 @@ document.getElementById("resetCropBtn").addEventListener("click", resetCrop);
 document.getElementById("startMarkerBtn").addEventListener("click", startManualMarker);
 document.getElementById("undoMarkerBtn").addEventListener("click", undoManualMarkerPoint);
 document.getElementById("saveMarkerBtn").addEventListener("click", saveManualMarker);
+document.getElementById("startRegionPickBtn").addEventListener("click", startRegionPick);
+document.getElementById("applyRegionPickBtn").addEventListener("click", applyRegionPick);
+document.getElementById("undoRegionStrokeBtn").addEventListener("click", undoRegionStroke);
+document.getElementById("resetRegionPickBtn").addEventListener("click", resetRegionPick);
 document.getElementById("prepareMarkerImageBtn").addEventListener("click", prepareMarkerImageFromUi);
 document.getElementById("detectIconsBtn").addEventListener("click", detectIconsFromUi);
 document.getElementById("prepareIconImageBtn").addEventListener("click", prepareIconImageFromUi);
@@ -6445,9 +7200,15 @@ document.addEventListener("keydown", (event) => {
   } else if (key === "u") {
     event.preventDefault();
     startStairConnection();
+  } else if (key === "b") {
+    event.preventDefault();
+    startWallPath();
   } else if (key === "p") {
     event.preventDefault();
     startCrop();
+  } else if (key === "n") {
+    event.preventDefault();
+    startRegionPick();
   } else if (key === "o") {
     event.preventDefault();
     startElevatorLink();
@@ -6475,6 +7236,7 @@ document.addEventListener("keydown", (event) => {
   } else if (event.key === "Delete") {
     event.preventDefault();
     if (state.selectedSubwayId) deleteSelectedSubwayAsset();
+    else if (state.selectedWallId) deleteSelectedWallPath();
     else if (selectedPlatformIds().length) deleteSelectedPlatform();
     else if (selectedElevatorPointIds().length) deleteSelectedElevatorPoint();
     else if (state.selectedLayerAlignIndex !== null) deleteSelectedLayerAlignPair();
@@ -6483,21 +7245,26 @@ document.addEventListener("keydown", (event) => {
   } else if (event.key === "Backspace") {
     event.preventDefault();
     if (state.tool === "marker") undoManualMarkerPoint();
+    else if (state.tool === "regionPick") undoRegionStroke();
     else if (state.tool === "cutHole") undoCutHolePoint();
     else if (state.tool === "splitPolygon") undoSplitPolygonPoint();
     else if (state.tool === "scaleCalibration") undoScaleCalibrationPoint();
+    else if (state.tool === "wall") undoWallPoint();
     else undoAddPolygonPoint();
   } else if (event.key === "Shift") {
     event.preventDefault();
     if (state.tool === "keep") applySimpleKeep();
+    else if (state.tool === "regionPick") applyRegionPick();
     else if (state.tool === "addPolygon") applyAddPolygon();
     else if (state.tool === "cutHole") applyCutHole();
     else if (state.tool === "scaleCalibration") applyScaleCalibration();
     else if (state.tool === "crop") applyCrop();
     else if (state.tool === "straighten") applyStraighten();
+    else if (state.tool === "wall") applyWallPath();
   } else if (event.key === "Escape") {
     event.preventDefault();
     if (state.tool === "keep") resetSimpleKeep();
+    else if (state.tool === "regionPick") resetRegionPick();
     else if (state.tool === "addPolygon") resetAddPolygon();
     else if (state.tool === "cutHole") resetCutHole();
     else if (state.tool === "splitPolygon") resetSplitPolygon();
@@ -6508,6 +7275,7 @@ document.addEventListener("keydown", (event) => {
     else if (state.tool === "elevatorPoint") resetElevatorPoint();
     else if (state.tool === "elevatorLink") resetElevatorLink();
     else if (state.tool === "scaleCalibration") resetScaleCalibration();
+    else if (state.tool === "wall") resetWallPath();
     else if (state.tool === "marker") {
       state.tool = "select";
       state.marker.active = false;
@@ -6530,6 +7298,8 @@ updateStraightenStatus();
 updateMoveStatus();
 updateInsertVertexStatus();
 updateDeleteStatus();
+updateRegionPickStatus();
+updateWallStatus();
 setupSidebarTabs();
 updateModeSummary();
 updateSharedEdgeStatus();

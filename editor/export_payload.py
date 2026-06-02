@@ -524,7 +524,7 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
     assets = []
     for asset in (annotations or {}).get("manual_assets", []):
         asset_type = asset.get("type") or "subway"
-        if asset_type not in {"subway", "moving_walkway", "ticket_gate"} or not asset.get("point_source"):
+        if asset_type not in {"subway", "moving_walkway", "ticket_gate", "exit"} or not asset.get("point_source"):
             continue
         layer = asset.get("layer")
         polygon_id = asset.get("polygon_id")
@@ -590,7 +590,7 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
                 "start_point_source": start_source,
                 "end_point_source": end_source,
                 "gate_type": asset.get("gate_type") if asset_type == "ticket_gate" else None,
-                "navigation": asset.get("navigation") if asset_type == "ticket_gate" else None,
+                "navigation": asset.get("navigation") if asset_type in {"ticket_gate", "exit"} else None,
             }
         )
     return assets
@@ -919,6 +919,7 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
                 polygon_id=from_data.get("polygon_id"),
                 connector_id=connection_id,
                 connector_type=connector_type,
+                exit_number=connection.get("exit_number"),
                 endpoint="from",
             )
         )
@@ -931,6 +932,7 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
                 polygon_id=to_data.get("polygon_id"),
                 connector_id=connection_id,
                 connector_type=connector_type,
+                exit_number=connection.get("exit_number"),
                 endpoint="to",
             )
         )
@@ -939,26 +941,28 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
                 f"{connection_id}_edge",
                 from_node_id,
                 to_node_id,
-                "vertical",
+                "exit" if connection.get("type") in {"exit_stair", "exit_escalator"} else "vertical",
                 cost=distance_3d(from_pos, to_pos),
                 bidirectional=connection.get("bidirectional", True),
                 connector_id=connection_id,
                 connector_type=connector_type,
+                exit_number=connection.get("exit_number"),
             )
         )
 
     for asset in manual_assets or []:
-        if asset.get("type") not in {"subway", "moving_walkway", "ticket_gate"} or not asset.get("location"):
+        if asset.get("type") not in {"subway", "moving_walkway", "ticket_gate", "exit"} or not asset.get("location"):
             continue
         asset_id = asset.get("asset_id") or asset.get("label")
         if not asset_id:
             continue
         is_gate = asset.get("type") == "ticket_gate"
+        is_exit = asset.get("type") == "exit"
         navigation_extra = asset.get("navigation") or {}
         add_node(
             navigation_node(
                 f"{asset_id}_node",
-                "gate" if is_gate else "asset",
+                "gate" if is_gate else ("exit" if is_exit else "asset"),
                 asset.get("layer"),
                 asset.get("location"),
                 polygon_id=asset.get("polygon_id"),
@@ -966,8 +970,8 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
                 asset_type=asset.get("type"),
                 label=asset.get("label"),
                 gate_type=asset.get("gate_type") if is_gate else None,
-                access_transition=navigation_extra.get("access_transition") if is_gate else None,
-                cost=navigation_extra.get("cost") if is_gate else None,
+                access_transition=navigation_extra.get("access_transition") if (is_gate or is_exit) else None,
+                cost=navigation_extra.get("cost") if (is_gate or is_exit) else None,
             )
         )
 
@@ -1564,32 +1568,37 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         layer = wall.get("semantic", {}).get("layer")
         z_value = layer_z_from_height(layer, default_z=default_z, floor_height=floor_height, layer_z=layer_z)
         height = float(wall.get("height", 1.0))
-        p1, p2 = wall_points[:2]
-        y1 = -float(p1[1]) if invert_y else float(p1[1])
-        y2 = -float(p2[1]) if invert_y else float(p2[1])
-        x1 = -float(p1[0]) if invert_x else float(p1[0])
-        x2 = -float(p2[0]) if invert_x else float(p2[0])
         layer_transform = alignment_transforms.get(layer)
-        wall_records.append(
-            {
-                "name": wall.get("wall_id"),
-                "wall_id": wall.get("wall_id"),
-                "source_polygon_ids": wall.get("source_polygon_ids"),
-                "type": wall.get("type", "shared_boundary_wall"),
-                "height": height,
-                "color": [0.8, 0.1, 0.1, 1.0],
-                "vertices": apply_layer_transform_to_vertices(
-                    [
-                        [x1 * effective_scale, y1 * effective_scale, z_value],
-                        [x2 * effective_scale, y2 * effective_scale, z_value],
-                        [x2 * effective_scale, y2 * effective_scale, z_value + height],
-                        [x1 * effective_scale, y1 * effective_scale, z_value + height],
-                    ],
-                    layer_transform,
-                ),
-                "alignment_transform": xy_transform_to_list(layer_transform) if layer_transform is not None else None,
-            }
-        )
+        for segment_index, (p1, p2) in enumerate(zip(wall_points, wall_points[1:]), start=1):
+            y1 = -float(p1[1]) if invert_y else float(p1[1])
+            y2 = -float(p2[1]) if invert_y else float(p2[1])
+            x1 = -float(p1[0]) if invert_x else float(p1[0])
+            x2 = -float(p2[0]) if invert_x else float(p2[0])
+            wall_id = wall.get("wall_id")
+            segment_id = wall_id if len(wall_points) == 2 else f"{wall_id}_seg_{segment_index:03d}"
+            wall_records.append(
+                {
+                    "name": segment_id,
+                    "wall_id": wall_id,
+                    "segment_id": segment_id,
+                    "segment_index": segment_index,
+                    "source_polygon_ids": wall.get("source_polygon_ids"),
+                    "type": wall.get("type", "shared_boundary_wall"),
+                    "height": height,
+                    "color": [0.8, 0.1, 0.1, 1.0],
+                    "points_source": wall.get("points_source"),
+                    "vertices": apply_layer_transform_to_vertices(
+                        [
+                            [x1 * effective_scale, y1 * effective_scale, z_value],
+                            [x2 * effective_scale, y2 * effective_scale, z_value],
+                            [x2 * effective_scale, y2 * effective_scale, z_value + height],
+                            [x1 * effective_scale, y1 * effective_scale, z_value + height],
+                        ],
+                        layer_transform,
+                    ),
+                    "alignment_transform": xy_transform_to_list(layer_transform) if layer_transform is not None else None,
+                }
+            )
     connection_records = []
     for connection in annotations.get("manual_connections", []):
         from_point = connection.get("from_point_source")
@@ -1622,6 +1631,8 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         to_transform = alignment_transforms.get(to_layer)
         from_z = polygon_id_z_value(connection.get("from_polygon_id"), from_layer, annotations=annotations, layer_z=layer_z, default_z=default_z, floor_height=floor_height)
         to_z = polygon_id_z_value(connection.get("to_polygon_id"), to_layer, annotations=annotations, layer_z=layer_z, default_z=default_z, floor_height=floor_height)
+        if connection.get("type") in {"exit_stair", "exit_escalator"}:
+            to_z = from_z + float(connection.get("exit_rise", floor_height))
         start_line = scene_line_from_source_points(
             connection.get("from_points_source"),
             from_layer,
@@ -1657,6 +1668,10 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
                 "asset_type": connection.get("asset_type", connection.get("type", "connection")),
                 "connection_schema": connection.get("connection_schema", "edge_pair_v2" if connection.get("from_points_source") and connection.get("to_points_source") else "legacy_center_points"),
                 "label": connection.get("label"),
+                "exit_number": connection.get("exit_number"),
+                "exit_length_source": connection.get("exit_length_source"),
+                "exit_rise": connection.get("exit_rise"),
+                "direction_point_source": connection.get("direction_point_source"),
                 "bidirectional": bool(connection.get("bidirectional", True)),
                 "start_line": start_line,
                 "end_line": end_line,
@@ -1823,11 +1838,13 @@ def blend_name_for_connection(connection):
 
 
 def blend_name_for_manual_asset(asset_type):
-    """Return the Blender asset filename for one manual linear asset."""
+    """Return the Blender asset filename for one manual map asset."""
     if asset_type == "ticket_gate":
         return "TicketGate.blend"
     if asset_type == "moving_walkway":
         return "MovingWalkway.blend"
+    if asset_type == "exit":
+        return "ExitMarker.blend"
     if asset_type == "subway":
         return "Subway.blend"
     return f"{asset_type}.blend"
