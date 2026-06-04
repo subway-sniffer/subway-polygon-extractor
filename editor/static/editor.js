@@ -4,6 +4,7 @@ const state = {
   manualPolygons: [],
   connections: [],
   icons: [],
+  stationOptions: [],
   annotations: {
     polygon_layers: {},
     polygon_z_offsets: {},
@@ -197,12 +198,18 @@ const state = {
   },
   platform: {
     active: false,
+    mode: "line",
     point: null,
     facingPoint: null,
+    lineStart: null,
+    lineEnd: null,
+    anchors: [],
+    quickExitRows: [],
     stationName: "",
     lineId: "",
     direction: "",
-    carRange: "",
+    carCount: 10,
+    doorsPerCar: 4,
     label: "",
     polygonId: null,
     layer: null,
@@ -285,10 +292,13 @@ const manualAssetTypeInput = document.getElementById("manualAssetTypeInput");
 const gateCountInput = document.getElementById("gateCountInput");
 const toiletGenderInput = document.getElementById("toiletGenderInput");
 const platformStatus = document.getElementById("platformStatus");
+const quickExitStatus = document.getElementById("quickExitStatus");
 const platformStationInput = document.getElementById("platformStationInput");
+const platformStationOptions = document.getElementById("platformStationOptions");
 const platformLineInput = document.getElementById("platformLineInput");
 const platformDirectionInput = document.getElementById("platformDirectionInput");
-const platformCarRangeInput = document.getElementById("platformCarRangeInput");
+const platformCarCountInput = document.getElementById("platformCarCountInput");
+const platformDoorsPerCarInput = document.getElementById("platformDoorsPerCarInput");
 const platformLabelInput = document.getElementById("platformLabelInput");
 const elevatorStatus = document.getElementById("elevatorStatus");
 const elevatorIdInput = document.getElementById("elevatorIdInput");
@@ -801,10 +811,25 @@ function drawPlatforms() {
     );
   }
   if (state.platform.active) {
-    const points = [state.platform.point, state.platform.facingPoint].filter(Boolean);
+    const points = state.platform.mode === "line"
+      ? [state.platform.lineStart, state.platform.lineEnd].filter(Boolean)
+      : [state.platform.point, state.platform.facingPoint].filter(Boolean);
     if (points.length >= 2) {
       drawPath(points, "rgba(155, 80, 255, 0.95)", 4);
       drawPathArrow(points, "rgba(155, 80, 255, 0.95)");
+    }
+    if (state.platform.mode === "line") {
+      (state.platform.anchors || []).forEach((anchor) => {
+        const screen = worldToScreen(anchor.point_source);
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = "#ffb000";
+        ctx.strokeStyle = "#111111";
+        ctx.lineWidth = 1;
+        ctx.fill();
+        ctx.stroke();
+        drawCanvasLabel(anchor.point_source, anchor.car_door || `${anchor.car}-${anchor.door}`, "#ffb000", 8, -8);
+      });
     }
     points.forEach((point, index) => {
       const screen = worldToScreen(point);
@@ -815,7 +840,7 @@ function drawPlatforms() {
       ctx.lineWidth = 1;
       ctx.fill();
       ctx.stroke();
-      drawCanvasLabel(point, index === 0 ? "platform" : "facing", "#7b2cff", 8, 16);
+      drawCanvasLabel(point, state.platform.mode === "line" ? (index === 0 ? "1호차/front" : "tail") : (index === 0 ? "platform" : "facing"), "#7b2cff", 8, 16);
     });
   }
   ctx.restore();
@@ -4278,6 +4303,20 @@ function selectedGateCount() {
   return Number.isFinite(value) && value >= 1 ? Math.round(value) : 1;
 }
 
+function selectedPlatformMode() {
+  return "line";
+}
+
+function selectedPlatformCarCount() {
+  const value = Number(platformCarCountInput?.value || 10);
+  return Number.isFinite(value) && value >= 1 ? Math.round(value) : 10;
+}
+
+function selectedPlatformDoorsPerCar() {
+  const value = Number(platformDoorsPerCarInput?.value || 4);
+  return Number.isFinite(value) && value >= 1 ? Math.round(value) : 4;
+}
+
 function manualAssetBlend(type) {
   if (type === "ticket_gate") return "TicketGate.blend";
   if (type === "moving_walkway") return "MovingWalkway.blend";
@@ -4708,6 +4747,111 @@ function nextPlatformId() {
   return `platform_${String(next).padStart(3, "0")}`;
 }
 
+function parseCarDoor(value) {
+  const match = String(value || "").match(/(\d+)\s*-\s*(\d+)/);
+  if (!match) return null;
+  return {car: Number(match[1]), door: Number(match[2]), carDoor: `${Number(match[1])}-${Number(match[2])}`};
+}
+
+function carDoorOrdinal(car, door, doorsPerCar = 4) {
+  return (Number(car) - 1) * Number(doorsPerCar) + Number(door);
+}
+
+function sortedQuickExitRowsForDirection(rows, direction, doorsPerCar = 4) {
+  const needle = String(direction || "").replace(/\s*방면\s*$/, "").trim();
+  return (rows || [])
+    .filter((row) => {
+      if (!needle) return true;
+      return String(row.toward || row.direction || "").includes(needle)
+        || String(row.up_down || "").includes(needle);
+    })
+    .map((row) => {
+      const parsed = parseCarDoor(row.door_no);
+      return parsed ? {...row, car: parsed.car, door: parsed.door, car_door: parsed.carDoor, ordinal: carDoorOrdinal(parsed.car, parsed.door, doorsPerCar)} : null;
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.ordinal - b.ordinal);
+}
+
+function normalizeStationDisplayName(name) {
+  const value = String(name || "").trim();
+  if (!value) return "";
+  return value.endsWith("역") ? value : `${value}역`;
+}
+
+function populateStationOptions(stations) {
+  state.stationOptions = stations || [];
+  if (!platformStationOptions) return;
+  platformStationOptions.innerHTML = "";
+  for (const item of state.stationOptions) {
+    const option = document.createElement("option");
+    option.value = item.station;
+    platformStationOptions.appendChild(option);
+  }
+}
+
+function linesForStation(stationName) {
+  const station = normalizeStationDisplayName(stationName);
+  const item = (state.stationOptions || []).find((candidate) => candidate.station === station);
+  return item?.lines || [];
+}
+
+function populatePlatformLineOptions() {
+  const previous = platformLineInput.value;
+  const lines = linesForStation(platformStationInput.value);
+  platformLineInput.innerHTML = "";
+  const empty = document.createElement("option");
+  empty.value = "";
+  empty.textContent = lines.length ? "select line" : "no local line data";
+  platformLineInput.appendChild(empty);
+  for (const line of lines) {
+    const option = document.createElement("option");
+    option.value = line;
+    option.textContent = line;
+    platformLineInput.appendChild(option);
+  }
+  if (lines.includes(previous)) platformLineInput.value = previous;
+  else if (lines.length === 1) platformLineInput.value = lines[0];
+}
+
+function populatePlatformDirectionOptions(rows) {
+  const previous = platformDirectionInput.value;
+  const directions = Array.from(new Set((rows || []).map((row) => row.toward).filter(Boolean))).sort();
+  platformDirectionInput.innerHTML = "";
+  const empty = document.createElement("option");
+  empty.value = "";
+  empty.textContent = directions.length ? "select direction" : "no direction data";
+  platformDirectionInput.appendChild(empty);
+  for (const direction of directions) {
+    const option = document.createElement("option");
+    option.value = direction;
+    option.textContent = `${direction} 방면`;
+    platformDirectionInput.appendChild(option);
+  }
+  if (directions.includes(previous)) platformDirectionInput.value = previous;
+  else if (directions.length === 1) platformDirectionInput.value = directions[0];
+}
+
+function loadStationOptions() {
+  fetch("/api/stations")
+    .then((response) => response.json())
+    .then((data) => {
+      populateStationOptions(data.stations || []);
+      populatePlatformLineOptions();
+    })
+    .catch((error) => {
+      quickExitStatus.textContent = `stations: ${error.message || error}`;
+    });
+}
+
+function projectedPointOnPlatformLine(world) {
+  if (!state.platform.lineStart || !state.platform.lineEnd) {
+    return [Number(world.x.toFixed(2)), Number(world.y.toFixed(2))];
+  }
+  const projected = projectPointToSegment(world, state.platform.lineStart, state.platform.lineEnd);
+  return [Number(projected[0].toFixed(2)), Number(projected[1].toFixed(2))];
+}
+
 function platformDisplayPoints(platform) {
   if (platform.point_source) {
     return [platform.point_source, platform.facing_point_source].filter(Boolean);
@@ -4735,7 +4879,11 @@ function platformDisplayPoints(platform) {
       },
     ];
   }
-  return anchors.sort((a, b) => a.ordinal - b.ordinal).map((anchor) => anchor.point_source);
+  const anchorPoints = anchors.sort((a, b) => a.ordinal - b.ordinal).map((anchor) => anchor.point_source);
+  if (platform.start_point_source && platform.end_point_source) {
+    return [platform.start_point_source, ...anchorPoints, platform.end_point_source];
+  }
+  return anchorPoints;
 }
 
 function selectedPlatformIds() {
@@ -4755,13 +4903,31 @@ function updatePlatformStatus(message = null) {
     ].filter(Boolean).join("\n") || "inactive";
     return;
   }
+  if (state.platform.mode === "line") {
+    const rows = sortedQuickExitRowsForDirection(state.platform.quickExitRows, state.platform.direction, state.platform.doorsPerCar);
+    platformStatus.textContent = [
+      message,
+      "mode: platform line",
+      `station: ${state.platform.stationName || "-"}`,
+      `line: ${state.platform.lineId || "-"}`,
+      `direction: ${state.platform.direction || "-"}`,
+      `line: ${state.platform.lineStart ? "start" : "-"} / ${state.platform.lineEnd ? "end" : "-"}`,
+      `anchors: ${(state.platform.anchors || []).length}/${rows.length || "manual"}`,
+      rows.length ? `next door: ${rows[(state.platform.anchors || []).length]?.door_no || "done"}` : null,
+      !state.platform.lineStart
+        ? "Click train-front point. This becomes car 1."
+        : !state.platform.lineEnd
+          ? "Click train-tail point."
+          : "Click stair/access points in train-direction order. Shift saves.",
+    ].filter(Boolean).join("\n");
+    return;
+  }
   platformStatus.textContent = [
     message,
     `mode: platform point`,
     `station: ${state.platform.stationName || "-"}`,
     `line: ${state.platform.lineId || "-"}`,
     `direction: ${state.platform.direction || "-"}`,
-    `car range: ${state.platform.carRange || "-"}`,
     `point: ${state.platform.point ? "set" : "-"}`,
     `facing: ${state.platform.facingPoint ? "set" : "-"}`,
     state.platform.point ? "Click facing direction." : "Click platform point.",
@@ -4773,12 +4939,18 @@ function startPlatformLine() {
   state.tool = "platform";
   state.platform = {
     active: true,
+    mode: selectedPlatformMode(),
     point: null,
     facingPoint: null,
-    stationName: platformStationInput.value.trim(),
+    lineStart: null,
+    lineEnd: null,
+    anchors: [],
+    quickExitRows: state.platform.quickExitRows || [],
+    stationName: normalizeStationDisplayName(platformStationInput.value),
     lineId: platformLineInput.value.trim(),
     direction: platformDirectionInput.value.trim(),
-    carRange: platformCarRangeInput.value.trim(),
+    carCount: selectedPlatformCarCount(),
+    doorsPerCar: selectedPlatformDoorsPerCar(),
     label: platformLabelInput.value.trim(),
     polygonId: null,
     layer: null,
@@ -4791,12 +4963,18 @@ function resetPlatformLine() {
   state.tool = "select";
   state.platform = {
     active: false,
+    mode: selectedPlatformMode(),
     point: null,
     facingPoint: null,
-    stationName: platformStationInput.value.trim(),
+    lineStart: null,
+    lineEnd: null,
+    anchors: [],
+    quickExitRows: state.platform.quickExitRows || [],
+    stationName: normalizeStationDisplayName(platformStationInput.value),
     lineId: platformLineInput.value.trim(),
     direction: platformDirectionInput.value.trim(),
-    carRange: platformCarRangeInput.value.trim(),
+    carCount: selectedPlatformCarCount(),
+    doorsPerCar: selectedPlatformDoorsPerCar(),
     label: platformLabelInput.value.trim(),
     polygonId: null,
     layer: null,
@@ -4807,6 +4985,10 @@ function resetPlatformLine() {
 
 function addPlatformPoint(world, poly) {
   if (!state.platform.active) return;
+  if (state.platform.mode === "line") {
+    addPlatformLinePoint(world, poly);
+    return;
+  }
   if (!state.platform.point && !poly) {
     updatePlatformStatus("Click inside a platform polygon.");
     return;
@@ -4838,7 +5020,6 @@ function addPlatformPoint(world, poly) {
     station_name: state.platform.stationName || null,
     line_id: state.platform.lineId || null,
     direction: state.platform.direction || null,
-    car_range: state.platform.carRange || null,
     polygon_id: state.platform.polygonId,
     layer: state.platform.layer,
     point_source: state.platform.point,
@@ -4851,6 +5032,140 @@ function addPlatformPoint(world, poly) {
     resetPlatformLine();
     updatePlatformStatus(`${platformId} saved.`);
   });
+}
+
+function addPlatformLinePoint(world, poly) {
+  if (!state.platform.lineStart && !poly) {
+    updatePlatformStatus("Click the train-front point inside a platform polygon.");
+    return;
+  }
+  const layer = poly ? polygonLayerValue(poly) : state.platform.layer;
+  if (!state.platform.lineStart && !layer) {
+    updatePlatformStatus(`Set layer first: ${poly.polygon_id}`);
+    return;
+  }
+  const point = [Number(world.x.toFixed(2)), Number(world.y.toFixed(2))];
+  if (!state.platform.lineStart) {
+    state.platform.lineStart = point;
+    state.platform.polygonId = poly.polygon_id;
+    state.platform.layer = layer;
+    updatePlatformStatus("Train-front point set. Click train-tail point.");
+    draw();
+    return;
+  }
+  if (!state.platform.lineEnd) {
+    state.platform.lineEnd = point;
+    updatePlatformStatus("Platform line set. Click access points to map quick-exit doors.");
+    draw();
+    return;
+  }
+  const rows = sortedQuickExitRowsForDirection(state.platform.quickExitRows, state.platform.direction, state.platform.doorsPerCar);
+  const nextRow = rows[(state.platform.anchors || []).length] || null;
+  const mappedPoint = projectedPointOnPlatformLine(world);
+  const parsed = nextRow ? parseCarDoor(nextRow.door_no) : null;
+  state.platform.anchors = state.platform.anchors || [];
+  state.platform.anchors.push({
+    point_source: mappedPoint,
+    car: parsed ? parsed.car : 1,
+    door: parsed ? parsed.door : state.platform.anchors.length + 1,
+    car_door: parsed ? parsed.carDoor : null,
+    quick_exit: nextRow,
+    near_connection_id: null,
+  });
+  updatePlatformStatus(nextRow ? `Mapped ${nextRow.door_no}.` : "Anchor added without quick-exit door.");
+  draw();
+}
+
+function applyPlatformLine() {
+  if (!state.platform.active || state.platform.mode !== "line") return;
+  if (!state.platform.lineStart || !state.platform.lineEnd) {
+    updatePlatformStatus("Platform line needs start and end points.");
+    return;
+  }
+  const platformId = nextPlatformId();
+  const anchors = (state.platform.anchors || []).filter((anchor) => anchor.point_source && anchor.car && anchor.door);
+  state.annotations.manual_platforms = state.annotations.manual_platforms || [];
+  state.annotations.manual_platforms.push({
+    platform_id: platformId,
+    type: "platform_direction",
+    label: state.platform.label || platformId,
+    station_name: state.platform.stationName || null,
+    line_id: state.platform.lineId || null,
+    direction: state.platform.direction || null,
+    polygon_id: state.platform.polygonId,
+    layer: state.platform.layer,
+    car_count: state.platform.carCount || selectedPlatformCarCount(),
+    doors_per_car: state.platform.doorsPerCar || selectedPlatformDoorsPerCar(),
+    car_order: "train_direction_front_is_car_1",
+    start_point_source: state.platform.lineStart,
+    end_point_source: state.platform.lineEnd,
+    anchors,
+    quick_exit_rows: state.platform.quickExitRows || [],
+    bidirectional: false,
+  });
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    resetPlatformLine();
+    updatePlatformStatus(`${platformId} saved.`);
+  });
+}
+
+function undoPlatformInputPoint() {
+  if (!state.platform.active) return;
+  if (state.platform.mode !== "line") {
+    if (state.platform.facingPoint) state.platform.facingPoint = null;
+    else if (state.platform.point) {
+      state.platform.point = null;
+      state.platform.polygonId = null;
+      state.platform.layer = null;
+    }
+    updatePlatformStatus();
+    draw();
+    return;
+  }
+  if ((state.platform.anchors || []).length) {
+    state.platform.anchors.pop();
+  } else if (state.platform.lineEnd) {
+    state.platform.lineEnd = null;
+  } else if (state.platform.lineStart) {
+    state.platform.lineStart = null;
+    state.platform.polygonId = null;
+    state.platform.layer = null;
+  }
+  updatePlatformStatus();
+  draw();
+}
+
+function fetchQuickExitDoors() {
+  const station = normalizeStationDisplayName(platformStationInput.value);
+  const line = platformLineInput.value.trim();
+  if (!station || !line) {
+    quickExitStatus.textContent = "quick exit: station and line are required";
+    return;
+  }
+  quickExitStatus.textContent = "quick exit: loading...";
+  const url = `/api/quick_exit?station=${encodeURIComponent(station)}&line=${encodeURIComponent(line)}&facility=${encodeURIComponent("계단")}`;
+  fetch(url)
+    .then((response) => response.json().then((data) => ({ok: response.ok, data})))
+    .then(({ok, data}) => {
+      if (!ok) throw new Error(data.error || "quick exit request failed");
+      const rows = data.rows || [];
+      populatePlatformDirectionOptions(rows);
+      const direction = platformDirectionInput.value;
+      const directionRows = sortedQuickExitRowsForDirection(rows, direction, selectedPlatformDoorsPerCar());
+      state.platform.quickExitRows = rows;
+      const doors = directionRows.map((row) => row.door_no).join(", ");
+      quickExitStatus.textContent = [
+        `quick exit: ${rows.length} rows loaded`,
+        direction ? `${direction} 방면: ${directionRows.length} door(s)` : "select direction",
+        doors || null,
+      ].filter(Boolean).join("\n");
+      updatePlatformStatus();
+      draw();
+    })
+    .catch((error) => {
+      quickExitStatus.textContent = `quick exit: ${error.message || error}`;
+    });
 }
 
 function applyPlatformMetadataToSelected() {
@@ -7570,7 +7885,29 @@ document.getElementById("deleteSubwayBtn").addEventListener("click", deleteSelec
 document.getElementById("deleteAllSubwayBtn").addEventListener("click", deleteAllSubwayAssets);
 document.getElementById("undoSubwayBtn").addEventListener("click", undoLastSubwayAsset);
 document.getElementById("resetSubwayBtn").addEventListener("click", resetSubwayPlacement);
+document.getElementById("fetchQuickExitBtn").addEventListener("click", fetchQuickExitDoors);
+platformStationInput.addEventListener("change", () => {
+  platformStationInput.value = normalizeStationDisplayName(platformStationInput.value);
+  populatePlatformLineOptions();
+  populatePlatformDirectionOptions([]);
+  state.platform.quickExitRows = [];
+  quickExitStatus.textContent = "quick exit: not loaded";
+});
+platformLineInput.addEventListener("change", () => {
+  populatePlatformDirectionOptions([]);
+  state.platform.quickExitRows = [];
+  quickExitStatus.textContent = "quick exit: not loaded";
+});
+platformDirectionInput.addEventListener("change", () => {
+  state.platform.direction = platformDirectionInput.value;
+  const rows = sortedQuickExitRowsForDirection(state.platform.quickExitRows || [], platformDirectionInput.value, selectedPlatformDoorsPerCar());
+  quickExitStatus.textContent = rows.length
+    ? [`quick exit: ${(state.platform.quickExitRows || []).length} rows loaded`, `${platformDirectionInput.value} 방면: ${rows.length} door(s)`, rows.map((row) => row.door_no).join(", ")].join("\n")
+    : "quick exit: no doors for selected direction";
+  updatePlatformStatus();
+});
 document.getElementById("startPlatformBtn").addEventListener("click", startPlatformLine);
+document.getElementById("applyPlatformLineBtn").addEventListener("click", applyPlatformLine);
 document.getElementById("applyPlatformMetadataBtn").addEventListener("click", applyPlatformMetadataToSelected);
 document.getElementById("clearPlatformSelectionBtn").addEventListener("click", clearPlatformSelection);
 document.getElementById("deletePlatformBtn").addEventListener("click", deleteSelectedPlatform);
@@ -7771,6 +8108,7 @@ document.addEventListener("keydown", (event) => {
     else if (state.tool === "scaleCalibration") undoScaleCalibrationPoint();
     else if (state.tool === "wall") undoWallPoint();
     else if (state.tool === "subway") undoSubwayPoint();
+    else if (state.tool === "platform") undoPlatformInputPoint();
     else undoAddPolygonPoint();
   } else if (event.key === "Shift") {
     event.preventDefault();
@@ -7783,6 +8121,7 @@ document.addEventListener("keydown", (event) => {
     else if (state.tool === "straighten") applyStraighten();
     else if (state.tool === "wall") applyWallPath();
     else if (state.tool === "subway") applySubwayPlacement();
+    else if (state.tool === "platform") applyPlatformLine();
   } else if (event.key === "Escape") {
     event.preventDefault();
     if (state.tool === "keep") resetSimpleKeep();
@@ -7837,4 +8176,5 @@ updatePlatformStatus();
 updateElevatorStatus();
 updateStationStatus();
 updateKeepStatus();
+loadStationOptions();
 loadProject();

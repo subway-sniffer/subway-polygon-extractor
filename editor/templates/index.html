@@ -413,25 +413,36 @@
         <h2>Platform Point</h2>
         <label>
           Station
-          <input id="platformStationInput" placeholder="총신대입구">
+          <input id="platformStationInput" list="platformStationOptions" placeholder="서울역">
+          <datalist id="platformStationOptions"></datalist>
         </label>
         <label>
           Line
-          <input id="platformLineInput" placeholder="4호선">
+          <select id="platformLineInput">
+            <option value="">select line</option>
+          </select>
         </label>
         <label>
           Direction
-          <input id="platformDirectionInput" placeholder="사당 방면">
+          <select id="platformDirectionInput">
+            <option value="">fetch quick exit first</option>
+          </select>
         </label>
         <label>
-          Car range
-          <input id="platformCarRangeInput" placeholder="3-1~4-4">
+          Cars
+          <input id="platformCarCountInput" type="number" value="10" min="1" step="1">
+        </label>
+        <label>
+          Doors/car
+          <input id="platformDoorsPerCarInput" type="number" value="4" min="1" step="1">
         </label>
         <label>
           Label
           <input id="platformLabelInput" placeholder="auto">
         </label>
-        <button id="startPlatformBtn">Start Platform Point (Q)</button>
+        <button id="fetchQuickExitBtn">Fetch Quick Exit Doors</button>
+        <button id="startPlatformBtn">Start Platform (Q)</button>
+        <button id="applyPlatformLineBtn">Apply Platform Line (Shift)</button>
         <button id="applyPlatformMetadataBtn">Apply Metadata to Selected</button>
         <button id="clearPlatformSelectionBtn">Clear Platform Selection</button>
         <button id="deletePlatformBtn">Delete Selected Platform</button>
@@ -439,6 +450,7 @@
         <button id="undoPlatformBtn">Undo Last Platform</button>
         <button id="resetPlatformBtn">Reset Platform</button>
         <div id="platformStatus">inactive</div>
+        <div id="quickExitStatus">quick exit: not loaded</div>
       </section>
 
       <section>

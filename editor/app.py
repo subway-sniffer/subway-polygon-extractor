@@ -1,11 +1,15 @@
 import argparse
+import csv
+import os
 import struct
 import sys
+import xml.etree.ElementTree as ET
 from types import SimpleNamespace
 from pathlib import Path
 
 import cv2
 import numpy as np
+import requests
 from flask import Flask, Response, jsonify, render_template, request, send_file
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
@@ -72,6 +76,104 @@ from tests.render_scene_planes import draw_scene_planes, render_layers
 
 MAX_IMAGE_PIXELS = 80_000_000
 MAX_IMAGE_SIDE = 20_000
+QUICK_EXIT_URL = "https://apis.data.go.kr/B553766/inout/getFstExit"
+DEFAULT_QUICK_EXIT_SERVICE_KEY = "53689e54755f719c9ca21bdbd09894ed1a0e7c005449a2446696c975375180b7"
+STATION_CSV_CANDIDATES = [
+    ROOT_DIR / "서울교통공사_역사건축정보_20250310.csv",
+    ROOT_DIR / "서울교통공사_역사심도정보_20241104.csv",
+]
+
+
+def pick_first(row, *names):
+    """Return the first non-empty value for any key in one API row."""
+    for name in names:
+        value = row.get(name)
+        if value not in (None, ""):
+            return value
+    return ""
+
+
+def parse_api_items(data):
+    """Extract OpenAPI item rows from the common data.go.kr response shape."""
+    body = data.get("response", {}).get("body", {})
+    items = body.get("items", {})
+    if isinstance(items, dict):
+        items = items.get("item", [])
+    if isinstance(items, dict):
+        return [items]
+    return items if isinstance(items, list) else []
+
+
+def parse_xml_error(text):
+    """Return a readable message from an XML/text API error response."""
+    try:
+        root = ET.fromstring(text)
+    except ET.ParseError:
+        return text.strip()
+    messages = []
+    for tag in ("returnAuthMsg", "errMsg", "resultMsg", "message"):
+        found = root.find(f".//{tag}")
+        if found is not None and found.text:
+            messages.append(found.text.strip())
+    return " / ".join(messages) if messages else text.strip()
+
+
+def normalize_quick_exit_row(row):
+    """Normalize one quick-exit API row for editor use."""
+    door_no = pick_first(row, "qckgffVhclDoorNo", "QCKGFF_VHCL_DOOR_NO")
+    car_no = door_no.split("-")[0] if "-" in str(door_no) else door_no
+    return {
+        "line": pick_first(row, "lineNm", "SW_NM"),
+        "station": pick_first(row, "stnNm", "SBWAY_STTN_NM"),
+        "up_down": pick_first(row, "upbdnbSe", "UPBDNB_SE"),
+        "toward": pick_first(row, "drtnInfo", "DRTN_INFO"),
+        "facility": pick_first(row, "plfmCmgFac", "PLFM_CMG_FAC"),
+        "facility_position": (
+            pick_first(row, "facPstnNm", "FAC_PSTN_NM")
+            or pick_first(row, "fwkPstnNm", "FWK_PSTN_NM")
+            or pick_first(row, "facNo", "FAC_NO")
+        ),
+        "door_no": door_no,
+        "car_no": car_no,
+        "raw": row,
+    }
+
+
+def normalize_station_name(name):
+    """Return station name in API-friendly display form."""
+    value = str(name or "").strip()
+    if not value:
+        return ""
+    return value if value.endswith("역") else f"{value}역"
+
+
+def normalize_line_name(line):
+    """Return line name in API-friendly display form."""
+    value = str(line or "").strip()
+    if not value:
+        return ""
+    return value if value.endswith("호선") else f"{value}호선"
+
+
+def load_station_line_options():
+    """Load station/line candidates from local Seoul Metro CSV files."""
+    by_station = {}
+    for path in STATION_CSV_CANDIDATES:
+        if not path.exists():
+            continue
+        with path.open("r", encoding="cp949", newline="") as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                station = normalize_station_name(row.get("역명"))
+                line = normalize_line_name(row.get("호선"))
+                if not station or not line:
+                    continue
+                by_station.setdefault(station, set()).add(line)
+    stations = [
+        {"station": station, "lines": sorted(lines, key=lambda item: (len(item), item))}
+        for station, lines in sorted(by_station.items())
+    ]
+    return stations
 
 
 def image_dimensions_from_bytes(data):
@@ -792,6 +894,58 @@ def create_app(args):
                 "output": str(saved_path),
                 "polygon_count": len(payload["polygons"]),
                 "source": payload.get("manual_export", {}).get("source", "annotations"),
+            }
+        )
+
+    @app.route("/api/stations", methods=["GET"])
+    def station_options():
+        """Return station/line candidates from local station metadata files."""
+        stations = load_station_line_options()
+        return jsonify({"count": len(stations), "stations": stations})
+
+    @app.route("/api/quick_exit", methods=["GET"])
+    def quick_exit():
+        """Fetch Seoul Metro quick-exit rows for platform door mapping."""
+        station = (request.args.get("station") or "").strip()
+        line = (request.args.get("line") or "").strip()
+        facility = (request.args.get("facility") or "계단").strip()
+        if not station or not line:
+            return jsonify({"error": "station and line are required"}), 400
+        service_key = os.environ.get("DATA_GO_KR_SERVICE_KEY", DEFAULT_QUICK_EXIT_SERVICE_KEY)
+        params = {
+            "serviceKey": service_key,
+            "pageNo": 1,
+            "numOfRows": 500,
+            "dataType": "JSON",
+            "stnNm": station,
+            "lineNm": line,
+        }
+        try:
+            response = requests.get(QUICK_EXIT_URL, params=params, timeout=10)
+        except requests.RequestException as exc:
+            return jsonify({"error": f"quick exit request failed: {exc}"}), 502
+        if response.status_code == 401:
+            return jsonify({"error": "quick exit API authorization failed"}), 401
+        if not response.ok:
+            return jsonify({"error": f"quick exit API failed: HTTP {response.status_code}", "body": response.text[:300]}), 502
+        try:
+            payload = response.json()
+        except ValueError:
+            return jsonify({"error": f"quick exit API did not return JSON: {parse_xml_error(response.text)[:300]}"}), 502
+        header = payload.get("response", {}).get("header", {})
+        result_code = str(header.get("resultCode", "")).strip()
+        if result_code and result_code not in {"00", "0"}:
+            return jsonify({"error": f"quick exit API error {result_code}: {header.get('resultMsg', '')}"}), 502
+        rows = [normalize_quick_exit_row(row) for row in parse_api_items(payload)]
+        if facility:
+            rows = [row for row in rows if facility in str(row.get("facility") or "")]
+        return jsonify(
+            {
+                "station": station,
+                "line": line,
+                "facility": facility,
+                "count": len(rows),
+                "rows": rows,
             }
         )
 
