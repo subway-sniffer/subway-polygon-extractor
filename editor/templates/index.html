@@ -279,6 +279,17 @@
         <button id="undoLayerAlignBtn">Undo Last Correction Pair</button>
         <button id="resetLayerAlignBtn">Reset XY Correction (Esc)</button>
         <div id="layerAlignStatus">inactive</div>
+        <hr>
+        <label>
+          Local shift label
+          <input id="localShiftLabelInput" placeholder="shift_001">
+        </label>
+        <button id="startLocalShiftBtn">Start Local Shift (S)</button>
+        <button id="deleteLocalShiftBtn">Delete Selected Shift</button>
+        <button id="deleteAllLocalShiftBtn">Delete All Local Shifts</button>
+        <button id="undoLocalShiftBtn">Undo Last Local Shift</button>
+        <button id="resetLocalShiftBtn">Reset Local Shift (Esc)</button>
+        <div id="localShiftStatus">inactive</div>
       </section>
 
       <section>
@@ -369,13 +380,28 @@
             <option value="moving_walkway">moving walkway</option>
             <option value="ticket_gate">ticket gate</option>
             <option value="exit">exit point</option>
+            <option value="toilet">toilet point</option>
           </select>
         </label>
         <label>
           Label
           <input id="subwayLabelInput" placeholder="auto">
         </label>
+        <label>
+          Gate count
+          <input id="gateCountInput" type="number" value="1" min="1" step="1">
+        </label>
+        <label>
+          Toilet type
+          <select id="toiletGenderInput">
+            <option value="both">men + women</option>
+            <option value="female">women</option>
+            <option value="male">men</option>
+            <option value="accessible">accessible</option>
+          </select>
+        </label>
         <button id="startSubwayBtn">Start Map Asset (T)</button>
+        <button id="applySubwayBtn">Apply Map Asset (Shift)</button>
         <button id="deleteSubwayBtn">Delete Selected Asset</button>
         <button id="deleteAllSubwayBtn">Delete All Map Assets</button>
         <button id="undoSubwayBtn">Undo Last Map Asset</button>
@@ -425,9 +451,18 @@
           Label
           <input id="elevatorLabelInput" placeholder="auto">
         </label>
+        <label class="inline-option">
+          <input id="elevatorExitToggle" type="checkbox">
+          Exit elevator
+        </label>
+        <label>
+          Exit number
+          <input id="elevatorExitNumberInput" placeholder="1">
+        </label>
         <button id="startElevatorBtn">Start Elevator Point (E)</button>
         <button id="startElevatorLinkBtn">Start Elevator Link (O)</button>
         <button id="applyElevatorLinkBtn">Create/Update Link</button>
+        <button id="applyElevatorExitBtn">Apply Exit to Selected</button>
         <button id="selectSameElevatorBtn">Select Same Link</button>
         <button id="clearElevatorLinkBtn">Clear Link From Selected</button>
         <button id="clearElevatorSelectionBtn">Clear Elevator Selection</button>

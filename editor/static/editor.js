@@ -17,6 +17,7 @@ const state = {
     manual_platforms: [],
     manual_elevator_points: [],
     layer_alignment_pairs: [],
+    local_shift_corrections: [],
     polygon_axis_corrections: {},
     scale_calibration: null,
     station_metadata: {},
@@ -140,6 +141,20 @@ const state = {
     hoverPoint: null,
   },
   selectedLayerAlignIndex: null,
+  selectedLocalShiftIndex: null,
+  localShift: {
+    active: false,
+    label: "",
+    applyToPolygonIds: [],
+    movingPoint: null,
+    movingPolygonId: null,
+    movingLayer: null,
+    referencePoint: null,
+    referencePolygonId: null,
+    referenceLayer: null,
+    movingVertexIndex: null,
+    movingHoleIndex: null,
+  },
   scaleCalibration: {
     active: false,
     points: [],
@@ -178,6 +193,7 @@ const state = {
     points: [],
     polygonId: null,
     layer: null,
+    gateCount: 1,
   },
   platform: {
     active: false,
@@ -195,6 +211,8 @@ const state = {
     active: false,
     elevatorId: "",
     label: "",
+    isExit: false,
+    exitNumber: "",
     point: null,
     facingPoint: null,
     polygonId: null,
@@ -247,6 +265,8 @@ const splitPolygonStatus = document.getElementById("splitPolygonStatus");
 const layerAlignStatus = document.getElementById("layerAlignStatus");
 const alignLabelInput = document.getElementById("alignLabelInput");
 const alignModeInput = document.getElementById("alignModeInput");
+const localShiftStatus = document.getElementById("localShiftStatus");
+const localShiftLabelInput = document.getElementById("localShiftLabelInput");
 const scaleLengthInput = document.getElementById("scaleLengthInput");
 const scaleStatus = document.getElementById("scaleStatus");
 const localAxisStatus = document.getElementById("localAxisStatus");
@@ -262,6 +282,8 @@ const wallHeightInput = document.getElementById("wallHeightInput");
 const subwayStatus = document.getElementById("subwayStatus");
 const subwayLabelInput = document.getElementById("subwayLabelInput");
 const manualAssetTypeInput = document.getElementById("manualAssetTypeInput");
+const gateCountInput = document.getElementById("gateCountInput");
+const toiletGenderInput = document.getElementById("toiletGenderInput");
 const platformStatus = document.getElementById("platformStatus");
 const platformStationInput = document.getElementById("platformStationInput");
 const platformLineInput = document.getElementById("platformLineInput");
@@ -271,6 +293,8 @@ const platformLabelInput = document.getElementById("platformLabelInput");
 const elevatorStatus = document.getElementById("elevatorStatus");
 const elevatorIdInput = document.getElementById("elevatorIdInput");
 const elevatorLabelInput = document.getElementById("elevatorLabelInput");
+const elevatorExitToggle = document.getElementById("elevatorExitToggle");
+const elevatorExitNumberInput = document.getElementById("elevatorExitNumberInput");
 const keepStatus = document.getElementById("keepStatus");
 const imageSelect = document.getElementById("imageSelect");
 const uploadImageInput = document.getElementById("uploadImageInput");
@@ -299,7 +323,7 @@ const regionToleranceInput = document.getElementById("regionToleranceInput");
 const regionCloseKernelInput = document.getElementById("regionCloseKernelInput");
 const regionOpenKernelInput = document.getElementById("regionOpenKernelInput");
 const regionEpsilonInput = document.getElementById("regionEpsilonInput");
-const MANUAL_ASSET_TYPES = ["subway", "moving_walkway", "ticket_gate", "exit"];
+const MANUAL_ASSET_TYPES = ["subway", "moving_walkway", "ticket_gate", "exit", "toilet"];
 const VERTICAL_CONNECTION_TYPES = ["stair", "escalator", "exit_stair", "exit_escalator"];
 const SIDEBAR_PANELS = [
   {id: "setup", label: "Setup", titles: new Set(["Station Info", "View"])},
@@ -393,6 +417,7 @@ function currentModeLabel() {
     platform: "Platform Point",
     elevatorPoint: "Elevator Point",
     elevatorLink: "Elevator Link",
+    localShift: "Local Shift",
   };
   return labels[state.tool] || state.tool || "Select";
 }
@@ -410,6 +435,9 @@ function selectionSummaryText() {
   if (elevatorIds.length) parts.push(`${elevatorIds.length} elevator point(s)`);
   if (state.selectedLayerAlignIndex !== null && state.selectedLayerAlignIndex !== undefined) {
     parts.push(`xy correction ${state.selectedLayerAlignIndex + 1}`);
+  }
+  if (state.selectedLocalShiftIndex !== null && state.selectedLocalShiftIndex !== undefined) {
+    parts.push(`local shift ${state.selectedLocalShiftIndex + 1}`);
   }
   return parts.length ? parts.join(" | ") : "-";
 }
@@ -701,8 +729,12 @@ function drawManualAssets() {
     const baseColor = manualAssetColor(asset.type, 0.88);
     const selectedColor = "rgba(255, 210, 0, 0.95)";
     const labelColor = manualAssetLabelColor(asset.type);
-    if (asset.start_point_source && asset.end_point_source) {
-      drawPath([asset.start_point_source, asset.end_point_source], selected ? selectedColor : baseColor, selected ? 5 : 3);
+    const assetPath = asset.points_source
+      || (asset.start_point_source && asset.end_point_source ? [asset.start_point_source, asset.end_point_source] : null)
+      || (asset.point_source && asset.facing_point_source ? [asset.point_source, asset.facing_point_source] : null);
+    if (assetPath && assetPath.length >= 2) {
+      drawPath(assetPath, selected ? selectedColor : baseColor, selected ? 5 : 3);
+      if (asset.facing_point_source) drawPathArrow(assetPath, selected ? selectedColor : baseColor);
     }
     const screen = worldToScreen(asset.point_source);
     ctx.beginPath();
@@ -721,7 +753,7 @@ function drawManualAssets() {
   if (state.subway.active) {
     const points = state.subway.points || [];
     const color = manualAssetColor(state.subway.assetType, 0.95);
-    if (points.length === 2) drawPath(points, color, 4);
+    if (points.length >= 2) drawPath(points, color, 4);
     points.forEach((point, index) => {
       const screen = worldToScreen(point);
       ctx.beginPath();
@@ -815,6 +847,12 @@ function selectedElevatorPointIds() {
   return Array.from(ids);
 }
 
+function selectedPolygonIds() {
+  const ids = new Set(state.selectedIds || []);
+  if (state.selectedId) ids.add(state.selectedId);
+  return Array.from(ids);
+}
+
 function drawElevatorPoints() {
   ctx.save();
   const selectedIds = new Set(selectedElevatorPointIds());
@@ -822,7 +860,8 @@ function drawElevatorPoints() {
     if (!item.point_source) continue;
     const itemId = item.elevator_point_id || item.label;
     const selected = selectedIds.has(itemId);
-    const color = selected ? "rgba(255, 210, 0, 0.95)" : "rgba(20, 170, 255, 0.9)";
+    const isExit = Boolean(item.exit);
+    const color = selected ? "rgba(255, 210, 0, 0.95)" : (isExit ? "rgba(255, 120, 40, 0.92)" : "rgba(20, 170, 255, 0.9)");
     const points = [item.point_source, item.facing_point_source].filter(Boolean);
     if (points.length >= 2) {
       drawPath(points, color, selected ? 6 : 4);
@@ -832,7 +871,7 @@ function drawElevatorPoints() {
       const screen = worldToScreen(point);
       ctx.beginPath();
       ctx.rect(screen.x - 6, screen.y - 6, 12, 12);
-      ctx.fillStyle = selected ? "#ffd200" : (index === 0 ? "#14aaff" : "#8bdcff");
+      ctx.fillStyle = selected ? "#ffd200" : (isExit ? (index === 0 ? "#ff7828" : "#ffb077") : (index === 0 ? "#14aaff" : "#8bdcff"));
       ctx.strokeStyle = "#111111";
       ctx.lineWidth = selected ? 3 : 1;
       ctx.fill();
@@ -840,8 +879,8 @@ function drawElevatorPoints() {
     });
     drawCanvasLabel(
       item.point_source,
-      [item.elevator_id, item.label || item.elevator_point_id].filter(Boolean).join(" "),
-      selected ? "#ffd200" : "#14aaff",
+      [item.elevator_id, item.label || item.elevator_point_id, item.exit ? `exit ${item.exit_number || ""}` : null].filter(Boolean).join(" "),
+      selected ? "#ffd200" : (isExit ? "#ff7828" : "#14aaff"),
       10,
       -10,
     );
@@ -1565,6 +1604,43 @@ function drawLayerAlignPreview() {
   ctx.restore();
 }
 
+function drawLocalShiftCorrections() {
+  if (!state.showCorrections && !state.localShift.active) return;
+  ctx.save();
+  if (state.showCorrections) {
+    (state.annotations.local_shift_corrections || []).forEach((correction, index) => {
+      const moving = correction.moving?.point_source;
+      const reference = correction.reference?.point_source;
+      if (!moving || !reference) return;
+      const selected = index === state.selectedLocalShiftIndex;
+      const color = selected ? "rgba(255, 210, 0, 0.95)" : "rgba(255, 70, 150, 0.8)";
+      drawPath([moving, reference], color, selected ? 6 : 3);
+      drawPathArrow([moving, reference], color);
+      drawCanvasLabel(moving, `${correction.label || correction.correction_id || "shift"} move`, selected ? "#ffd200" : "#ff4696", 8, -8);
+      drawCanvasLabel(reference, "ref", selected ? "#ffd200" : "#ff4696", 8, 18);
+    });
+  }
+  if (state.localShift.active) {
+    const points = [state.localShift.movingPoint, state.localShift.referencePoint].filter(Boolean);
+    if (points.length === 2) {
+      drawPath(points, "rgba(255, 70, 150, 0.95)", 5);
+      drawPathArrow(points, "rgba(255, 70, 150, 0.95)");
+    }
+    points.forEach((point, index) => {
+      const screen = worldToScreen(point);
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, 7, 0, Math.PI * 2);
+      ctx.fillStyle = index === 0 ? "#ff4696" : "#ffd200";
+      ctx.strokeStyle = "#111111";
+      ctx.lineWidth = 2;
+      ctx.fill();
+      ctx.stroke();
+      drawCanvasLabel(point, index === 0 ? "moving" : "reference", ctx.fillStyle, 8, -8);
+    });
+  }
+  ctx.restore();
+}
+
 function drawScaleCalibrationPreview() {
   ctx.save();
   const calibration = state.annotations.scale_calibration;
@@ -1711,6 +1787,7 @@ function draw() {
   drawCutHolePreview();
   drawSplitPolygonPreview();
   drawLayerAlignPreview();
+  drawLocalShiftCorrections();
   drawScaleCalibrationPreview();
   drawLocalAxisCorrections();
   drawSharedEdgePreview();
@@ -3053,6 +3130,245 @@ function undoLastLayerAlignPair() {
   });
 }
 
+function updateLocalShiftStatus(message = null) {
+  const count = (state.annotations.local_shift_corrections || []).length;
+  if (!state.localShift.active) {
+    localShiftStatus.textContent = [
+      message,
+      `shifts: ${count}`,
+      state.selectedLocalShiftIndex !== null ? `selected: ${state.selectedLocalShiftIndex + 1}` : null,
+    ].filter(Boolean).join("\n") || "inactive";
+    return;
+  }
+  const next = !state.localShift.movingPoint
+    ? "Click a vertex on a selected moving polygon"
+    : !state.localShift.referencePolygonId
+      ? "Click the reference polygon"
+      : !state.localShift.referencePoint
+      ? "Click the reference point. It can be outside polygons."
+      : "Shift ready";
+  localShiftStatus.textContent = [
+    message,
+    `label: ${state.localShift.label || "auto"}`,
+    `apply polygons: ${state.localShift.applyToPolygonIds.length}`,
+    `moving: ${state.localShift.movingPolygonId || "-"}`,
+    `reference: ${state.localShift.referencePolygonId || "-"}`,
+    next,
+  ].filter(Boolean).join("\n");
+}
+
+function startLocalShift() {
+  if (!canEdit()) return;
+  const applyToPolygonIds = selectedPolygonIds();
+  if (!applyToPolygonIds.length) {
+    updateLocalShiftStatus("Select polygon(s) to shift first.");
+    return;
+  }
+  state.tool = "localShift";
+  state.localShift = {
+    active: true,
+    label: localShiftLabelInput.value.trim(),
+    applyToPolygonIds,
+    movingPoint: null,
+    movingPolygonId: null,
+    movingLayer: null,
+    referencePoint: null,
+    referencePolygonId: null,
+    referenceLayer: null,
+    movingVertexIndex: null,
+    movingHoleIndex: null,
+  };
+  updateLocalShiftStatus();
+  draw();
+}
+
+function resetLocalShift() {
+  state.tool = "select";
+  state.localShift = {
+    active: false,
+    label: localShiftLabelInput.value.trim(),
+    applyToPolygonIds: [],
+    movingPoint: null,
+    movingPolygonId: null,
+    movingLayer: null,
+    referencePoint: null,
+    referencePolygonId: null,
+    referenceLayer: null,
+    movingVertexIndex: null,
+    movingHoleIndex: null,
+  };
+  updateLocalShiftStatus();
+  draw();
+}
+
+function nearestLocalShiftMovingVertex(world, maxScreenDistance = 18) {
+  const applyIds = new Set(state.localShift.applyToPolygonIds || []);
+  let best = null;
+  for (const poly of allPolygons()) {
+    if (!applyIds.has(poly.polygon_id)) continue;
+    const vertex = nearestConnectionVertex(world, poly, maxScreenDistance);
+    if (!vertex || vertex.polygonId !== poly.polygon_id) continue;
+    if (!best || vertex.distance < best.distance) best = vertex;
+  }
+  return best;
+}
+
+function addLocalShiftPoint(world, poly) {
+  if (!state.localShift.active) return;
+  if (!state.localShift.movingPoint) {
+    const vertex = nearestLocalShiftMovingVertex(world);
+    if (!vertex) {
+      updateLocalShiftStatus("Click a vertex on one of the selected moving polygons.");
+      return;
+    }
+    const vertexPoly = vertex.poly || allPolygons().find((item) => item.polygon_id === vertex.polygonId);
+    const layer = polygonLayerValue(vertexPoly);
+    if (!layer) {
+      updateLocalShiftStatus(`Set layer first: ${vertex.polygonId}`);
+      return;
+    }
+    state.localShift.movingPoint = [Number(vertex.point[0].toFixed(2)), Number(vertex.point[1].toFixed(2))];
+    state.localShift.movingPolygonId = vertex.polygonId;
+    state.localShift.movingLayer = layer;
+    state.localShift.movingVertexIndex = vertex.index;
+    state.localShift.movingHoleIndex = vertex.holeIndex;
+    updateLocalShiftStatus();
+    draw();
+    return;
+  }
+  if (!state.localShift.referencePolygonId) {
+    if (!poly) {
+      updateLocalShiftStatus("Click the reference polygon first.");
+      return;
+    }
+    const layer = polygonLayerValue(poly);
+    if (!layer) {
+      updateLocalShiftStatus(`Set layer first: ${poly.polygon_id}`);
+      return;
+    }
+    state.localShift.referencePolygonId = poly.polygon_id;
+    state.localShift.referenceLayer = layer;
+    updateLocalShiftStatus("Reference polygon selected. Now click the reference point.");
+    draw();
+    return;
+  }
+  const point = [Number(world.x.toFixed(2)), Number(world.y.toFixed(2))];
+  state.localShift.referencePoint = point;
+  state.annotations.local_shift_corrections = state.annotations.local_shift_corrections || [];
+  const index = state.annotations.local_shift_corrections.length + 1;
+  const correctionId = `shift_${String(index).padStart(3, "0")}`;
+  state.annotations.local_shift_corrections.push({
+    correction_id: correctionId,
+    type: "local_shift",
+    label: state.localShift.label || correctionId,
+    reference: {
+      polygon_id: state.localShift.referencePolygonId,
+      layer: state.localShift.referenceLayer,
+      point_source: state.localShift.referencePoint,
+    },
+    moving: {
+      polygon_id: state.localShift.movingPolygonId,
+      layer: state.localShift.movingLayer,
+      point_source: state.localShift.movingPoint,
+      vertex_index: state.localShift.movingVertexIndex,
+      hole_index: state.localShift.movingHoleIndex,
+    },
+    apply_to_polygon_ids: state.localShift.applyToPolygonIds,
+    move_attached_annotations: true,
+  });
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    resetLocalShift();
+    updateLocalShiftStatus(`${correctionId} saved.`);
+  });
+}
+
+function nearestLocalShift(world, maxScreenDistance = 12) {
+  const mouseScreen = worldToScreen([world.x, world.y]);
+  let best = null;
+  (state.annotations.local_shift_corrections || []).forEach((correction, index) => {
+    const from = correction.moving?.point_source;
+    const to = correction.reference?.point_source;
+    if (!from || !to) return;
+    const projected = projectPointToSegment(world, from, to);
+    const projectedScreen = worldToScreen(projected);
+    const distance = Math.hypot(projectedScreen.x - mouseScreen.x, projectedScreen.y - mouseScreen.y);
+    if (distance <= maxScreenDistance && (!best || distance < best.distance)) {
+      best = {index, distance};
+    }
+  });
+  return best;
+}
+
+function selectLocalShift(world) {
+  const hit = nearestLocalShift(world);
+  if (!hit) {
+    state.selectedLocalShiftIndex = null;
+    updateLocalShiftStatus();
+    draw();
+    return false;
+  }
+  state.selectedLocalShiftIndex = hit.index;
+  state.selectedLayerAlignIndex = null;
+  state.selectedStairId = null;
+  state.selectedStairIds = [];
+  state.selectedSubwayId = null;
+  state.selectedId = null;
+  state.selectedIds = [];
+  updateSelectedInfo();
+  updateLocalShiftStatus(`Selected local shift ${hit.index + 1}.`);
+  draw();
+  return true;
+}
+
+function deleteSelectedLocalShift() {
+  if (state.selectedLocalShiftIndex === null) {
+    updateLocalShiftStatus("Select a local shift first.");
+    return;
+  }
+  state.annotations.local_shift_corrections = state.annotations.local_shift_corrections || [];
+  if (state.selectedLocalShiftIndex < 0 || state.selectedLocalShiftIndex >= state.annotations.local_shift_corrections.length) {
+    state.selectedLocalShiftIndex = null;
+    updateLocalShiftStatus("Selected local shift is missing.");
+    draw();
+    return;
+  }
+  const removed = state.annotations.local_shift_corrections.splice(state.selectedLocalShiftIndex, 1)[0];
+  state.selectedLocalShiftIndex = null;
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateLocalShiftStatus(`Deleted ${removed.label || removed.correction_id || "local shift"}.`);
+    draw();
+  });
+}
+
+function deleteAllLocalShifts() {
+  state.annotations.local_shift_corrections = state.annotations.local_shift_corrections || [];
+  const removed = state.annotations.local_shift_corrections.length;
+  state.annotations.local_shift_corrections = [];
+  state.selectedLocalShiftIndex = null;
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateLocalShiftStatus(`Deleted ${removed} local shift(s).`);
+    draw();
+  });
+}
+
+function undoLastLocalShift() {
+  state.annotations.local_shift_corrections = state.annotations.local_shift_corrections || [];
+  const removed = state.annotations.local_shift_corrections.pop();
+  if (!removed) {
+    updateLocalShiftStatus("No local shift to undo.");
+    return;
+  }
+  state.selectedLocalShiftIndex = null;
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateLocalShiftStatus(`Removed ${removed.label || removed.correction_id || "local shift"}.`);
+    draw();
+  });
+}
+
 function updateLocalAxisStatus(message = null) {
   const count = Object.keys(state.annotations.polygon_axis_corrections || {}).length;
   if (!state.localAxis.active) {
@@ -3957,10 +4273,16 @@ function selectedManualAssetType() {
   return manualAssetTypeInput?.value || "subway";
 }
 
+function selectedGateCount() {
+  const value = Number(gateCountInput?.value || 1);
+  return Number.isFinite(value) && value >= 1 ? Math.round(value) : 1;
+}
+
 function manualAssetBlend(type) {
   if (type === "ticket_gate") return "TicketGate.blend";
   if (type === "moving_walkway") return "MovingWalkway.blend";
   if (type === "exit") return "ExitMarker.blend";
+  if (type === "toilet") return "Toilet.blend";
   return "Subway.blend";
 }
 
@@ -3968,6 +4290,7 @@ function manualAssetDisplayName(type) {
   if (type === "ticket_gate") return "ticket gate";
   if (type === "moving_walkway") return "moving walkway";
   if (type === "exit") return "exit point";
+  if (type === "toilet") return "toilet point";
   return "subway train";
 }
 
@@ -3975,6 +4298,7 @@ function manualAssetColor(type, alpha = 0.9) {
   if (type === "ticket_gate") return `rgba(210, 31, 60, ${alpha})`;
   if (type === "moving_walkway") return `rgba(0, 190, 140, ${alpha})`;
   if (type === "exit") return `rgba(255, 176, 0, ${alpha})`;
+  if (type === "toilet") return `rgba(120, 70, 255, ${alpha})`;
   return `rgba(0, 120, 255, ${alpha})`;
 }
 
@@ -3982,6 +4306,7 @@ function manualAssetLabelColor(type) {
   if (type === "ticket_gate") return "#d21f3c";
   if (type === "moving_walkway") return "#00a878";
   if (type === "exit") return "#c47b00";
+  if (type === "toilet") return "#7846ff";
   return "#0078ff";
 }
 
@@ -3989,7 +4314,41 @@ function manualAssetPointColor(type, index) {
   if (type === "ticket_gate") return index === 0 ? "#ff5a6f" : "#d21f3c";
   if (type === "moving_walkway") return index === 0 ? "#00d29a" : "#00a878";
   if (type === "exit") return "#ffb000";
+  if (type === "toilet") return index === 0 ? "#7846ff" : "#b39cff";
   return index === 0 ? "#00aaff" : "#0078ff";
+}
+
+function pathCenter(points) {
+  if (!points || !points.length) return null;
+  if (points.length === 1) return points[0];
+  const totalLength = points.slice(0, -1).reduce((total, point, index) => {
+    const next = points[index + 1];
+    return total + Math.hypot(next[0] - point[0], next[1] - point[1]);
+  }, 0);
+  if (totalLength <= 0) return points[0];
+  const target = totalLength / 2;
+  let walked = 0;
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const start = points[index];
+    const end = points[index + 1];
+    const length = Math.hypot(end[0] - start[0], end[1] - start[1]);
+    if (walked + length >= target) {
+      const ratio = length > 0 ? (target - walked) / length : 0;
+      return [
+        Number((start[0] + (end[0] - start[0]) * ratio).toFixed(2)),
+        Number((start[1] + (end[1] - start[1]) * ratio).toFixed(2)),
+      ];
+    }
+    walked += length;
+  }
+  return points[points.length - 1];
+}
+
+function pathRotationDegrees(points) {
+  if (!points || points.length < 2) return 0.0;
+  const start = points[0];
+  const end = points[points.length - 1];
+  return Math.atan2(end[1] - start[1], end[0] - start[0]) * 180 / Math.PI;
 }
 
 function updateSubwayStatus(message = null) {
@@ -3997,6 +4356,7 @@ function updateSubwayStatus(message = null) {
   const walkwayCount = (state.annotations.manual_assets || []).filter((asset) => asset.type === "moving_walkway").length;
   const gateCount = (state.annotations.manual_assets || []).filter((asset) => asset.type === "ticket_gate").length;
   const exitCount = (state.annotations.manual_assets || []).filter((asset) => asset.type === "exit").length;
+  const toiletCount = (state.annotations.manual_assets || []).filter((asset) => asset.type === "toilet").length;
   const currentType = state.subway.active ? state.subway.assetType : selectedManualAssetType();
   if (!state.subway.active) {
     subwayStatus.textContent = [
@@ -4005,17 +4365,26 @@ function updateSubwayStatus(message = null) {
       `moving walkways: ${walkwayCount}`,
       `ticket gates: ${gateCount}`,
       `exits: ${exitCount}`,
+      `toilets: ${toiletCount}`,
       state.selectedSubwayId ? `selected: ${state.selectedSubwayId}` : null,
     ].filter(Boolean).join("\n") || "inactive";
     return;
   }
   const pointOnly = currentType === "exit";
+  const facingPointAsset = currentType === "toilet";
+  const pathAsset = currentType === "ticket_gate";
   subwayStatus.textContent = [
     message,
     `mode: ${manualAssetDisplayName(currentType)}`,
     `label: ${state.subway.label || "auto"}`,
-    `points: ${(state.subway.points || []).length}/${pointOnly ? 1 : 2}`,
-    pointOnly
+    pathAsset ? `gate count: ${state.subway.gateCount || selectedGateCount()}` : null,
+    facingPointAsset ? `toilet: ${toiletGenderInput?.value || "both"}` : null,
+    `points: ${(state.subway.points || []).length}/${pointOnly ? 1 : (pathAsset ? "path" : 2)}`,
+    pathAsset
+      ? "Click gate path points. Shift applies."
+      : facingPointAsset
+      ? ((state.subway.points || []).length < 1 ? "Click toilet point inside a polygon" : "Click facing direction")
+      : pointOnly
       ? "Click exit point inside a polygon"
       : ((state.subway.points || []).length < 1 ? "Click asset start point" : "Click asset end point"),
   ].filter(Boolean).join("\n");
@@ -4031,6 +4400,7 @@ function startSubwayPlacement() {
     points: [],
     polygonId: null,
     layer: null,
+    gateCount: selectedGateCount(),
   };
   updateSubwayStatus();
   draw();
@@ -4045,6 +4415,7 @@ function resetSubwayPlacement() {
     points: [],
     polygonId: null,
     layer: null,
+    gateCount: selectedGateCount(),
   };
   updateSubwayStatus();
   draw();
@@ -4064,6 +4435,14 @@ function addSubwayAsset(world, poly) {
   const point = [Number(world.x.toFixed(2)), Number(world.y.toFixed(2))];
   state.subway.points = state.subway.points || [];
   const assetType = state.subway.assetType || selectedManualAssetType();
+  if (assetType === "ticket_gate") {
+    state.subway.points.push(point);
+    if (!state.subway.polygonId) state.subway.polygonId = poly.polygon_id;
+    if (!state.subway.layer) state.subway.layer = layer;
+    updateSubwayStatus();
+    draw();
+    return;
+  }
   if (assetType === "exit") {
     const assetId = nextManualAssetId(assetType);
     state.annotations.manual_assets = state.annotations.manual_assets || [];
@@ -4080,6 +4459,43 @@ function addSubwayAsset(world, poly) {
       rotation_z: 0.0,
       scale: [1.0, 1.0, 1.0],
       navigation: {node_type: "exit", access_transition: "outside", cost: 0},
+    });
+    saveAnnotations().then((result) => {
+      saveResult.textContent = JSON.stringify(result, null, 2);
+      resetSubwayPlacement();
+      updateSubwayStatus(`${assetId} saved.`);
+    });
+    return;
+  }
+  if (assetType === "toilet") {
+    if (state.subway.points.length < 1) {
+      state.subway.points.push(point);
+      state.subway.polygonId = poly.polygon_id;
+      state.subway.layer = layer;
+      updateSubwayStatus();
+      draw();
+      return;
+    }
+    const start = state.subway.points[0];
+    const dx = point[0] - start[0];
+    const dy = point[1] - start[1];
+    const facingAngleDeg = Math.atan2(dy, dx) * 180 / Math.PI;
+    const assetId = nextManualAssetId(assetType);
+    state.annotations.manual_assets = state.annotations.manual_assets || [];
+    state.annotations.manual_assets.push({
+      asset_id: assetId,
+      type: assetType,
+      blend: manualAssetBlend(assetType),
+      label: state.subway.label || assetId,
+      polygon_id: state.subway.polygonId,
+      layer: state.subway.layer,
+      point_source: start,
+      facing_point_source: point,
+      facing_angle_deg: facingAngleDeg,
+      toilet_gender: toiletGenderInput?.value || "both",
+      rotation_z: facingAngleDeg,
+      scale: [1.0, 1.0, 1.0],
+      navigation: {node_type: "poi", poi_type: "toilet", cost: 0},
     });
     saveAnnotations().then((result) => {
       saveResult.textContent = JSON.stringify(result, null, 2);
@@ -4136,16 +4552,66 @@ function addSubwayAsset(world, poly) {
   });
 }
 
+function applySubwayPlacement() {
+  if (!canEdit()) return;
+  const assetType = state.subway.assetType || selectedManualAssetType();
+  if (!state.subway.active || assetType !== "ticket_gate") return;
+  const points = state.subway.points || [];
+  if (points.length < 2) {
+    updateSubwayStatus("Ticket gate needs at least 2 path points.");
+    return;
+  }
+  const assetId = nextManualAssetId(assetType);
+  const center = pathCenter(points);
+  state.annotations.manual_assets = state.annotations.manual_assets || [];
+  state.annotations.manual_assets.push({
+    asset_id: assetId,
+    type: assetType,
+    blend: manualAssetBlend(assetType),
+    label: state.subway.label || assetId,
+    polygon_id: state.subway.polygonId,
+    layer: state.subway.layer,
+    point_source: center,
+    points_source: points,
+    start_point_source: points[0],
+    end_point_source: points[points.length - 1],
+    rotation_z: pathRotationDegrees(points),
+    scale: [1.0, 1.0, 1.0],
+    gate_count: state.subway.gateCount || selectedGateCount(),
+    gate_type: "ticket_gate",
+    navigation: {node_type: "gate", access_transition: "public_paid", cost: 10},
+  });
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    resetSubwayPlacement();
+    updateSubwayStatus(`${assetId} saved.`);
+  });
+}
+
+function undoSubwayPoint() {
+  if (!state.subway.active || !(state.subway.points || []).length) return;
+  state.subway.points.pop();
+  if (!state.subway.points.length) {
+    state.subway.polygonId = null;
+    state.subway.layer = null;
+  }
+  updateSubwayStatus();
+  draw();
+}
+
 function nearestSubwayAsset(world, maxScreenDistance = 14) {
   const mouseScreen = worldToScreen([world.x, world.y]);
   let best = null;
   (state.annotations.manual_assets || []).forEach((asset, index) => {
     if (!MANUAL_ASSET_TYPES.includes(asset.type) || !asset.point_source) return;
     let distance;
-    if (asset.start_point_source && asset.end_point_source) {
-      const projected = projectPointToSegment(world, asset.start_point_source, asset.end_point_source);
-      const projectedScreen = worldToScreen(projected);
-      distance = Math.hypot(projectedScreen.x - mouseScreen.x, projectedScreen.y - mouseScreen.y);
+    const assetPath = asset.points_source || (asset.start_point_source && asset.end_point_source ? [asset.start_point_source, asset.end_point_source] : null);
+    if (assetPath && assetPath.length >= 2) {
+      distance = Math.min(...assetPath.slice(0, -1).map((point, pointIndex) => {
+        const projected = projectPointToSegment(world, point, assetPath[pointIndex + 1]);
+        const projectedScreen = worldToScreen(projected);
+        return Math.hypot(projectedScreen.x - mouseScreen.x, projectedScreen.y - mouseScreen.y);
+      }));
     } else {
       const screen = worldToScreen(asset.point_source);
       distance = Math.hypot(screen.x - mouseScreen.x, screen.y - mouseScreen.y);
@@ -4546,10 +5012,15 @@ function updateElevatorStatus(message = null) {
     message,
     "mode: elevator point",
     `elevator: ${state.elevatorPoint.elevatorId || "-"}`,
+    `exit: ${state.elevatorPoint.isExit ? (state.elevatorPoint.exitNumber || "yes") : "no"}`,
     `point: ${state.elevatorPoint.point ? "set" : "-"}`,
     `facing: ${state.elevatorPoint.facingPoint ? "set" : "-"}`,
     state.elevatorPoint.point ? "Click facing direction. It can be outside polygons." : "Click elevator access point inside a polygon.",
   ].filter(Boolean).join("\n");
+}
+
+function selectedElevatorExitNumber() {
+  return (elevatorExitNumberInput?.value || "").trim();
 }
 
 function startElevatorPoint() {
@@ -4559,6 +5030,8 @@ function startElevatorPoint() {
     active: true,
     elevatorId: elevatorIdInput.value.trim(),
     label: elevatorLabelInput.value.trim(),
+    isExit: Boolean(elevatorExitToggle?.checked),
+    exitNumber: selectedElevatorExitNumber(),
     point: null,
     facingPoint: null,
     polygonId: null,
@@ -4574,6 +5047,8 @@ function resetElevatorPoint() {
     active: false,
     elevatorId: elevatorIdInput.value.trim(),
     label: elevatorLabelInput.value.trim(),
+    isExit: Boolean(elevatorExitToggle?.checked),
+    exitNumber: selectedElevatorExitNumber(),
     point: null,
     facingPoint: null,
     polygonId: null,
@@ -4633,6 +5108,9 @@ function addElevatorPoint(world, poly) {
     point_source: state.elevatorPoint.point,
     facing_point_source: state.elevatorPoint.facingPoint,
     facing_angle_deg: facingAngleDeg,
+    exit: state.elevatorPoint.isExit,
+    exit_number: state.elevatorPoint.isExit ? state.elevatorPoint.exitNumber : null,
+    access_transition: state.elevatorPoint.isExit ? "outside" : null,
   });
   saveAnnotations().then((result) => {
     saveResult.textContent = JSON.stringify(result, null, 2);
@@ -4748,6 +5226,29 @@ function undoLastElevatorPoint() {
   saveAnnotations().then((result) => {
     saveResult.textContent = JSON.stringify(result, null, 2);
     updateElevatorStatus(`Removed ${removed.elevator_point_id || removed.label}.`);
+    draw();
+  });
+}
+
+function applyElevatorExitToSelected() {
+  const ids = selectedElevatorPointIds();
+  if (!ids.length) {
+    updateElevatorStatus("Select elevator point(s) first.");
+    return;
+  }
+  const idSet = new Set(ids);
+  const isExit = Boolean(elevatorExitToggle?.checked);
+  const exitNumber = selectedElevatorExitNumber();
+  for (const item of state.annotations.manual_elevator_points || []) {
+    if (idSet.has(item.elevator_point_id || item.label)) {
+      item.exit = isExit;
+      item.exit_number = isExit ? exitNumber : null;
+      item.access_transition = isExit ? "outside" : null;
+    }
+  }
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateElevatorStatus(`Updated exit metadata on ${ids.length} elevator point(s).`);
     draw();
   });
 }
@@ -5899,6 +6400,7 @@ function loadProject() {
       state.annotations.manual_assets = state.annotations.manual_assets || [];
       state.annotations.manual_platforms = state.annotations.manual_platforms || [];
   state.annotations.manual_elevator_points = state.annotations.manual_elevator_points || [];
+      state.annotations.local_shift_corrections = state.annotations.local_shift_corrections || [];
       state.annotations.scale_calibration = state.annotations.scale_calibration || null;
       state.annotations.polygon_z_offsets = state.annotations.polygon_z_offsets || {};
       state.annotations.polygon_z_values = state.annotations.polygon_z_values || {};
@@ -5959,6 +6461,7 @@ function resetProjectWorkingState(message) {
     manual_platforms: [],
     manual_elevator_points: [],
     layer_alignment_pairs: [],
+    local_shift_corrections: [],
     polygon_axis_corrections: {},
     scale_calibration: null,
     station_metadata: {},
@@ -6488,6 +6991,7 @@ function applyExportedFinalPayload(data, sourceLabel = null) {
     manual_platforms: state.annotations.manual_platforms || [],
     manual_elevator_points: state.annotations.manual_elevator_points || [],
     layer_alignment_pairs: state.annotations.layer_alignment_pairs || [],
+    local_shift_corrections: state.annotations.local_shift_corrections || [],
     polygon_axis_corrections: state.annotations.polygon_axis_corrections || {},
     scale_calibration: state.annotations.scale_calibration || null,
     station_metadata: data.station_metadata || state.annotations.station_metadata || {},
@@ -6846,6 +7350,10 @@ canvas.addEventListener("click", (event) => {
     addLayerAlignPoint(world, poly);
     return;
   }
+  if (state.tool === "localShift") {
+    addLocalShiftPoint(world, poly);
+    return;
+  }
   if (state.tool === "localAxis") {
     addLocalAxisPoint(world, poly);
     return;
@@ -6887,6 +7395,7 @@ canvas.addEventListener("click", (event) => {
     return;
   }
   if (selectLayerAlignPair(world)) return;
+  if (selectLocalShift(world)) return;
   if (selectSubwayAsset(world)) return;
   if (selectWallPath(world)) return;
   if (selectPlatform(world, event.shiftKey || event.ctrlKey || event.metaKey)) return;
@@ -7028,6 +7537,11 @@ document.getElementById("deleteLayerAlignBtn").addEventListener("click", deleteS
 document.getElementById("deleteAllLayerAlignBtn").addEventListener("click", deleteAllLayerAlignPairs);
 document.getElementById("undoLayerAlignBtn").addEventListener("click", undoLastLayerAlignPair);
 document.getElementById("resetLayerAlignBtn").addEventListener("click", resetLayerAlign);
+document.getElementById("startLocalShiftBtn").addEventListener("click", startLocalShift);
+document.getElementById("deleteLocalShiftBtn").addEventListener("click", deleteSelectedLocalShift);
+document.getElementById("deleteAllLocalShiftBtn").addEventListener("click", deleteAllLocalShifts);
+document.getElementById("undoLocalShiftBtn").addEventListener("click", undoLastLocalShift);
+document.getElementById("resetLocalShiftBtn").addEventListener("click", resetLocalShift);
 document.getElementById("startScaleBtn").addEventListener("click", startScaleCalibration);
 document.getElementById("applyScaleBtn").addEventListener("click", applyScaleCalibration);
 document.getElementById("clearScaleBtn").addEventListener("click", clearScaleCalibration);
@@ -7051,6 +7565,7 @@ document.getElementById("deleteAllWallsBtn").addEventListener("click", deleteAll
 document.getElementById("undoWallBtn").addEventListener("click", undoLastWall);
 document.getElementById("resetWallBtn").addEventListener("click", resetWallPath);
 document.getElementById("startSubwayBtn").addEventListener("click", startSubwayPlacement);
+document.getElementById("applySubwayBtn").addEventListener("click", applySubwayPlacement);
 document.getElementById("deleteSubwayBtn").addEventListener("click", deleteSelectedSubwayAsset);
 document.getElementById("deleteAllSubwayBtn").addEventListener("click", deleteAllSubwayAssets);
 document.getElementById("undoSubwayBtn").addEventListener("click", undoLastSubwayAsset);
@@ -7065,6 +7580,7 @@ document.getElementById("resetPlatformBtn").addEventListener("click", resetPlatf
 document.getElementById("startElevatorBtn").addEventListener("click", startElevatorPoint);
 document.getElementById("startElevatorLinkBtn").addEventListener("click", startElevatorLink);
 document.getElementById("applyElevatorLinkBtn").addEventListener("click", applyElevatorLink);
+document.getElementById("applyElevatorExitBtn").addEventListener("click", applyElevatorExitToSelected);
 document.getElementById("selectSameElevatorBtn").addEventListener("click", selectSameElevatorLink);
 document.getElementById("clearElevatorLinkBtn").addEventListener("click", clearElevatorLinkFromSelected);
 document.getElementById("clearElevatorSelectionBtn").addEventListener("click", clearElevatorSelection);
@@ -7185,6 +7701,9 @@ document.addEventListener("keydown", (event) => {
   } else if (key === "r") {
     event.preventDefault();
     startMoveVertex();
+  } else if (key === "s") {
+    event.preventDefault();
+    startLocalShift();
   } else if (key === "t") {
     event.preventDefault();
     startSubwayPlacement();
@@ -7240,6 +7759,7 @@ document.addEventListener("keydown", (event) => {
     else if (selectedPlatformIds().length) deleteSelectedPlatform();
     else if (selectedElevatorPointIds().length) deleteSelectedElevatorPoint();
     else if (state.selectedLayerAlignIndex !== null) deleteSelectedLayerAlignPair();
+    else if (state.selectedLocalShiftIndex !== null) deleteSelectedLocalShift();
     else if (state.selectedStairId) deleteSelectedStairConnection();
     else deleteSelectedPolygon();
   } else if (event.key === "Backspace") {
@@ -7250,6 +7770,7 @@ document.addEventListener("keydown", (event) => {
     else if (state.tool === "splitPolygon") undoSplitPolygonPoint();
     else if (state.tool === "scaleCalibration") undoScaleCalibrationPoint();
     else if (state.tool === "wall") undoWallPoint();
+    else if (state.tool === "subway") undoSubwayPoint();
     else undoAddPolygonPoint();
   } else if (event.key === "Shift") {
     event.preventDefault();
@@ -7261,6 +7782,7 @@ document.addEventListener("keydown", (event) => {
     else if (state.tool === "crop") applyCrop();
     else if (state.tool === "straighten") applyStraighten();
     else if (state.tool === "wall") applyWallPath();
+    else if (state.tool === "subway") applySubwayPlacement();
   } else if (event.key === "Escape") {
     event.preventDefault();
     if (state.tool === "keep") resetSimpleKeep();
@@ -7269,6 +7791,7 @@ document.addEventListener("keydown", (event) => {
     else if (state.tool === "cutHole") resetCutHole();
     else if (state.tool === "splitPolygon") resetSplitPolygon();
     else if (state.tool === "layerAlign") resetLayerAlign();
+    else if (state.tool === "localShift") resetLocalShift();
     else if (state.tool === "localAxis") resetLocalAxisCorrection();
     else if (state.tool === "subway") resetSubwayPlacement();
     else if (state.tool === "platform") resetPlatformLine();

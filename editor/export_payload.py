@@ -519,12 +519,54 @@ def build_scene_icon_records(icon_matches, polygons, annotations=None, transform
     return records
 
 
-def build_manual_asset_records(annotations=None, transform_metadata=None, transform_info=None, scale=0.01, layer_z=None, floor_height=5.0, default_z=0.0, invert_x=False, invert_y=False, alignment_transforms=None):
+def gate_instances_along_path(path_points, gate_count, z_value, asset_id):
+    """Return per-gate locations and rotations along one transformed gate path."""
+    if not path_points or len(path_points) < 2:
+        return []
+    count = max(1, int(gate_count or 1))
+    segments = []
+    total_length = 0.0
+    for start, end in zip(path_points, path_points[1:]):
+        dx = float(end[0]) - float(start[0])
+        dy = float(end[1]) - float(start[1])
+        length = float(np.hypot(dx, dy))
+        if length <= 0:
+            continue
+        segments.append((start, end, length, total_length))
+        total_length += length
+    if total_length <= 0 or not segments:
+        return []
+
+    gates = []
+    for index in range(count):
+        target = total_length * ((index + 0.5) / count)
+        segment = segments[-1]
+        for candidate in segments:
+            if candidate[3] + candidate[2] >= target:
+                segment = candidate
+                break
+        start, end, length, offset = segment
+        ratio = (target - offset) / length if length > 0 else 0.0
+        x = float(start[0]) + (float(end[0]) - float(start[0])) * ratio
+        y = float(start[1]) + (float(end[1]) - float(start[1])) * ratio
+        rotation_z = float(np.degrees(np.arctan2(float(end[1]) - float(start[1]), float(end[0]) - float(start[0]))))
+        gates.append(
+            {
+                "gate_id": f"{asset_id}_gate_{index + 1:03d}" if asset_id else f"gate_{index + 1:03d}",
+                "index": index + 1,
+                "location": [x, y, float(z_value)],
+                "rotation_z": rotation_z,
+            }
+        )
+    return gates
+
+
+def build_manual_asset_records(annotations=None, transform_metadata=None, transform_info=None, scale=0.01, layer_z=None, floor_height=5.0, default_z=0.0, invert_x=False, invert_y=False, alignment_transforms=None, local_shift_offsets=None):
     """Build Blender assets from manually placed editor asset markers."""
     assets = []
     for asset in (annotations or {}).get("manual_assets", []):
         asset_type = asset.get("type") or "subway"
-        if asset_type not in {"subway", "moving_walkway", "ticket_gate", "exit"} or not asset.get("point_source"):
+        if asset_type not in {"subway", "moving_walkway", "ticket_gate", "exit", "toilet"} or not asset.get("point_source"):
             continue
         layer = asset.get("layer")
         polygon_id = asset.get("polygon_id")
@@ -536,10 +578,12 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
             default_z=default_z,
             floor_height=floor_height,
         )
-        xy = scene_xy_for_connection_point(
+        xy = scene_xy_for_polygon_point(
             asset.get("point_source"),
             layer,
+            polygon_id=polygon_id,
             alignment_transforms=alignment_transforms,
+            local_shift_offsets=local_shift_offsets,
             transform_metadata=transform_metadata,
             transform_info=transform_info,
             scale=scale,
@@ -548,23 +592,57 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
         )
         rotation_z = float(asset.get("rotation_z", 0.0))
         scale_value = asset.get("scale") or [8.0, 1.0, 1.0]
+        path_source = asset.get("points_source") or []
         start_source = asset.get("start_point_source")
         end_source = asset.get("end_point_source")
-        if start_source and end_source:
-            start_xy = scene_xy_for_connection_point(
+        if asset_type == "ticket_gate" and path_source and len(path_source) >= 2:
+            transformed_path = [
+                scene_xy_for_polygon_point(
+                    point,
+                    layer,
+                    polygon_id=polygon_id,
+                    alignment_transforms=alignment_transforms,
+                    local_shift_offsets=local_shift_offsets,
+                    transform_metadata=transform_metadata,
+                    transform_info=transform_info,
+                    scale=scale,
+                    invert_x=invert_x,
+                    invert_y=invert_y,
+                )
+                for point in path_source
+            ]
+            gates = gate_instances_along_path(
+                transformed_path,
+                int(asset.get("gate_count") or 1),
+                z_value,
+                asset.get("asset_id"),
+            )
+            if gates:
+                first = gates[0]["location"]
+                last = gates[-1]["location"]
+                dx = float(last[0]) - float(first[0])
+                dy = float(last[1]) - float(first[1])
+                rotation_z = gates[0]["rotation_z"]
+                scale_value = [float(max(1, len(gates))), 1.0, 1.0]
+        elif start_source and end_source:
+            start_xy = scene_xy_for_polygon_point(
                 start_source,
                 layer,
+                polygon_id=polygon_id,
                 alignment_transforms=alignment_transforms,
+                local_shift_offsets=local_shift_offsets,
                 transform_metadata=transform_metadata,
                 transform_info=transform_info,
                 scale=scale,
                 invert_x=invert_x,
                 invert_y=invert_y,
             )
-            end_xy = scene_xy_for_connection_point(
+            end_xy = scene_xy_for_polygon_point(
                 end_source,
                 layer,
+                polygon_id=polygon_id,
                 alignment_transforms=alignment_transforms,
+                local_shift_offsets=local_shift_offsets,
                 transform_metadata=transform_metadata,
                 transform_info=transform_info,
                 scale=scale,
@@ -575,28 +653,54 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
             dy = float(end_xy[1]) - float(start_xy[1])
             rotation_z = float(np.degrees(np.arctan2(dy, dx)))
             scale_value = [float(np.hypot(dx, dy)), 1.0, 1.0]
-        assets.append(
-            {
-                "asset_id": asset.get("asset_id"),
-                "type": asset_type,
-                "blend": asset.get("blend") or blend_name_for_manual_asset(asset_type),
-                "label": asset.get("label"),
-                "polygon_id": polygon_id,
-                "layer": layer,
-                "location": [float(xy[0]), float(xy[1]), float(z_value)],
-                "rotation_z": rotation_z,
-                "scale": [float(value) for value in scale_value],
-                "point_source": asset.get("point_source"),
-                "start_point_source": start_source,
-                "end_point_source": end_source,
-                "gate_type": asset.get("gate_type") if asset_type == "ticket_gate" else None,
-                "navigation": asset.get("navigation") if asset_type in {"ticket_gate", "exit"} else None,
-            }
-        )
+            gates = None
+        else:
+            gates = None
+        facing_position = None
+        if asset.get("facing_point_source"):
+            facing_xy = scene_xy_for_polygon_point(
+                asset["facing_point_source"],
+                layer,
+                polygon_id=polygon_id,
+                alignment_transforms=alignment_transforms,
+                local_shift_offsets=local_shift_offsets,
+                transform_metadata=transform_metadata,
+                transform_info=transform_info,
+                scale=scale,
+                invert_x=invert_x,
+                invert_y=invert_y,
+            )
+            facing_position = [float(facing_xy[0]), float(facing_xy[1]), float(z_value)]
+            rotation_z = float(np.degrees(np.arctan2(facing_position[1] - xy[1], facing_position[0] - xy[0])))
+        record = {
+            "asset_id": asset.get("asset_id"),
+            "type": asset_type,
+            "blend": asset.get("blend") or blend_name_for_manual_asset(asset_type),
+            "label": asset.get("label"),
+            "polygon_id": polygon_id,
+            "layer": layer,
+            "location": [float(xy[0]), float(xy[1]), float(z_value)],
+            "rotation_z": rotation_z,
+            "scale": [float(value) for value in scale_value],
+            "point_source": asset.get("point_source"),
+            "points_source": path_source if path_source else None,
+            "start_point_source": start_source,
+            "end_point_source": end_source,
+            "facing_point_source": asset.get("facing_point_source"),
+            "facing_position": facing_position,
+            "toilet_gender": asset.get("toilet_gender") if asset_type == "toilet" else None,
+            "gate_count": int(asset.get("gate_count") or 1) if asset_type == "ticket_gate" else None,
+            "gate_type": asset.get("gate_type") if asset_type == "ticket_gate" else None,
+            "navigation": asset.get("navigation") if asset_type in {"ticket_gate", "exit", "toilet"} else None,
+            "local_shift_offset": [float(value) for value in polygon_offset(local_shift_offsets, polygon_id)] if polygon_offset(local_shift_offsets, polygon_id) else None,
+        }
+        if gates is not None:
+            record["gates"] = gates
+        assets.append(record)
     return assets
 
 
-def build_elevator_point_records(annotations=None, transform_metadata=None, transform_info=None, scale=0.01, layer_z=None, floor_height=5.0, default_z=0.0, invert_x=False, invert_y=False, alignment_transforms=None):
+def build_elevator_point_records(annotations=None, transform_metadata=None, transform_info=None, scale=0.01, layer_z=None, floor_height=5.0, default_z=0.0, invert_x=False, invert_y=False, alignment_transforms=None, local_shift_offsets=None):
     """Build scene elevator access points grouped by manual elevator_id."""
     records = []
     for item in (annotations or {}).get("manual_elevator_points", []):
@@ -613,10 +717,12 @@ def build_elevator_point_records(annotations=None, transform_metadata=None, tran
             default_z=default_z,
             floor_height=floor_height,
         )
-        xy = scene_xy_for_connection_point(
+        xy = scene_xy_for_polygon_point(
             point_source,
             layer,
+            polygon_id=polygon_id,
             alignment_transforms=alignment_transforms,
+            local_shift_offsets=local_shift_offsets,
             transform_metadata=transform_metadata,
             transform_info=transform_info,
             scale=scale,
@@ -627,10 +733,12 @@ def build_elevator_point_records(annotations=None, transform_metadata=None, tran
         facing_position = None
         facing_angle_deg = item.get("facing_angle_deg")
         if item.get("facing_point_source"):
-            facing_xy = scene_xy_for_connection_point(
+            facing_xy = scene_xy_for_polygon_point(
                 item["facing_point_source"],
                 layer,
+                polygon_id=polygon_id,
                 alignment_transforms=alignment_transforms,
+                local_shift_offsets=local_shift_offsets,
                 transform_metadata=transform_metadata,
                 transform_info=transform_info,
                 scale=scale,
@@ -652,6 +760,10 @@ def build_elevator_point_records(annotations=None, transform_metadata=None, tran
                 "position": position,
                 "facing_position": facing_position,
                 "facing_angle_deg": facing_angle_deg,
+                "exit": bool(item.get("exit")),
+                "exit_number": item.get("exit_number"),
+                "access_transition": item.get("access_transition") if item.get("exit") else None,
+                "local_shift_offset": [float(value) for value in polygon_offset(local_shift_offsets, polygon_id)] if polygon_offset(local_shift_offsets, polygon_id) else None,
             }
         )
     return records
@@ -690,7 +802,7 @@ def distance_3d(a, b):
     return float(np.linalg.norm(np.asarray(a, dtype=np.float64) - np.asarray(b, dtype=np.float64)))
 
 
-def build_platform_records(annotations=None, transform_metadata=None, transform_info=None, scale=0.01, layer_z=None, floor_height=5.0, default_z=0.0, invert_x=False, invert_y=False, alignment_transforms=None):
+def build_platform_records(annotations=None, transform_metadata=None, transform_info=None, scale=0.01, layer_z=None, floor_height=5.0, default_z=0.0, invert_x=False, invert_y=False, alignment_transforms=None, local_shift_offsets=None):
     """Build platform direction records and generated car-door navigation points."""
     records = []
     for platform in (annotations or {}).get("manual_platforms", []):
@@ -711,10 +823,12 @@ def build_platform_records(annotations=None, transform_metadata=None, transform_
             point_source = platform.get("point_source")
             if not point_source:
                 continue
-            xy = scene_xy_for_connection_point(
+            xy = scene_xy_for_polygon_point(
                 point_source,
                 layer,
+                polygon_id=polygon_id,
                 alignment_transforms=alignment_transforms,
+                local_shift_offsets=local_shift_offsets,
                 transform_metadata=transform_metadata,
                 transform_info=transform_info,
                 scale=scale,
@@ -725,10 +839,12 @@ def build_platform_records(annotations=None, transform_metadata=None, transform_
             facing_position = None
             facing_angle_deg = platform.get("facing_angle_deg")
             if platform.get("facing_point_source"):
-                facing_xy = scene_xy_for_connection_point(
+                facing_xy = scene_xy_for_polygon_point(
                     platform["facing_point_source"],
                     layer,
+                    polygon_id=polygon_id,
                     alignment_transforms=alignment_transforms,
+                    local_shift_offsets=local_shift_offsets,
                     transform_metadata=transform_metadata,
                     transform_info=transform_info,
                     scale=scale,
@@ -777,10 +893,12 @@ def build_platform_records(annotations=None, transform_metadata=None, transform_
             if not anchor.get("point_source") or not anchor.get("car") or not anchor.get("door"):
                 continue
             ordinal = int((int(anchor["car"]) - 1) * doors_per_car + int(anchor["door"]))
-            xy = scene_xy_for_connection_point(
+            xy = scene_xy_for_polygon_point(
                 anchor["point_source"],
                 layer,
+                polygon_id=polygon_id,
                 alignment_transforms=alignment_transforms,
+                local_shift_offsets=local_shift_offsets,
                 transform_metadata=transform_metadata,
                 transform_info=transform_info,
                 scale=scale,
@@ -813,10 +931,12 @@ def build_platform_records(annotations=None, transform_metadata=None, transform_
                 },
             ]
             for anchor in anchors:
-                xy = scene_xy_for_connection_point(
+                xy = scene_xy_for_polygon_point(
                     anchor["point_source"],
                     layer,
+                    polygon_id=polygon_id,
                     alignment_transforms=alignment_transforms,
+                    local_shift_offsets=local_shift_offsets,
                     transform_metadata=transform_metadata,
                     transform_info=transform_info,
                     scale=scale,
@@ -951,18 +1071,19 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
         )
 
     for asset in manual_assets or []:
-        if asset.get("type") not in {"subway", "moving_walkway", "ticket_gate", "exit"} or not asset.get("location"):
+        if asset.get("type") not in {"subway", "moving_walkway", "ticket_gate", "exit", "toilet"} or not asset.get("location"):
             continue
         asset_id = asset.get("asset_id") or asset.get("label")
         if not asset_id:
             continue
         is_gate = asset.get("type") == "ticket_gate"
         is_exit = asset.get("type") == "exit"
+        is_toilet = asset.get("type") == "toilet"
         navigation_extra = asset.get("navigation") or {}
         add_node(
             navigation_node(
                 f"{asset_id}_node",
-                "gate" if is_gate else ("exit" if is_exit else "asset"),
+                "gate" if is_gate else ("exit" if is_exit else ("poi" if is_toilet else "asset")),
                 asset.get("layer"),
                 asset.get("location"),
                 polygon_id=asset.get("polygon_id"),
@@ -970,8 +1091,11 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
                 asset_type=asset.get("type"),
                 label=asset.get("label"),
                 gate_type=asset.get("gate_type") if is_gate else None,
+                poi_type="toilet" if is_toilet else None,
+                toilet_gender=asset.get("toilet_gender") if is_toilet else None,
+                facing_angle_deg=asset.get("rotation_z") if is_toilet else None,
                 access_transition=navigation_extra.get("access_transition") if (is_gate or is_exit) else None,
-                cost=navigation_extra.get("cost") if (is_gate or is_exit) else None,
+                cost=navigation_extra.get("cost") if (is_gate or is_exit or is_toilet) else None,
             )
         )
 
@@ -1041,10 +1165,11 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
         if not elevator_point_id or not position:
             continue
         node_id = f"{elevator_point_id}_node"
+        is_exit_elevator = bool(elevator.get("exit"))
         add_node(
             navigation_node(
                 node_id,
-                "elevator",
+                "exit_elevator" if is_exit_elevator else "elevator",
                 elevator.get("layer"),
                 position,
                 polygon_id=elevator.get("polygon_id"),
@@ -1052,6 +1177,8 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
                 elevator_point_id=elevator_point_id,
                 label=elevator.get("label"),
                 facing_angle_deg=elevator.get("facing_angle_deg"),
+                exit_number=elevator.get("exit_number") if is_exit_elevator else None,
+                access_transition=elevator.get("access_transition") if is_exit_elevator else None,
             )
         )
         elevator_groups.setdefault(elevator.get("elevator_id") or "elevator", []).append((node_id, position))
@@ -1283,16 +1410,18 @@ def scene_xy_for_connection_point(point, layer, alignment_transforms=None, trans
     return apply_xy_transform(xy, layer_transform) if layer_transform is not None else xy
 
 
-def scene_line_from_source_points(points, layer, z_value, alignment_transforms=None, transform_metadata=None, transform_info=None, scale=0.01, invert_x=False, invert_y=False):
+def scene_line_from_source_points(points, layer, z_value, polygon_id=None, alignment_transforms=None, local_shift_offsets=None, transform_metadata=None, transform_info=None, scale=0.01, invert_x=False, invert_y=False):
     """Convert a two-point source line to scene XYZ coordinates."""
     if not valid_source_line(points):
         return None
     line = []
     for point in points:
-        xy = scene_xy_for_connection_point(
+        xy = scene_xy_for_polygon_point(
             point,
             layer,
+            polygon_id=polygon_id,
             alignment_transforms=alignment_transforms,
+            local_shift_offsets=local_shift_offsets,
             transform_metadata=transform_metadata,
             transform_info=transform_info,
             scale=scale,
@@ -1451,6 +1580,89 @@ def apply_xy_offset_to_vertices(vertices, offset):
     return [[float(x) + offset[0], float(y) + offset[1], float(z)] for x, y, z in vertices]
 
 
+def add_xy_offset(point, offset):
+    """Return a 2D point shifted by an optional XY offset."""
+    if not offset:
+        return [float(point[0]), float(point[1])]
+    return [float(point[0]) + float(offset[0]), float(point[1]) + float(offset[1])]
+
+
+def polygon_offset(local_shift_offsets, polygon_id):
+    """Return the accumulated local shift offset for one polygon id."""
+    return (local_shift_offsets or {}).get(polygon_id)
+
+
+def scene_xy_for_polygon_point(point, layer, polygon_id=None, alignment_transforms=None, local_shift_offsets=None, transform_metadata=None, transform_info=None, scale=0.01, invert_x=False, invert_y=False):
+    """Convert one source point to scene XY with layer alignment and optional local polygon shift."""
+    xy = scene_xy_for_connection_point(
+        point,
+        layer,
+        alignment_transforms=alignment_transforms,
+        transform_metadata=transform_metadata,
+        transform_info=transform_info,
+        scale=scale,
+        invert_x=invert_x,
+        invert_y=invert_y,
+    )
+    return add_xy_offset(xy, polygon_offset(local_shift_offsets, polygon_id))
+
+
+def build_local_shift_offsets(corrections, alignment_transforms=None, transform_metadata=None, transform_info=None, scale=0.01, invert_x=False, invert_y=False):
+    """Build accumulated scene-space local shift offsets keyed by polygon id."""
+    offsets = {}
+    metadata = []
+    for correction in corrections or []:
+        reference = correction.get("reference") or {}
+        moving = correction.get("moving") or {}
+        reference_point = reference.get("point_source")
+        moving_point = moving.get("point_source")
+        reference_polygon_id = reference.get("polygon_id")
+        moving_polygon_id = moving.get("polygon_id")
+        apply_to_polygon_ids = correction.get("apply_to_polygon_ids") or []
+        if not reference_point or not moving_point or not apply_to_polygon_ids:
+            continue
+        reference_xy = scene_xy_for_polygon_point(
+            reference_point,
+            reference.get("layer"),
+            polygon_id=reference_polygon_id,
+            alignment_transforms=alignment_transforms,
+            local_shift_offsets=offsets,
+            transform_metadata=transform_metadata,
+            transform_info=transform_info,
+            scale=scale,
+            invert_x=invert_x,
+            invert_y=invert_y,
+        )
+        moving_xy = scene_xy_for_polygon_point(
+            moving_point,
+            moving.get("layer"),
+            polygon_id=moving_polygon_id,
+            alignment_transforms=alignment_transforms,
+            local_shift_offsets=offsets,
+            transform_metadata=transform_metadata,
+            transform_info=transform_info,
+            scale=scale,
+            invert_x=invert_x,
+            invert_y=invert_y,
+        )
+        delta = [float(reference_xy[0]) - float(moving_xy[0]), float(reference_xy[1]) - float(moving_xy[1])]
+        for polygon_id in apply_to_polygon_ids:
+            current = offsets.get(polygon_id, [0.0, 0.0])
+            offsets[polygon_id] = [float(current[0]) + delta[0], float(current[1]) + delta[1]]
+        metadata.append(
+            {
+                "correction_id": correction.get("correction_id"),
+                "label": correction.get("label"),
+                "type": "local_shift",
+                "reference_polygon_id": reference_polygon_id,
+                "moving_polygon_id": moving_polygon_id,
+                "apply_to_polygon_ids": apply_to_polygon_ids,
+                "delta_scene_xy": delta,
+            }
+        )
+    return offsets, metadata
+
+
 def build_plane_payload_from_records(polygons, walls, annotations=None, transform_metadata=None, transform_info=None, scale=0.01, default_z=0.0, layer_z=None, floor_height=5.0, invert_x=False, invert_y=False, icon_matches=None):
     """Build examples/plane_with_color.json-style planes from polygon records."""
     annotations = annotations or {}
@@ -1471,6 +1683,15 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         invert_x=invert_x,
         invert_y=invert_y,
         reference_layer=annotations.get("layer_alignment_reference"),
+    )
+    local_shift_offsets, local_shift_metadata = build_local_shift_offsets(
+        annotations.get("local_shift_corrections", []),
+        alignment_transforms=alignment_transforms,
+        transform_metadata=transform_metadata,
+        transform_info=transform_info,
+        scale=effective_scale,
+        invert_x=invert_x,
+        invert_y=invert_y,
     )
     planes = []
     axis_corrections = annotations.get("polygon_axis_corrections") or {}
@@ -1506,6 +1727,8 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         vertices = [[float(x), float(y), float(z_value)] for x, y in scene_xy_points]
         layer_transform = alignment_transforms.get(layer)
         vertices = apply_layer_transform_to_vertices(vertices, layer_transform)
+        local_shift_offset = polygon_offset(local_shift_offsets, poly.get("polygon_id"))
+        vertices = apply_xy_offset_to_vertices(vertices, local_shift_offset)
         vertices = ensure_winding(vertices, clockwise=False)
         if transform_metadata and transform_info and poly.get("holes_source"):
             hole_sets = [
@@ -1530,9 +1753,11 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
             if correction_points:
                 hole_xy, _ = apply_local_axis_correction_to_scene_xy(hole_xy, correction_points)
             hole_vertices = [[float(x), float(y), float(z_value)] for x, y in hole_xy]
+            hole_vertices = apply_layer_transform_to_vertices(hole_vertices, layer_transform)
+            hole_vertices = apply_xy_offset_to_vertices(hole_vertices, local_shift_offset)
             holes.append(
                 ensure_winding(
-                    apply_layer_transform_to_vertices(hole_vertices, layer_transform),
+                    hole_vertices,
                     clockwise=True,
                 )
             )
@@ -1551,6 +1776,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
                 "holes": holes,
                 "local_axis_correction": axis_metadata,
                 "alignment_transform": xy_transform_to_list(layer_transform) if layer_transform is not None else None,
+                "local_shift_offset": [float(local_shift_offset[0]), float(local_shift_offset[1])] if local_shift_offset else None,
             }
         )
     wall_records = []
@@ -1569,6 +1795,8 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         z_value = layer_z_from_height(layer, default_z=default_z, floor_height=floor_height, layer_z=layer_z)
         height = float(wall.get("height", 1.0))
         layer_transform = alignment_transforms.get(layer)
+        wall_polygon_id = (wall.get("source_polygon_ids") or [None])[0]
+        wall_shift_offset = polygon_offset(local_shift_offsets, wall_polygon_id)
         for segment_index, (p1, p2) in enumerate(zip(wall_points, wall_points[1:]), start=1):
             y1 = -float(p1[1]) if invert_y else float(p1[1])
             y2 = -float(p2[1]) if invert_y else float(p2[1])
@@ -1576,6 +1804,16 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
             x2 = -float(p2[0]) if invert_x else float(p2[0])
             wall_id = wall.get("wall_id")
             segment_id = wall_id if len(wall_points) == 2 else f"{wall_id}_seg_{segment_index:03d}"
+            wall_vertices = apply_layer_transform_to_vertices(
+                [
+                    [x1 * effective_scale, y1 * effective_scale, z_value],
+                    [x2 * effective_scale, y2 * effective_scale, z_value],
+                    [x2 * effective_scale, y2 * effective_scale, z_value + height],
+                    [x1 * effective_scale, y1 * effective_scale, z_value + height],
+                ],
+                layer_transform,
+            )
+            wall_vertices = apply_xy_offset_to_vertices(wall_vertices, wall_shift_offset)
             wall_records.append(
                 {
                     "name": segment_id,
@@ -1587,16 +1825,9 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
                     "height": height,
                     "color": [0.8, 0.1, 0.1, 1.0],
                     "points_source": wall.get("points_source"),
-                    "vertices": apply_layer_transform_to_vertices(
-                        [
-                            [x1 * effective_scale, y1 * effective_scale, z_value],
-                            [x2 * effective_scale, y2 * effective_scale, z_value],
-                            [x2 * effective_scale, y2 * effective_scale, z_value + height],
-                            [x1 * effective_scale, y1 * effective_scale, z_value + height],
-                        ],
-                        layer_transform,
-                    ),
+                    "vertices": wall_vertices,
                     "alignment_transform": xy_transform_to_list(layer_transform) if layer_transform is not None else None,
+                    "local_shift_offset": [float(wall_shift_offset[0]), float(wall_shift_offset[1])] if wall_shift_offset else None,
                 }
             )
     connection_records = []
@@ -1607,20 +1838,24 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
             continue
         from_layer = connection.get("from_layer")
         to_layer = connection.get("to_layer")
-        from_xy = scene_xy_for_connection_point(
+        from_xy = scene_xy_for_polygon_point(
             from_point,
             from_layer,
+            polygon_id=connection.get("from_polygon_id"),
             alignment_transforms=alignment_transforms,
+            local_shift_offsets=local_shift_offsets,
             transform_metadata=transform_metadata,
             transform_info=transform_info,
             scale=effective_scale,
             invert_x=invert_x,
             invert_y=invert_y,
         )
-        to_xy = scene_xy_for_connection_point(
+        to_xy = scene_xy_for_polygon_point(
             to_point,
             to_layer,
+            polygon_id=connection.get("to_polygon_id"),
             alignment_transforms=alignment_transforms,
+            local_shift_offsets=local_shift_offsets,
             transform_metadata=transform_metadata,
             transform_info=transform_info,
             scale=effective_scale,
@@ -1637,7 +1872,9 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
             connection.get("from_points_source"),
             from_layer,
             from_z,
+            polygon_id=connection.get("from_polygon_id"),
             alignment_transforms=alignment_transforms,
+            local_shift_offsets=local_shift_offsets,
             transform_metadata=transform_metadata,
             transform_info=transform_info,
             scale=effective_scale,
@@ -1648,7 +1885,9 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
             connection.get("to_points_source"),
             to_layer,
             to_z,
+            polygon_id=connection.get("to_polygon_id"),
             alignment_transforms=alignment_transforms,
+            local_shift_offsets=local_shift_offsets,
             transform_metadata=transform_metadata,
             transform_info=transform_info,
             scale=effective_scale,
@@ -1686,6 +1925,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
                         from_position[2],
                     ],
                     "alignment_transform": xy_transform_to_list(from_transform) if from_transform is not None else None,
+                    "local_shift_offset": [float(value) for value in polygon_offset(local_shift_offsets, connection.get("from_polygon_id"))] if polygon_offset(local_shift_offsets, connection.get("from_polygon_id")) else None,
                 },
                 "to": {
                     "polygon_id": connection.get("to_polygon_id"),
@@ -1698,6 +1938,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
                         to_position[2],
                     ],
                     "alignment_transform": xy_transform_to_list(to_transform) if to_transform is not None else None,
+                    "local_shift_offset": [float(value) for value in polygon_offset(local_shift_offsets, connection.get("to_polygon_id"))] if polygon_offset(local_shift_offsets, connection.get("to_polygon_id")) else None,
                 },
             }
         )
@@ -1727,6 +1968,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         invert_x=invert_x,
         invert_y=invert_y,
         alignment_transforms=alignment_transforms,
+        local_shift_offsets=local_shift_offsets,
     )
     elevator_point_records = build_elevator_point_records(
         annotations=annotations,
@@ -1739,6 +1981,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         invert_x=invert_x,
         invert_y=invert_y,
         alignment_transforms=alignment_transforms,
+        local_shift_offsets=local_shift_offsets,
     )
     platform_records = build_platform_records(
         annotations=annotations,
@@ -1751,6 +1994,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         invert_x=invert_x,
         invert_y=invert_y,
         alignment_transforms=alignment_transforms,
+        local_shift_offsets=local_shift_offsets,
     )
     assets = connection_assets + manual_assets
     assets_by_connection_id = {
@@ -1804,6 +2048,14 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
                 "pair_count": len(annotations.get("layer_alignment_pairs", [])),
                 "mode": "xy_scale_translate_by_layer",
             },
+            "local_shift_corrections": {
+                "mode": "export_only_polygon_translation",
+                "corrections": local_shift_metadata,
+                "offsets_by_polygon": {
+                    polygon_id: [float(offset[0]), float(offset[1])]
+                    for polygon_id, offset in local_shift_offsets.items()
+                },
+            },
         },
         "planes": planes,
         "station_metadata": annotations.get("station_metadata") or {},
@@ -1845,6 +2097,8 @@ def blend_name_for_manual_asset(asset_type):
         return "MovingWalkway.blend"
     if asset_type == "exit":
         return "ExitMarker.blend"
+    if asset_type == "toilet":
+        return "Toilet.blend"
     if asset_type == "subway":
         return "Subway.blend"
     return f"{asset_type}.blend"
