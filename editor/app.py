@@ -71,6 +71,7 @@ from pipeline.polygon_grouping import (
     group_polygons_payload,
     select_edges_for_target_groups,
 )
+from pipeline.navigation_routing import build_route_result, list_nodes
 from tests.render_scene_planes import draw_scene_planes, render_layers
 
 
@@ -82,6 +83,20 @@ STATION_CSV_CANDIDATES = [
     ROOT_DIR / "서울교통공사_역사건축정보_20250310.csv",
     ROOT_DIR / "서울교통공사_역사심도정보_20241104.csv",
 ]
+
+
+def format_route_path_text(route):
+    """Return route nodes in blender-map-generator example_path text format."""
+    lines = []
+    nodes = route.get("nodes", []) if isinstance(route, dict) else []
+    for node in nodes:
+        node_id = node.get("node_id")
+        position = node.get("position")
+        if not node_id or not isinstance(position, list) or len(position) < 3:
+            continue
+        coords = [round(float(value), 6) for value in position[:3]]
+        lines.append(f"{node_id} {coords}")
+    return "\n".join(lines) + ("\n" if lines else "")
 
 
 def pick_first(row, *names):
@@ -1090,6 +1105,138 @@ def create_app(args):
                 "output": str(saved_path),
                 "asset_count": len(payload.get("assets", [])),
                 "format": payload.get("metadata", {}).get("format"),
+            }
+        )
+
+    @app.route("/api/navigation/route", methods=["POST"])
+    def navigation_route():
+        """Find a test route from the current editor navigation graph."""
+        data = request.get_json(silent=True) or {}
+        start = data.get("start")
+        goal = data.get("goal")
+        if not start or not goal:
+            return jsonify({"error": "start와 goal이 필요합니다."}), 400
+        annotations = load_annotations(store.active["annotations_path"])
+        height_options = scene_height_options(annotations)
+        icon_matches = load_active_icons()
+        working_polygons = data.get("working_polygons")
+        if working_polygons:
+            final_payload = build_working_final_payload(store.active["polygons_path"], working_polygons, annotations, store.active["transform_metadata"])
+            scene_payload = build_plane_payload_from_records(
+                final_payload["polygons"],
+                final_payload.get("walls", []),
+                annotations=annotations,
+                transform_metadata=store.active["transform_metadata"],
+                transform_info=final_payload.get("manual_export", {}).get("transform"),
+                scale=args.plane_scale,
+                default_z=height_options["default_z"],
+                layer_z=height_options["layer_z"],
+                floor_height=height_options["floor_height"],
+                invert_x=args.invert_x,
+                invert_y=args.invert_y,
+                icon_matches=icon_matches,
+            )
+        else:
+            scene_payload = build_plane_payload(
+                store.active["polygons_path"],
+                annotations,
+                store.active["transform_metadata"],
+                scale=args.plane_scale,
+                default_z=height_options["default_z"],
+                layer_z=height_options["layer_z"],
+                floor_height=height_options["floor_height"],
+                invert_x=args.invert_x,
+                invert_y=args.invert_y,
+                icon_matches=icon_matches,
+            )
+        try:
+            same_layer_radius = data.get("same_layer_radius")
+            same_layer_radius = float(same_layer_radius) if same_layer_radius not in (None, "") else None
+            route = build_route_result(
+                scene_payload.get("navigation", {}),
+                start,
+                goal,
+                synthetic_same_layer=not bool(data.get("no_synthetic_same_layer")),
+                synthetic_mode=data.get("synthetic_mode") or "same-polygon",
+                same_layer_radius=same_layer_radius,
+                zone_change_penalty=float(data.get("zone_change_penalty", 100.0)),
+                paid_free_penalty=float(data.get("paid_free_penalty", 1000.0)),
+            )
+        except Exception as exc:
+            return jsonify({"error": str(exc)}), 400
+        return jsonify(
+            {
+                "route": route,
+                "navigation_node_count": len(scene_payload.get("navigation", {}).get("nodes", [])),
+                "navigation_edge_count": len(scene_payload.get("navigation", {}).get("edges", [])),
+            }
+        )
+
+    @app.route("/api/navigation/export_path", methods=["POST"])
+    def navigation_export_path():
+        """Save the current test route as blender-map-generator path text."""
+        data = request.get_json(silent=True) or {}
+        route = data.get("route") or {}
+        text = format_route_path_text(route)
+        if not text.strip():
+            return jsonify({"error": "저장할 route node position이 없습니다."}), 400
+        output_path = store.named_output_path("route_path", suffix=".txt")
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(text, encoding="utf-8")
+        example_path = ROOT_DIR / "blender-map-generator" / "example_path_seoul.txt"
+        example_path.write_text(text, encoding="utf-8")
+        return jsonify(
+            {
+                "saved": True,
+                "output": str(output_path),
+                "example_output": str(example_path),
+                "line_count": len(text.strip().splitlines()),
+            }
+        )
+
+    @app.route("/api/navigation/nodes", methods=["POST"])
+    def navigation_nodes():
+        """Return selectable navigation nodes for the current editor graph."""
+        data = request.get_json(silent=True) or {}
+        annotations = load_annotations(store.active["annotations_path"])
+        height_options = scene_height_options(annotations)
+        icon_matches = load_active_icons()
+        working_polygons = data.get("working_polygons")
+        if working_polygons:
+            final_payload = build_working_final_payload(store.active["polygons_path"], working_polygons, annotations, store.active["transform_metadata"])
+            scene_payload = build_plane_payload_from_records(
+                final_payload["polygons"],
+                final_payload.get("walls", []),
+                annotations=annotations,
+                transform_metadata=store.active["transform_metadata"],
+                transform_info=final_payload.get("manual_export", {}).get("transform"),
+                scale=args.plane_scale,
+                default_z=height_options["default_z"],
+                layer_z=height_options["layer_z"],
+                floor_height=height_options["floor_height"],
+                invert_x=args.invert_x,
+                invert_y=args.invert_y,
+                icon_matches=icon_matches,
+            )
+        else:
+            scene_payload = build_plane_payload(
+                store.active["polygons_path"],
+                annotations,
+                store.active["transform_metadata"],
+                scale=args.plane_scale,
+                default_z=height_options["default_z"],
+                layer_z=height_options["layer_z"],
+                floor_height=height_options["floor_height"],
+                invert_x=args.invert_x,
+                invert_y=args.invert_y,
+                icon_matches=icon_matches,
+            )
+        nodes = list_nodes(scene_payload.get("navigation", {}))
+        return jsonify(
+            {
+                "nodes": nodes,
+                "node_count": len(nodes),
+                "edge_count": len(scene_payload.get("navigation", {}).get("edges", [])),
             }
         )
 

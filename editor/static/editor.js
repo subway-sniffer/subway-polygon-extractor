@@ -237,6 +237,9 @@ const state = {
     exitNumber: "",
     point: null,
     facingPoint: null,
+    directionVertices: [],
+    directionVertexRefs: [],
+    hoverVertex: null,
     polygonId: null,
     layer: null,
   },
@@ -259,6 +262,10 @@ const state = {
       polygon_b: "forward",
     },
     replacementOrder: "auto",
+  },
+  route: {
+    result: null,
+    sourcePoints: [],
   },
 };
 
@@ -318,6 +325,7 @@ const subwayStatus = document.getElementById("subwayStatus");
 const subwayLabelInput = document.getElementById("subwayLabelInput");
 const manualAssetTypeInput = document.getElementById("manualAssetTypeInput");
 const gateCountInput = document.getElementById("gateCountInput");
+const manualExitNumberInput = document.getElementById("manualExitNumberInput");
 const toiletGenderInput = document.getElementById("toiletGenderInput");
 const platformStatus = document.getElementById("platformStatus");
 const quickExitStatus = document.getElementById("quickExitStatus");
@@ -333,6 +341,13 @@ const elevatorIdInput = document.getElementById("elevatorIdInput");
 const elevatorLabelInput = document.getElementById("elevatorLabelInput");
 const elevatorExitToggle = document.getElementById("elevatorExitToggle");
 const elevatorExitNumberInput = document.getElementById("elevatorExitNumberInput");
+const routeStartInput = document.getElementById("routeStartInput");
+const routeGoalInput = document.getElementById("routeGoalInput");
+const routeStartSelect = document.getElementById("routeStartSelect");
+const routeGoalSelect = document.getElementById("routeGoalSelect");
+const routePaidFreePenaltyInput = document.getElementById("routePaidFreePenaltyInput");
+const routeZonePenaltyInput = document.getElementById("routeZonePenaltyInput");
+const routeStatus = document.getElementById("routeStatus");
 const keepStatus = document.getElementById("keepStatus");
 const imageSelect = document.getElementById("imageSelect");
 const uploadImageInput = document.getElementById("uploadImageInput");
@@ -821,12 +836,22 @@ function drawManualAssets() {
     const baseColor = manualAssetColor(asset.type, 0.88);
     const selectedColor = "rgba(255, 210, 0, 0.95)";
     const labelColor = manualAssetLabelColor(asset.type);
+    const directionPoints = asset.type === "toilet" ? (asset.direction_points_source || null) : null;
     const assetPath = asset.points_source
       || (asset.start_point_source && asset.end_point_source ? [asset.start_point_source, asset.end_point_source] : null)
+      || (directionPoints?.length >= 2 ? directionPoints : null)
       || (asset.point_source && asset.facing_point_source ? [asset.point_source, asset.facing_point_source] : null);
     if (assetPath && assetPath.length >= 2) {
       drawPath(assetPath, selected ? selectedColor : baseColor, selected ? 5 : 3);
-      if (asset.facing_point_source) drawPathArrow(assetPath, selected ? selectedColor : baseColor);
+      if (directionPoints?.length >= 2 && asset.point_source) {
+        const facing = perpendicularFacingFromLine(asset.point_source, directionPoints[0], directionPoints[1], 50);
+        if (facing) {
+          drawPath([asset.point_source, facing.point], selected ? selectedColor : baseColor, selected ? 5 : 3);
+          drawPathArrow([asset.point_source, facing.point], selected ? selectedColor : baseColor);
+        }
+      } else if (asset.facing_point_source) {
+        drawPathArrow(assetPath, selected ? selectedColor : baseColor);
+      }
     }
     const screen = worldToScreen(asset.point_source);
     ctx.beginPath();
@@ -845,7 +870,17 @@ function drawManualAssets() {
   if (state.subway.active) {
     const points = state.subway.points || [];
     const color = manualAssetColor(state.subway.assetType, 0.95);
-    if (points.length >= 2) drawPath(points, color, 4);
+    const directionVertices = state.subway.assetType === "toilet" ? (state.subway.directionVertices || []) : [];
+    if (directionVertices.length >= 2 && points.length >= 1) {
+      drawPath(directionVertices, "rgba(160, 120, 255, 0.9)", 4);
+      const facing = perpendicularFacingFromLine(points[0], directionVertices[0], directionVertices[1], 50);
+      if (facing) {
+        drawPath([points[0], facing.point], color, 4);
+        drawPathArrow([points[0], facing.point], color);
+      }
+    } else if (points.length >= 2) {
+      drawPath(points, color, 4);
+    }
     points.forEach((point, index) => {
       const screen = worldToScreen(point);
       ctx.beginPath();
@@ -856,6 +891,31 @@ function drawManualAssets() {
       ctx.fill();
       ctx.stroke();
     });
+    directionVertices.forEach((point, index) => {
+      const screen = worldToScreen(point);
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = "#b39cff";
+      ctx.strokeStyle = "#111111";
+      ctx.lineWidth = 1;
+      ctx.fill();
+      ctx.stroke();
+      drawCanvasLabel(point, `dir ${index + 1}/2`, "#7846ff", 8, 16);
+    });
+    if (state.subway.assetType === "toilet" && state.subway.hoverVertex) {
+      const screen = worldToScreen(state.subway.hoverVertex.point);
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, 10, 0, Math.PI * 2);
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, 12, 0, Math.PI * 2);
+      ctx.strokeStyle = "#111111";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      drawCanvasLabel(state.subway.hoverVertex.point, "vertex", "#ffffff", 10, -10);
+    }
   }
   ctx.restore();
 }
@@ -969,8 +1029,16 @@ function drawElevatorPoints() {
     const selected = selectedIds.has(itemId);
     const isExit = Boolean(item.exit);
     const color = selected ? "rgba(255, 210, 0, 0.95)" : (isExit ? "rgba(255, 120, 40, 0.92)" : "rgba(20, 170, 255, 0.9)");
-    const points = [item.point_source, item.facing_point_source].filter(Boolean);
-    if (points.length >= 2) {
+    const directionPoints = item.direction_points_source || null;
+    const points = directionPoints ? [item.point_source, ...directionPoints].filter(Boolean) : [item.point_source, item.facing_point_source].filter(Boolean);
+    if (directionPoints?.length >= 2) {
+      drawPath(directionPoints, "rgba(160, 120, 255, 0.8)", selected ? 5 : 3);
+      const facing = perpendicularFacingFromLine(item.point_source, directionPoints[0], directionPoints[1], 50);
+      if (facing) {
+        drawPath([item.point_source, facing.point], color, selected ? 6 : 4);
+        drawPathArrow([item.point_source, facing.point], color);
+      }
+    } else if (points.length >= 2) {
       drawPath(points, color, selected ? 6 : 4);
       drawPathArrow(points, color);
     }
@@ -993,10 +1061,15 @@ function drawElevatorPoints() {
     );
   }
   if (state.elevatorPoint.active) {
-    const points = [state.elevatorPoint.point, state.elevatorPoint.facingPoint].filter(Boolean);
-    if (points.length >= 2) {
-      drawPath(points, "rgba(20, 170, 255, 0.95)", 4);
-      drawPathArrow(points, "rgba(20, 170, 255, 0.95)");
+    const directionVertices = state.elevatorPoint.directionVertices || [];
+    const points = [state.elevatorPoint.point, ...directionVertices].filter(Boolean);
+    if (directionVertices.length >= 2) {
+      drawPath(directionVertices, "rgba(160, 120, 255, 0.9)", 4);
+      const facing = perpendicularFacingFromLine(state.elevatorPoint.point, directionVertices[0], directionVertices[1], 50);
+      if (facing) {
+        drawPath([state.elevatorPoint.point, facing.point], "rgba(20, 170, 255, 0.95)", 4);
+        drawPathArrow([state.elevatorPoint.point, facing.point], "rgba(20, 170, 255, 0.95)");
+      }
     }
     points.forEach((point, index) => {
       const screen = worldToScreen(point);
@@ -1007,9 +1080,54 @@ function drawElevatorPoints() {
       ctx.lineWidth = 1;
       ctx.fill();
       ctx.stroke();
-      drawCanvasLabel(point, index === 0 ? "elevator" : "facing", "#14aaff", 8, 16);
+      drawCanvasLabel(point, index === 0 ? "elevator" : `dir ${index}/2`, "#14aaff", 8, 16);
     });
+    if (state.elevatorPoint.hoverVertex) {
+      const screen = worldToScreen(state.elevatorPoint.hoverVertex.point);
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, 10, 0, Math.PI * 2);
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, 12, 0, Math.PI * 2);
+      ctx.strokeStyle = "#111111";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      drawCanvasLabel(state.elevatorPoint.hoverVertex.point, "vertex", "#ffffff", 10, -10);
+    }
   }
+  ctx.restore();
+}
+
+function drawRouteOverlay() {
+  const points = state.route?.sourcePoints || [];
+  if (!points.length) return;
+  ctx.save();
+  if (points.length >= 2) {
+    drawPath(points, "rgba(255, 214, 0, 0.95)", 8);
+    drawPath(points, "rgba(30, 30, 30, 0.9)", 3);
+    drawPathArrow(points, "rgba(255, 214, 0, 0.95)");
+  }
+  const nodes = state.route?.result?.nodes || [];
+  points.forEach((point, index) => {
+    const screen = worldToScreen(point);
+    ctx.beginPath();
+    ctx.arc(screen.x, screen.y, 8, 0, Math.PI * 2);
+    ctx.fillStyle = index === 0 ? "#00d084" : (index === points.length - 1 ? "#ff4d5f" : "#ffd600");
+    ctx.strokeStyle = "#111111";
+    ctx.lineWidth = 2;
+    ctx.fill();
+    ctx.stroke();
+    const node = nodes[index] || {};
+    drawCanvasLabel(
+      point,
+      `${node.node_key_str || node.node_key || index + 1} ${node.type || ""}`,
+      "#ffd600",
+      10,
+      -14,
+    );
+  });
   ctx.restore();
 }
 
@@ -1883,6 +2001,7 @@ function draw() {
   drawManualAssets();
   drawPlatforms();
   drawElevatorPoints();
+  drawRouteOverlay();
   drawManualMarkerPreview();
   drawCropPreview();
   drawRegionPickPreview();
@@ -2364,6 +2483,144 @@ function saveAnnotations() {
 
 function workingPolygonsPayload() {
   return finalWorkingPolygons();
+}
+
+function routeSourcePoints(route) {
+  return (route?.nodes || [])
+    .map((node) => node.source_position)
+    .filter((point) => Array.isArray(point) && point.length >= 2)
+    .map((point) => [Number(point[0]), Number(point[1])]);
+}
+
+function updateRouteStatus(message = null) {
+  const route = state.route?.result;
+  routeStatus.textContent = [
+    message,
+    route ? `cost: ${Number(route.total_cost || 0).toFixed(3)}` : null,
+    route ? `nodes: ${route.node_count}, edges: ${route.edge_count}` : null,
+    route ? `zones: ${(route.zone_sequence || []).join(" -> ")}` : null,
+    route ? `path: ${(route.node_ids || []).join(" -> ")}` : null,
+  ].filter(Boolean).join("\n") || "inactive";
+}
+
+function routeNodeLabel(node) {
+  return [
+    node.node_key_str || node.node_key,
+    node.type,
+    node.layer,
+    node.zone_type,
+    node.label,
+    node.node_id,
+  ].filter(Boolean).join(" | ");
+}
+
+function populateRouteNodeSelects(nodes) {
+  const previousStart = routeStartInput.value || routeStartSelect.value;
+  const previousGoal = routeGoalInput.value || routeGoalSelect.value;
+  for (const select of [routeStartSelect, routeGoalSelect]) {
+    select.innerHTML = "";
+    const empty = document.createElement("option");
+    empty.value = "";
+    empty.textContent = nodes.length ? "select node" : "no nodes";
+    select.appendChild(empty);
+    for (const node of nodes) {
+      const option = document.createElement("option");
+      option.value = node.node_key_str || node.node_id;
+      option.textContent = routeNodeLabel(node);
+      option.dataset.nodeId = node.node_id || "";
+      select.appendChild(option);
+    }
+  }
+  if (previousStart) routeStartSelect.value = previousStart;
+  if (previousGoal) routeGoalSelect.value = previousGoal;
+}
+
+function loadRouteNodesFromUi() {
+  updateRouteStatus("Loading route nodes...");
+  saveAnnotations()
+    .then(() => fetch("/api/navigation/nodes", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        working_polygons: workingPolygonsPayload(),
+      }),
+    }))
+    .then((response) => response.json().then((data) => ({ok: response.ok, data})))
+    .then(({ok, data}) => {
+      if (!ok) throw new Error(data.error || "node loading failed");
+      populateRouteNodeSelects(data.nodes || []);
+      updateRouteStatus(`Loaded ${data.node_count || 0} nodes.`);
+    })
+    .catch((error) => {
+      updateRouteStatus(String(error));
+    });
+}
+
+function findRouteFromUi() {
+  const start = (routeStartInput.value || routeStartSelect.value || "").trim();
+  const goal = (routeGoalInput.value || routeGoalSelect.value || "").trim();
+  if (!start || !goal) {
+    updateRouteStatus("Start and goal are required.");
+    return;
+  }
+  updateRouteStatus("Finding route...");
+  saveAnnotations()
+    .then(() => fetch("/api/navigation/route", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        start,
+        goal,
+        working_polygons: workingPolygonsPayload(),
+        synthetic_mode: "same-polygon",
+        paid_free_penalty: Number(routePaidFreePenaltyInput.value || 1000),
+        zone_change_penalty: Number(routeZonePenaltyInput.value || 100),
+      }),
+    }))
+    .then((response) => response.json().then((data) => ({ok: response.ok, data})))
+    .then(({ok, data}) => {
+      if (!ok) throw new Error(data.error || "route failed");
+      state.route.result = data.route;
+      state.route.sourcePoints = routeSourcePoints(data.route);
+      updateRouteStatus(state.route.sourcePoints.length >= 2 ? "Route found." : "Route found, but source positions are incomplete.");
+      draw();
+    })
+    .catch((error) => {
+      state.route.result = null;
+      state.route.sourcePoints = [];
+      updateRouteStatus(String(error));
+      draw();
+    });
+}
+
+function exportRoutePathFromUi() {
+  if (!state.route?.result) {
+    updateRouteStatus("Find a route first.");
+    return;
+  }
+  updateRouteStatus("Exporting route path...");
+  fetch("/api/navigation/export_path", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      route: state.route.result,
+    }),
+  })
+    .then((response) => response.json().then((data) => ({ok: response.ok, data})))
+    .then(({ok, data}) => {
+      if (!ok) throw new Error(data.error || "route path export failed");
+      updateRouteStatus(`Route path exported.\noutput: ${data.output}\nexample: ${data.example_output}`);
+    })
+    .catch((error) => {
+      updateRouteStatus(String(error));
+    });
+}
+
+function clearRouteOverlay() {
+  state.route.result = null;
+  state.route.sourcePoints = [];
+  updateRouteStatus();
+  draw();
 }
 
 function validateScene() {
@@ -4065,6 +4322,30 @@ function midpoint(a, b) {
   ];
 }
 
+function perpendicularFacingFromLine(anchorPoint, lineStart, lineEnd, length = 50) {
+  const dx = Number(lineEnd[0]) - Number(lineStart[0]);
+  const dy = Number(lineEnd[1]) - Number(lineStart[1]);
+  const lineLength = Math.hypot(dx, dy);
+  if (!Number.isFinite(lineLength) || lineLength <= 1e-6) return null;
+  const normalA = [-dy / lineLength, dx / lineLength];
+  const normalB = [dy / lineLength, -dx / lineLength];
+  const lineCenter = midpoint(lineStart, lineEnd);
+  const toAnchor = [
+    Number(anchorPoint[0]) - Number(lineCenter[0]),
+    Number(anchorPoint[1]) - Number(lineCenter[1]),
+  ];
+  const dotA = (normalA[0] * toAnchor[0]) + (normalA[1] * toAnchor[1]);
+  const normal = dotA >= 0 ? normalA : normalB;
+  const facingPoint = [
+    Number((Number(anchorPoint[0]) + normal[0] * length).toFixed(2)),
+    Number((Number(anchorPoint[1]) + normal[1] * length).toFixed(2)),
+  ];
+  return {
+    point: facingPoint,
+    angleDeg: Number((Math.atan2(normal[1], normal[0]) * 180 / Math.PI).toFixed(6)),
+  };
+}
+
 function validLinePoints(points) {
   return Array.isArray(points) && points.length === 2 && points.every((point) => Array.isArray(point) && point.length >= 2);
 }
@@ -4718,7 +4999,7 @@ function selectedPlatformDoorsPerCar() {
 function manualAssetBlend(type) {
   if (type === "ticket_gate") return "TicketGate.blend";
   if (type === "moving_walkway") return "MovingWalkway.blend";
-  if (type === "exit") return "ExitMarker.blend";
+  if (type === "exit") return "Exit.blend";
   if (type === "toilet") return "Toilet.blend";
   return "Subway.blend";
 }
@@ -4788,6 +5069,30 @@ function pathRotationDegrees(points) {
   return Math.atan2(end[1] - start[1], end[0] - start[0]) * 180 / Math.PI;
 }
 
+function selectedManualExitNumber() {
+  return manualExitNumberInput?.value?.trim() || "";
+}
+
+function nextManualExitNumber() {
+  const connectionNumbers = (state.annotations.manual_connections || [])
+    .filter((conn) => isExitConnectionType(conn.type))
+    .map((conn) => {
+      const match = String(conn.exit_number || "").match(/(\d+)/);
+      return match ? Number(match[1]) : 0;
+    });
+  const assetNumbers = (state.annotations.manual_assets || [])
+    .filter((asset) => asset.type === "exit")
+    .map((asset) => {
+      const match = String(asset.exit_number || asset.number || asset.label || "").match(/(\d+)/);
+      return match ? Number(match[1]) : 0;
+    });
+  return String(Math.max(0, ...connectionNumbers, ...assetNumbers) + 1);
+}
+
+function selectedOrNextManualExitNumber() {
+  return selectedManualExitNumber() || nextManualExitNumber();
+}
+
 function updateSubwayStatus(message = null) {
   const subwayCount = (state.annotations.manual_assets || []).filter((asset) => asset.type === "subway").length;
   const walkwayCount = (state.annotations.manual_assets || []).filter((asset) => asset.type === "moving_walkway").length;
@@ -4810,17 +5115,20 @@ function updateSubwayStatus(message = null) {
   const pointOnly = currentType === "exit";
   const facingPointAsset = currentType === "toilet";
   const pathAsset = currentType === "ticket_gate";
+  const toiletDirectionCount = (state.subway.directionVertices || []).length;
   subwayStatus.textContent = [
     message,
     `mode: ${manualAssetDisplayName(currentType)}`,
     `label: ${state.subway.label || "auto"}`,
     pathAsset ? `gate count: ${state.subway.gateCount || selectedGateCount()}` : null,
+    pointOnly ? `exit: ${state.subway.exitNumber || selectedOrNextManualExitNumber()}` : null,
     facingPointAsset ? `toilet: ${toiletGenderInput?.value || "both"}` : null,
     `points: ${(state.subway.points || []).length}/${pointOnly ? 1 : (pathAsset ? "path" : 2)}`,
+    facingPointAsset && (state.subway.points || []).length >= 1 ? `direction vertices: ${toiletDirectionCount}/2` : null,
     pathAsset
       ? "Click gate path points. Shift applies."
       : facingPointAsset
-      ? ((state.subway.points || []).length < 1 ? "Click toilet point inside a polygon" : "Click facing direction")
+      ? ((state.subway.points || []).length < 1 ? "Click toilet point inside a polygon" : `Click existing polygon vertex for direction ${toiletDirectionCount + 1}/2.`)
       : pointOnly
       ? "Click exit point inside a polygon"
       : ((state.subway.points || []).length < 1 ? "Click asset start point" : "Click asset end point"),
@@ -4838,6 +5146,9 @@ function startSubwayPlacement() {
     polygonId: null,
     layer: null,
     gateCount: selectedGateCount(),
+    exitNumber: selectedOrNextManualExitNumber(),
+    directionVertices: [],
+    directionVertexRefs: [],
   };
   updateSubwayStatus();
   draw();
@@ -4853,6 +5164,9 @@ function resetSubwayPlacement() {
     polygonId: null,
     layer: null,
     gateCount: selectedGateCount(),
+    exitNumber: selectedOrNextManualExitNumber(),
+    directionVertices: [],
+    directionVertexRefs: [],
   };
   updateSubwayStatus();
   draw();
@@ -4860,18 +5174,19 @@ function resetSubwayPlacement() {
 
 function addSubwayAsset(world, poly) {
   if (!state.subway.active) return;
-  if (!poly) {
+  const assetType = state.subway.assetType || selectedManualAssetType();
+  const point = [Number(world.x.toFixed(2)), Number(world.y.toFixed(2))];
+  state.subway.points = state.subway.points || [];
+  const selectingToiletDirection = assetType === "toilet" && state.subway.points.length >= 1;
+  if (!poly && !selectingToiletDirection) {
     updateSubwayStatus("Click inside a polygon.");
     return;
   }
-  const layer = polygonLayerValue(poly);
-  if (!layer) {
+  const layer = poly ? polygonLayerValue(poly) : state.subway.layer;
+  if (!layer && !selectingToiletDirection) {
     updateSubwayStatus(`Set layer first: ${poly.polygon_id}`);
     return;
   }
-  const point = [Number(world.x.toFixed(2)), Number(world.y.toFixed(2))];
-  state.subway.points = state.subway.points || [];
-  const assetType = state.subway.assetType || selectedManualAssetType();
   if (assetType === "ticket_gate") {
     state.subway.points.push(point);
     if (!state.subway.polygonId) state.subway.polygonId = poly.polygon_id;
@@ -4882,12 +5197,15 @@ function addSubwayAsset(world, poly) {
   }
   if (assetType === "exit") {
     const assetId = nextManualAssetId(assetType);
+    const exitNumber = state.subway.exitNumber || selectedOrNextManualExitNumber();
     state.annotations.manual_assets = state.annotations.manual_assets || [];
     state.annotations.manual_assets.push({
       asset_id: assetId,
       type: assetType,
       blend: manualAssetBlend(assetType),
-      label: state.subway.label || assetId,
+      label: state.subway.label || (exitNumber ? `exit_${exitNumber}` : assetId),
+      exit_number: exitNumber || null,
+      number: exitNumber || null,
       polygon_id: poly.polygon_id,
       layer,
       point_source: point,
@@ -4914,9 +5232,37 @@ function addSubwayAsset(world, poly) {
       return;
     }
     const start = state.subway.points[0];
-    const dx = point[0] - start[0];
-    const dy = point[1] - start[1];
-    const facingAngleDeg = Math.atan2(dy, dx) * 180 / Math.PI;
+    const hover = nearestConnectionVertex(world, poly, 18);
+    if (!hover) {
+      updateSubwayStatus("Click near an existing polygon vertex for toilet direction.");
+      return;
+    }
+    state.subway.directionVertices = state.subway.directionVertices || [];
+    state.subway.directionVertexRefs = state.subway.directionVertexRefs || [];
+    state.subway.directionVertices.push([
+      Number(hover.point[0].toFixed(2)),
+      Number(hover.point[1].toFixed(2)),
+    ]);
+    state.subway.directionVertexRefs.push({
+      polygon_id: hover.polygonId,
+      hole_index: hover.holeIndex,
+      vertex_index: hover.index,
+    });
+    if (state.subway.directionVertices.length < 2) {
+      updateSubwayStatus("Direction vertex 1 set. Click direction vertex 2/2.");
+      draw();
+      return;
+    }
+    const directionStart = state.subway.directionVertices[0];
+    const directionEnd = state.subway.directionVertices[1];
+    const perpendicularFacing = perpendicularFacingFromLine(start, directionStart, directionEnd, 50);
+    if (!perpendicularFacing) {
+      state.subway.directionVertices.pop();
+      state.subway.directionVertexRefs.pop();
+      updateSubwayStatus("Direction vertices must be different.");
+      draw();
+      return;
+    }
     const assetId = nextManualAssetId(assetType);
     state.annotations.manual_assets = state.annotations.manual_assets || [];
     state.annotations.manual_assets.push({
@@ -4927,10 +5273,13 @@ function addSubwayAsset(world, poly) {
       polygon_id: state.subway.polygonId,
       layer: state.subway.layer,
       point_source: start,
-      facing_point_source: point,
-      facing_angle_deg: facingAngleDeg,
+      facing_point_source: perpendicularFacing.point,
+      facing_angle_deg: perpendicularFacing.angleDeg,
+      direction_points_source: state.subway.directionVertices,
+      direction_vertex_refs: state.subway.directionVertexRefs,
+      facing_mode: "perpendicular_to_existing_vertex_line",
       toilet_gender: toiletGenderInput?.value || "both",
-      rotation_z: facingAngleDeg,
+      rotation_z: perpendicularFacing.angleDeg,
       scale: [1.0, 1.0, 1.0],
       navigation: {node_type: "poi", poi_type: "toilet", cost: 0},
     });
@@ -5727,8 +6076,10 @@ function updateElevatorStatus(message = null) {
     `elevator: ${state.elevatorPoint.elevatorId || "-"}`,
     `exit: ${state.elevatorPoint.isExit ? (state.elevatorPoint.exitNumber || "yes") : "no"}`,
     `point: ${state.elevatorPoint.point ? "set" : "-"}`,
-    `facing: ${state.elevatorPoint.facingPoint ? "set" : "-"}`,
-    state.elevatorPoint.point ? "Click facing direction. It can be outside polygons." : "Click elevator access point inside a polygon.",
+    `direction vertices: ${(state.elevatorPoint.directionVertices || []).length}/2`,
+    state.elevatorPoint.point
+      ? `Click existing polygon vertex for direction ${(state.elevatorPoint.directionVertices || []).length + 1}/2.`
+      : "Click elevator access point inside a polygon.",
   ].filter(Boolean).join("\n");
 }
 
@@ -5747,6 +6098,9 @@ function startElevatorPoint() {
     exitNumber: selectedElevatorExitNumber(),
     point: null,
     facingPoint: null,
+    directionVertices: [],
+    directionVertexRefs: [],
+    hoverVertex: null,
     polygonId: null,
     layer: null,
   };
@@ -5764,6 +6118,9 @@ function resetElevatorPoint() {
     exitNumber: selectedElevatorExitNumber(),
     point: null,
     facingPoint: null,
+    directionVertices: [],
+    directionVertexRefs: [],
+    hoverVertex: null,
     polygonId: null,
     layer: null,
   };
@@ -5802,15 +6159,53 @@ function addElevatorPoint(world, poly) {
     state.elevatorPoint.point = point;
     state.elevatorPoint.polygonId = poly.polygon_id;
     state.elevatorPoint.layer = layer;
-    updateElevatorStatus("Elevator point set. Click facing direction.");
+    updateElevatorStatus("Elevator point set. Click direction vertex 1/2.");
     draw();
     return;
   }
-  state.elevatorPoint.facingPoint = point;
+  const vertex = nearestConnectionVertex(world, poly, 18);
+  if (!vertex) {
+    updateElevatorStatus("Click near an existing polygon vertex for direction.");
+    return;
+  }
+  state.elevatorPoint.directionVertices = state.elevatorPoint.directionVertices || [];
+  state.elevatorPoint.directionVertexRefs = state.elevatorPoint.directionVertexRefs || [];
+  state.elevatorPoint.directionVertices.push([
+    Number(vertex.point[0].toFixed(2)),
+    Number(vertex.point[1].toFixed(2)),
+  ]);
+  state.elevatorPoint.directionVertexRefs.push({
+    polygon_id: vertex.polygonId,
+    hole_index: vertex.holeIndex,
+    vertex_index: vertex.index,
+  });
+  if (state.elevatorPoint.directionVertices.length < 2) {
+    updateElevatorStatus("Direction vertex 1 set. Click direction vertex 2/2.");
+    draw();
+    return;
+  }
+  const directionStart = state.elevatorPoint.directionVertices[0];
+  const directionEnd = state.elevatorPoint.directionVertices[1];
+  const dx = directionEnd[0] - directionStart[0];
+  const dy = directionEnd[1] - directionStart[1];
+  if (Math.hypot(dx, dy) <= 1e-6) {
+    state.elevatorPoint.directionVertices.pop();
+    state.elevatorPoint.directionVertexRefs.pop();
+    updateElevatorStatus("Direction vertices must be different.");
+    draw();
+    return;
+  }
+  const perpendicularFacing = perpendicularFacingFromLine(state.elevatorPoint.point, directionStart, directionEnd, 50);
+  if (!perpendicularFacing) {
+    state.elevatorPoint.directionVertices.pop();
+    state.elevatorPoint.directionVertexRefs.pop();
+    updateElevatorStatus("Direction line is invalid.");
+    draw();
+    return;
+  }
+  state.elevatorPoint.facingPoint = perpendicularFacing.point;
   const elevatorPointId = nextElevatorPointId();
-  const dx = state.elevatorPoint.facingPoint[0] - state.elevatorPoint.point[0];
-  const dy = state.elevatorPoint.facingPoint[1] - state.elevatorPoint.point[1];
-  const facingAngleDeg = Number((Math.atan2(dy, dx) * 180 / Math.PI).toFixed(6));
+  const facingAngleDeg = perpendicularFacing.angleDeg;
   state.annotations.manual_elevator_points = state.annotations.manual_elevator_points || [];
   state.annotations.manual_elevator_points.push({
     elevator_point_id: elevatorPointId,
@@ -5820,6 +6215,9 @@ function addElevatorPoint(world, poly) {
     layer: state.elevatorPoint.layer,
     point_source: state.elevatorPoint.point,
     facing_point_source: state.elevatorPoint.facingPoint,
+    direction_points_source: state.elevatorPoint.directionVertices,
+    direction_vertex_refs: state.elevatorPoint.directionVertexRefs,
+    facing_mode: "perpendicular_to_existing_vertex_line",
     facing_angle_deg: facingAngleDeg,
     exit: state.elevatorPoint.isExit,
     exit_number: state.elevatorPoint.isExit ? state.elevatorPoint.exitNumber : null,
@@ -7967,6 +8365,36 @@ canvas.addEventListener("mousemove", (event) => {
     }
     return;
   }
+  if (state.tool === "elevatorPoint" && state.elevatorPoint.active && state.elevatorPoint.point) {
+    const hover = nearestConnectionVertex(world, findPolygonAt(world), 18);
+    const nextHover = hover ? {
+      polygonId: hover.polygonId,
+      holeIndex: hover.holeIndex,
+      index: hover.index,
+      point: hover.point,
+    } : null;
+    const changed = JSON.stringify(nextHover) !== JSON.stringify(state.elevatorPoint.hoverVertex);
+    if (changed) {
+      state.elevatorPoint.hoverVertex = nextHover;
+      draw();
+    }
+    return;
+  }
+  if (state.tool === "subway" && state.subway.active && state.subway.assetType === "toilet" && (state.subway.points || []).length >= 1) {
+    const hover = nearestConnectionVertex(world, findPolygonAt(world), 18);
+    const nextHover = hover ? {
+      polygonId: hover.polygonId,
+      holeIndex: hover.holeIndex,
+      index: hover.index,
+      point: hover.point,
+    } : null;
+    const changed = JSON.stringify(nextHover) !== JSON.stringify(state.subway.hoverVertex);
+    if (changed) {
+      state.subway.hoverVertex = nextHover;
+      draw();
+    }
+    return;
+  }
   if (state.tool === "wall" && state.wall.active) {
     const hover = snapWallPoint(world, findPolygonAt(world));
     const nextHover = hover ? {
@@ -8359,6 +8787,16 @@ document.getElementById("deleteElevatorBtn").addEventListener("click", deleteSel
 document.getElementById("deleteAllElevatorsBtn").addEventListener("click", deleteAllElevatorPoints);
 document.getElementById("undoElevatorBtn").addEventListener("click", undoLastElevatorPoint);
 document.getElementById("resetElevatorBtn").addEventListener("click", resetElevatorPoint);
+document.getElementById("loadRouteNodesBtn").addEventListener("click", loadRouteNodesFromUi);
+routeStartSelect.addEventListener("change", () => {
+  routeStartInput.value = routeStartSelect.value;
+});
+routeGoalSelect.addEventListener("change", () => {
+  routeGoalInput.value = routeGoalSelect.value;
+});
+document.getElementById("findRouteBtn").addEventListener("click", findRouteFromUi);
+document.getElementById("exportRoutePathBtn").addEventListener("click", exportRoutePathFromUi);
+document.getElementById("clearRouteBtn").addEventListener("click", clearRouteOverlay);
 document.getElementById("refreshImagesBtn").addEventListener("click", refreshImages);
 imageSelect.addEventListener("change", loadSelectedImage);
 uploadImageInput.addEventListener("change", uploadImageFile);
@@ -8615,6 +9053,7 @@ updateSubwayStatus();
 updateStairStatus();
 updatePlatformStatus();
 updateElevatorStatus();
+updateRouteStatus();
 updateStationStatus();
 updateKeepStatus();
 loadStationOptions();

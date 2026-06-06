@@ -566,6 +566,29 @@ def gate_instances_along_path(path_points, gate_count, z_value, asset_id):
 def build_manual_asset_records(annotations=None, transform_metadata=None, transform_info=None, scale=0.01, layer_z=None, floor_height=5.0, default_z=0.0, invert_x=False, invert_y=False, alignment_transforms=None, local_shift_offsets=None):
     """Build Blender assets from manually placed editor asset markers."""
     assets = []
+
+    def perpendicular_facing_from_line(position, line_start, line_end, length=1.0):
+        dx = float(line_end[0]) - float(line_start[0])
+        dy = float(line_end[1]) - float(line_start[1])
+        line_length = float(np.hypot(dx, dy))
+        if not np.isfinite(line_length) or line_length <= 1e-9:
+            return None, None
+        normal_a = np.array([-dy / line_length, dx / line_length], dtype=float)
+        normal_b = np.array([dy / line_length, -dx / line_length], dtype=float)
+        line_center = np.array([
+            (float(line_start[0]) + float(line_end[0])) / 2.0,
+            (float(line_start[1]) + float(line_end[1])) / 2.0,
+        ], dtype=float)
+        to_position = np.array([float(position[0]), float(position[1])], dtype=float) - line_center
+        normal = normal_a if float(np.dot(normal_a, to_position)) >= 0 else normal_b
+        facing_position = [
+            float(position[0]) + float(normal[0]) * length,
+            float(position[1]) + float(normal[1]) * length,
+            float(position[2]),
+        ]
+        facing_angle_deg = float(np.degrees(np.arctan2(normal[1], normal[0])))
+        return facing_position, facing_angle_deg
+
     for asset in (annotations or {}).get("manual_assets", []):
         asset_type = asset.get("type") or "subway"
         if asset_type not in {"subway", "moving_walkway", "ticket_gate", "exit", "toilet"} or not asset.get("point_source"):
@@ -663,7 +686,31 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
         else:
             gates = None
         facing_position = None
-        if asset.get("facing_point_source"):
+        direction_positions = []
+        if asset_type == "toilet" and asset.get("direction_points_source"):
+            direction_refs = asset.get("direction_vertex_refs") or []
+            for index, direction_point in enumerate(asset.get("direction_points_source") or []):
+                direction_polygon_id = (direction_refs[index] or {}).get("polygon_id") if index < len(direction_refs) else polygon_id
+                direction_xy = scene_xy_for_polygon_point(
+                    direction_point,
+                    layer,
+                    polygon_id=direction_polygon_id,
+                    alignment_transforms=alignment_transforms,
+                    local_shift_offsets=local_shift_offsets,
+                    transform_metadata=transform_metadata,
+                    transform_info=transform_info,
+                    scale=scale,
+                    invert_x=invert_x,
+                    invert_y=invert_y,
+                )
+                direction_positions.append([float(direction_xy[0]), float(direction_xy[1]), float(z_value)])
+            if len(direction_positions) >= 2:
+                facing_position, rotation_z = perpendicular_facing_from_line(
+                    [float(xy[0]), float(xy[1]), float(z_value)],
+                    direction_positions[0],
+                    direction_positions[1],
+                )
+        elif asset.get("facing_point_source"):
             facing_xy = scene_xy_for_polygon_point(
                 asset["facing_point_source"],
                 layer,
@@ -696,6 +743,12 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
             "end": end_position,
             "facing_point_source": asset.get("facing_point_source"),
             "facing_position": facing_position,
+            "direction_points_source": asset.get("direction_points_source") if asset_type == "toilet" else None,
+            "direction_vertex_refs": asset.get("direction_vertex_refs") if asset_type == "toilet" else None,
+            "direction_positions": direction_positions if direction_positions else None,
+            "facing_mode": asset.get("facing_mode") if asset_type == "toilet" else None,
+            "exit_number": asset.get("exit_number") if asset_type == "exit" else None,
+            "number": asset.get("number") if asset_type == "exit" else None,
             "toilet_gender": asset.get("toilet_gender") if asset_type == "toilet" else None,
             "gate_count": int(asset.get("gate_count") or 1) if asset_type == "ticket_gate" else None,
             "gate_type": asset.get("gate_type") if asset_type == "ticket_gate" else None,
@@ -711,6 +764,29 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
 def build_elevator_point_records(annotations=None, transform_metadata=None, transform_info=None, scale=0.01, layer_z=None, floor_height=5.0, default_z=0.0, invert_x=False, invert_y=False, alignment_transforms=None, local_shift_offsets=None):
     """Build scene elevator access points grouped by manual elevator_id."""
     records = []
+
+    def perpendicular_facing_from_line(position, line_start, line_end, length=1.0):
+        dx = float(line_end[0]) - float(line_start[0])
+        dy = float(line_end[1]) - float(line_start[1])
+        line_length = float(np.hypot(dx, dy))
+        if not np.isfinite(line_length) or line_length <= 1e-9:
+            return None, None
+        normal_a = np.array([-dy / line_length, dx / line_length], dtype=float)
+        normal_b = np.array([dy / line_length, -dx / line_length], dtype=float)
+        line_center = np.array([
+            (float(line_start[0]) + float(line_end[0])) / 2.0,
+            (float(line_start[1]) + float(line_end[1])) / 2.0,
+        ], dtype=float)
+        to_position = np.array([float(position[0]), float(position[1])], dtype=float) - line_center
+        normal = normal_a if float(np.dot(normal_a, to_position)) >= 0 else normal_b
+        facing_position = [
+            float(position[0]) + float(normal[0]) * length,
+            float(position[1]) + float(normal[1]) * length,
+            float(position[2]),
+        ]
+        facing_angle_deg = float(np.degrees(np.arctan2(normal[1], normal[0])))
+        return facing_position, facing_angle_deg
+
     for item in (annotations or {}).get("manual_elevator_points", []):
         point_source = item.get("point_source")
         if not point_source:
@@ -740,7 +816,28 @@ def build_elevator_point_records(annotations=None, transform_metadata=None, tran
         position = [float(xy[0]), float(xy[1]), float(z_value)]
         facing_position = None
         facing_angle_deg = item.get("facing_angle_deg")
-        if item.get("facing_point_source"):
+        direction_positions = []
+        if item.get("direction_points_source"):
+            direction_refs = item.get("direction_vertex_refs") or []
+            for index, direction_point in enumerate(item.get("direction_points_source") or []):
+                direction_polygon_id = (direction_refs[index] or {}).get("polygon_id") if index < len(direction_refs) else polygon_id
+                direction_xy = scene_xy_for_polygon_point(
+                    direction_point,
+                    layer,
+                    polygon_id=direction_polygon_id,
+                    alignment_transforms=alignment_transforms,
+                    local_shift_offsets=local_shift_offsets,
+                    transform_metadata=transform_metadata,
+                    transform_info=transform_info,
+                    scale=scale,
+                    invert_x=invert_x,
+                    invert_y=invert_y,
+                )
+                direction_positions.append([float(direction_xy[0]), float(direction_xy[1]), float(z_value)])
+            if len(direction_positions) >= 2:
+                start, end = direction_positions[0], direction_positions[1]
+                facing_position, facing_angle_deg = perpendicular_facing_from_line(position, start, end)
+        elif item.get("facing_point_source"):
             facing_xy = scene_xy_for_polygon_point(
                 item["facing_point_source"],
                 layer,
@@ -765,8 +862,11 @@ def build_elevator_point_records(annotations=None, transform_metadata=None, tran
                 "layer": layer,
                 "point_source": point_source,
                 "facing_point_source": item.get("facing_point_source"),
+                "direction_points_source": item.get("direction_points_source"),
+                "direction_vertex_refs": item.get("direction_vertex_refs"),
                 "position": position,
                 "facing_position": facing_position,
+                "direction_positions": direction_positions,
                 "facing_angle_deg": facing_angle_deg,
                 "exit": bool(item.get("exit")),
                 "exit_number": item.get("exit_number"),
@@ -870,6 +970,7 @@ def build_platform_records(annotations=None, transform_metadata=None, transform_
                     "direction": platform.get("direction"),
                     "car_range": platform.get("car_range"),
                     "position": position,
+                    "point_source": point_source,
                     "facing_angle_deg": facing_angle_deg,
                 }
             ]
@@ -957,7 +1058,7 @@ def build_platform_records(annotations=None, transform_metadata=None, transform_
         if len(anchors) < 2:
             continue
 
-        def interpolate_position(ordinal):
+        def anchor_pair_for_ordinal(ordinal):
             if ordinal <= anchors[0]["ordinal"]:
                 left, right = anchors[0], anchors[1]
             elif ordinal >= anchors[-1]["ordinal"]:
@@ -970,10 +1071,21 @@ def build_platform_records(annotations=None, transform_metadata=None, transform_
                         break
             span = right["ordinal"] - left["ordinal"]
             t = 0.0 if span == 0 else (ordinal - left["ordinal"]) / span
+            return left, right, t
+
+        def interpolate_position(ordinal):
+            left, right, t = anchor_pair_for_ordinal(ordinal)
             return [
                 float(left["position"][0]) + (float(right["position"][0]) - float(left["position"][0])) * t,
                 float(left["position"][1]) + (float(right["position"][1]) - float(left["position"][1])) * t,
                 float(z_value),
+            ]
+
+        def interpolate_source_point(ordinal):
+            left, right, t = anchor_pair_for_ordinal(ordinal)
+            return [
+                float(left["point_source"][0]) + (float(right["point_source"][0]) - float(left["point_source"][0])) * t,
+                float(left["point_source"][1]) + (float(right["point_source"][1]) - float(left["point_source"][1])) * t,
             ]
 
         nodes = []
@@ -981,6 +1093,7 @@ def build_platform_records(annotations=None, transform_metadata=None, transform_
             for door in range(1, doors_per_car + 1):
                 ordinal = (car - 1) * doors_per_car + door
                 position = interpolate_position(ordinal)
+                point_source = interpolate_source_point(ordinal)
                 nodes.append(
                     {
                         "node_id": f"{platform_id}_car_{car}_door_{door}",
@@ -990,6 +1103,7 @@ def build_platform_records(annotations=None, transform_metadata=None, transform_
                         "car_door": f"{car}-{door}",
                         "ordinal": ordinal,
                         "position": position,
+                        "point_source": point_source,
                     }
                 )
         records.append(
@@ -1071,6 +1185,7 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
                 from_data.get("layer"),
                 from_pos,
                 polygon_id=from_data.get("polygon_id"),
+                source_position=from_data.get("point_source"),
                 connector_id=connection_id,
                 connector_type=connector_type,
                 exit_number=connection.get("exit_number"),
@@ -1084,6 +1199,7 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
                 to_data.get("layer"),
                 to_pos,
                 polygon_id=to_data.get("polygon_id"),
+                source_position=to_data.get("point_source"),
                 connector_id=connection_id,
                 connector_type=connector_type,
                 exit_number=connection.get("exit_number"),
@@ -1121,6 +1237,7 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
                 asset.get("layer"),
                 asset.get("location"),
                 polygon_id=asset.get("polygon_id"),
+                source_position=asset.get("point_source"),
                 asset_id=asset_id,
                 asset_type=asset.get("type"),
                 label=asset.get("label"),
@@ -1146,6 +1263,7 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
                 icon.get("layer"),
                 position,
                 polygon_id=icon.get("polygon_id"),
+                source_position=icon.get("point_source") or icon.get("source_position"),
                 poi_id=icon_id,
                 poi_type=icon_type,
             )
@@ -1166,6 +1284,7 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
                     platform.get("layer"),
                     position,
                     polygon_id=platform.get("polygon_id"),
+                    source_position=platform_node.get("point_source"),
                     platform_id=platform.get("platform_id"),
                     station_name=platform.get("station_name") or platform_node.get("station_name"),
                     line_id=platform.get("line_id"),
@@ -1207,6 +1326,7 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
                 elevator.get("layer"),
                 position,
                 polygon_id=elevator.get("polygon_id"),
+                source_position=elevator.get("point_source"),
                 elevator_id=elevator.get("elevator_id"),
                 elevator_point_id=elevator_point_id,
                 label=elevator.get("label"),
@@ -1233,6 +1353,16 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
                     )
                 )
 
+    nodes.sort(key=lambda node: str(node.get("node_id") or ""))
+    for index, node in enumerate(nodes, start=1):
+        node["node_key"] = index
+        node["node_key_str"] = f"N{index:04d}"
+
+    nodes_by_layer = {}
+    for node in nodes:
+        if node.get("layer"):
+            nodes_by_layer.setdefault(node["layer"], []).append(node["node_id"])
+
     return {
         "metadata": {
             "format": "navigation_graph",
@@ -1240,6 +1370,7 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
             "same_layer_routing": "unity_navmesh",
             "same_layer_edges": "computed_in_unity",
             "vertical_edges": "exported",
+            "node_key_mode": "sequential_by_node_id",
             "default_zone_type": default_zone_type,
         },
         "nodes": nodes,
@@ -1878,10 +2009,19 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         if not wall_points or len(wall_points) < 2:
             continue
         layer = wall.get("semantic", {}).get("layer")
-        z_value = layer_z_from_height(layer, default_z=default_z, floor_height=floor_height, layer_z=layer_z)
+        wall_polygon_id = (wall.get("source_polygon_ids") or [None])[0]
+        if not layer and wall_polygon_id:
+            layer = (annotations.get("polygon_layers") or {}).get(wall_polygon_id)
+        z_value = polygon_id_z_value(
+            wall_polygon_id,
+            layer,
+            annotations=annotations,
+            layer_z=layer_z,
+            default_z=default_z,
+            floor_height=floor_height,
+        )
         height = float(wall.get("height", 1.0))
         layer_transform = alignment_transforms.get(layer)
-        wall_polygon_id = (wall.get("source_polygon_ids") or [None])[0]
         wall_shift_offset = polygon_offset(local_shift_offsets, wall_polygon_id)
         for segment_index, (p1, p2) in enumerate(zip(wall_points, wall_points[1:]), start=1):
             y1 = -float(p1[1]) if invert_y else float(p1[1])
@@ -1909,7 +2049,10 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
                     "source_polygon_ids": wall.get("source_polygon_ids"),
                     "type": wall.get("type", "shared_boundary_wall"),
                     "height": height,
-                    "color": [0.8, 0.1, 0.1, 1.0],
+                    "z_value": z_value,
+                    "z_offset": (annotations.get("polygon_z_offsets") or {}).get(wall_polygon_id),
+                    "z_override": (annotations.get("polygon_z_values") or {}).get(wall_polygon_id),
+                    "color": [0.18, 0.18, 0.18, 1.0],
                     "points_source": wall.get("points_source"),
                     "vertices": wall_vertices,
                     "alignment_transform": xy_transform_to_list(layer_transform) if layer_transform is not None else None,
@@ -2204,12 +2347,30 @@ def blend_name_for_manual_asset(asset_type):
     if asset_type == "moving_walkway":
         return "MovingWalkway.blend"
     if asset_type == "exit":
-        return "ExitMarker.blend"
+        return "Exit.blend"
     if asset_type == "toilet":
         return "Toilet.blend"
     if asset_type == "subway":
         return "Subway.blend"
     return f"{asset_type}.blend"
+
+
+def center_of_line(line):
+    """Return the midpoint of a two-point 3D line."""
+    if not line or len(line) != 2:
+        return None
+    return [
+        (float(line[0][0]) + float(line[1][0])) / 2.0,
+        (float(line[0][1]) + float(line[1][1])) / 2.0,
+        (float(line[0][2]) + float(line[1][2])) / 2.0,
+    ]
+
+
+def line_rotation_degrees(line):
+    """Return the XY rotation of a two-point line in degrees."""
+    if not line or len(line) != 2:
+        return 0.0
+    return float(np.degrees(np.arctan2(float(line[1][1]) - float(line[0][1]), float(line[1][0]) - float(line[0][0]))))
 
 
 def build_assets_from_connections(connections):
@@ -2247,6 +2408,8 @@ def build_assets_from_connections(connections):
                     "end_line": end_line,
                 }
             )
+            if asset_type == "stair":
+                asset["hasPillar"] = connection.get("type") != "exit_stair"
         else:
             asset.update(
                 {
@@ -2265,16 +2428,32 @@ def build_assets_from_connections(connections):
                 }
             )
         assets.append(asset)
+        if connection.get("type") in {"exit_stair", "exit_escalator"} and connection.get("exit_number") and asset.get("end_line"):
+            exit_center = center_of_line(asset["end_line"])
+            if exit_center:
+                assets.append(
+                    {
+                        "asset_id": f"{connection.get('connection_id')}_exit_number",
+                        "connection_id": connection.get("connection_id"),
+                        "type": "exit_number",
+                        "blend": "Exit.blend",
+                        "number": str(connection.get("exit_number")),
+                        "location": [exit_center[0], exit_center[1], exit_center[2] + 1.0],
+                        "rotation_z": line_rotation_degrees(asset["end_line"]),
+                        "scale": [1.0, 1.0, 1.0],
+                        "source_connection_type": connection.get("type"),
+                    }
+                )
     return assets
 
 
-def toilet_blend_name(toilet_gender):
-    """Return the Blender toilet asset filename for one toilet marker."""
+def toilet_type_name(toilet_gender):
+    """Return the Blender toilet collection type for one toilet marker."""
     if toilet_gender == "male":
-        return "Toilet_Men.blend"
+        return "Men"
     if toilet_gender == "female":
-        return "Toilet_Women.blend"
-    return "Toilet_Both.blend"
+        return "Women"
+    return "Both"
 
 
 def blender_asset_from_connection_asset(asset):
@@ -2289,7 +2468,17 @@ def blender_asset_from_connection_asset(asset):
         }
         if blend == "Stair.blend":
             record["target_height"] = float(asset.get("target_height") or 5.0)
+            record["hasPillar"] = bool(asset.get("hasPillar", True))
         return record
+    if blend == "Exit.blend" and asset.get("location") and asset.get("number"):
+        return {
+            "name": asset.get("asset_id") or asset.get("connection_id"),
+            "blend": "Exit.blend",
+            "number": str(asset.get("number")),
+            "location": asset.get("location"),
+            "rotation_z": float(asset.get("rotation_z") or 0.0),
+            "scale": [float(value) for value in (asset.get("scale") or [1.0, 1.0, 1.0])],
+        }
     return None
 
 
@@ -2322,8 +2511,21 @@ def blender_asset_from_manual_asset(asset):
     if asset_type == "toilet" and asset.get("location"):
         return {
             "name": name,
-            "blend": toilet_blend_name(asset.get("toilet_gender")),
+            "blend": "Toilet.blend",
+            "type": toilet_type_name(asset.get("toilet_gender")),
             "location": asset.get("location"),
+            "rotation_z": float(asset.get("rotation_z") or 0.0),
+            "scale": [1.0, 1.0, 1.0],
+        }
+    if asset_type == "exit" and asset.get("location"):
+        location = [float(value) for value in asset.get("location")]
+        if len(location) >= 3:
+            location = [location[0], location[1], location[2] + 1.0]
+        return {
+            "name": name,
+            "blend": "Exit.blend",
+            "number": str(asset.get("exit_number") or asset.get("number") or asset.get("label") or name),
+            "location": location,
             "rotation_z": float(asset.get("rotation_z") or 0.0),
             "scale": [1.0, 1.0, 1.0],
         }

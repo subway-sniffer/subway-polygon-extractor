@@ -450,6 +450,10 @@
           <input id="gateCountInput" type="number" value="1" min="1" step="1">
         </label>
         <label>
+          Exit number
+          <input id="manualExitNumberInput" placeholder="auto">
+        </label>
+        <label>
           Toilet type
           <select id="toiletGenderInput">
             <option value="both">men + women</option>
@@ -541,6 +545,39 @@
         <button id="undoElevatorBtn">Undo Last Elevator Point</button>
         <button id="resetElevatorBtn">Reset Elevator Point</button>
         <div id="elevatorStatus">inactive</div>
+      </section>
+
+      <section>
+        <h2>Route Test</h2>
+        <button id="loadRouteNodesBtn">Load Route Nodes</button>
+        <label>
+          Start node select
+          <select id="routeStartSelect"></select>
+        </label>
+        <label>
+          Start node manual
+          <input id="routeStartInput" placeholder="N0001 or node_id">
+        </label>
+        <label>
+          Goal node select
+          <select id="routeGoalSelect"></select>
+        </label>
+        <label>
+          Goal node manual
+          <input id="routeGoalInput" placeholder="N0138 or node_id">
+        </label>
+        <label>
+          Paid/free penalty
+          <input id="routePaidFreePenaltyInput" type="number" value="1000" min="0" step="10">
+        </label>
+        <label>
+          Zone change penalty
+          <input id="routeZonePenaltyInput" type="number" value="100" min="0" step="10">
+        </label>
+        <button id="findRouteBtn">Find Route</button>
+        <button id="exportRoutePathBtn">Export Route Path</button>
+        <button id="clearRouteBtn">Clear Route</button>
+        <div id="routeStatus">inactive</div>
       </section>
 
       <section>
