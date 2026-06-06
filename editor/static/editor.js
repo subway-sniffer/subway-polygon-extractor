@@ -14,6 +14,7 @@ const state = {
     manual_merges: [],
     manual_connections: [],
     manual_walls: [],
+    manual_zones: [],
     manual_assets: [],
     manual_platforms: [],
     manual_elevator_points: [],
@@ -21,6 +22,11 @@ const state = {
     local_shift_corrections: [],
     polygon_axis_corrections: {},
     scale_calibration: null,
+    scene_height: {
+      floor_height: 5,
+      default_z: 0,
+      layer_z: {},
+    },
     station_metadata: {},
   },
   scale: 1,
@@ -35,6 +41,7 @@ const state = {
   selectedStairIds: [],
   selectedSubwayId: null,
   selectedWallId: null,
+  selectedZoneId: null,
   selectedPlatformId: null,
   selectedPlatformIds: [],
   selectedElevatorPointId: null,
@@ -44,6 +51,7 @@ const state = {
   showIcons: false,
   showCorrections: true,
   showMarkers: true,
+  showZones: true,
   showHidden: false,
   previewFinal: false,
   exportedFinalPolygons: null,
@@ -187,6 +195,13 @@ const state = {
     polygonId: null,
     hoverSnap: null,
   },
+  zone: {
+    active: false,
+    zoneType: "paid",
+    points: [],
+    polygonId: null,
+    layer: null,
+  },
   subway: {
     active: false,
     label: "",
@@ -286,6 +301,19 @@ const exitRiseInput = document.getElementById("exitRiseInput");
 const wallStatus = document.getElementById("wallStatus");
 const wallLabelInput = document.getElementById("wallLabelInput");
 const wallHeightInput = document.getElementById("wallHeightInput");
+const zoneStatus = document.getElementById("zoneStatus");
+const zoneTypeInput = document.getElementById("zoneTypeInput");
+const showZonesToggle = document.getElementById("showZonesToggle");
+const toggleZonesBtn = document.getElementById("toggleZonesBtn");
+const layerHeightStatus = document.getElementById("layerHeightStatus");
+const floorHeightInput = document.getElementById("floorHeightInput");
+const defaultZInput = document.getElementById("defaultZInput");
+const layerZInputs = {
+  B1: document.getElementById("layerZB1Input"),
+  B2: document.getElementById("layerZB2Input"),
+  B3: document.getElementById("layerZB3Input"),
+  B4: document.getElementById("layerZB4Input"),
+};
 const subwayStatus = document.getElementById("subwayStatus");
 const subwayLabelInput = document.getElementById("subwayLabelInput");
 const manualAssetTypeInput = document.getElementById("manualAssetTypeInput");
@@ -423,6 +451,7 @@ function currentModeLabel() {
     scaleCalibration: "Scale Calibration",
     stair: "Vertical Connection",
     wall: "Wall Path",
+    zone: "Zone Region",
     subway: "Map Asset",
     platform: "Platform Point",
     elevatorPoint: "Elevator Point",
@@ -438,6 +467,7 @@ function selectionSummaryText() {
   if ((state.selectedIds || []).length > 1) parts.push(`${state.selectedIds.length} polygons`);
   if (state.selectedStairId) parts.push(`connection ${state.selectedStairId}`);
   if (state.selectedWallId) parts.push(`wall ${state.selectedWallId}`);
+  if (state.selectedZoneId) parts.push(`zone ${state.selectedZoneId}`);
   if (state.selectedSubwayId) parts.push(`asset ${state.selectedSubwayId}`);
   const platformIds = typeof selectedPlatformIds === "function" ? selectedPlatformIds() : [];
   if (platformIds.length) parts.push(`${platformIds.length} platform point(s)`);
@@ -586,6 +616,58 @@ function drawIcons() {
       ctx.fill();
       drawCanvasLabel(center, `${icon.icon_id || ""} ${type}`.trim(), color, 6, -6);
     }
+  }
+  ctx.restore();
+}
+
+function zoneColor(zoneType, alpha = 0.24) {
+  if (zoneType === "public") return `rgba(40, 145, 255, ${alpha})`;
+  if (zoneType === "outside") return `rgba(120, 120, 120, ${alpha})`;
+  if (zoneType === "transfer") return `rgba(160, 90, 255, ${alpha})`;
+  return `rgba(255, 80, 40, ${alpha})`;
+}
+
+function zoneStrokeColor(zoneType) {
+  if (zoneType === "public") return "#2891ff";
+  if (zoneType === "outside") return "#777777";
+  if (zoneType === "transfer") return "#a05aff";
+  return "#ff5028";
+}
+
+function drawZoneRegions() {
+  if (!state.showZones) return;
+  ctx.save();
+  for (const zone of state.annotations.manual_zones || []) {
+    const points = zone.points_source || [];
+    if (points.length < 3) continue;
+    const selected = (zone.zone_id || zone.label) === state.selectedZoneId;
+    ctx.beginPath();
+    points.forEach((point, index) => {
+      const screen = worldToScreen(point);
+      if (index === 0) ctx.moveTo(screen.x, screen.y);
+      else ctx.lineTo(screen.x, screen.y);
+    });
+    ctx.closePath();
+    ctx.fillStyle = zoneColor(zone.zone_type, selected ? 0.38 : 0.22);
+    ctx.strokeStyle = selected ? "#ffd200" : zoneStrokeColor(zone.zone_type);
+    ctx.lineWidth = selected ? 4 : 2;
+    ctx.fill();
+    ctx.stroke();
+    drawCanvasLabel(points[0], `${zone.zone_id || "zone"} ${zone.zone_type || "paid"}`, ctx.strokeStyle, 8, -8);
+  }
+  if (state.zone.active) {
+    const points = state.zone.points || [];
+    if (points.length > 1) drawPath(points, zoneStrokeColor(state.zone.zoneType), 4);
+    points.forEach((point, index) => {
+      const screen = worldToScreen(point);
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = index === 0 ? zoneStrokeColor(state.zone.zoneType) : "#ffffff";
+      ctx.strokeStyle = zoneStrokeColor(state.zone.zoneType);
+      ctx.lineWidth = 2;
+      ctx.fill();
+      ctx.stroke();
+    });
   }
   ctx.restore();
 }
@@ -1795,6 +1877,7 @@ function draw() {
   }
   drawConnections();
   drawIcons();
+  drawZoneRegions();
   drawStairConnections();
   drawWallPaths();
   drawManualAssets();
@@ -1886,6 +1969,7 @@ function toggleMultiSelectedPolygon(poly) {
   state.selectedPlatformIds = [];
   state.selectedSubwayId = null;
   state.selectedWallId = null;
+  state.selectedZoneId = null;
   state.selectedLayerAlignIndex = null;
   updateSelectedInfo();
   updateLayerAlignStatus();
@@ -1944,6 +2028,319 @@ function updateDeleteStatus(message = null) {
   ].filter(Boolean).join("\n");
 }
 
+function defaultSceneHeight() {
+  return {
+    floor_height: 5,
+    default_z: 0,
+    layer_z: {},
+  };
+}
+
+function sceneHeightFromInputs() {
+  const floorHeight = Number(floorHeightInput?.value);
+  const defaultZ = Number(defaultZInput?.value);
+  const layerZ = {};
+  for (const [layer, input] of Object.entries(layerZInputs)) {
+    if (!input || input.value === "") continue;
+    const value = Number(input.value);
+    if (Number.isFinite(value)) layerZ[layer] = value;
+  }
+  return {
+    floor_height: Number.isFinite(floorHeight) ? floorHeight : 5,
+    default_z: Number.isFinite(defaultZ) ? defaultZ : 0,
+    layer_z: layerZ,
+  };
+}
+
+function populateSceneHeightInputs(sceneHeight = null) {
+  const values = {...defaultSceneHeight(), ...(sceneHeight || {})};
+  const layerZ = values.layer_z || {};
+  if (floorHeightInput) floorHeightInput.value = values.floor_height ?? 5;
+  if (defaultZInput) defaultZInput.value = values.default_z ?? 0;
+  for (const [layer, input] of Object.entries(layerZInputs)) {
+    if (!input) continue;
+    input.value = layerZ[layer] ?? "";
+  }
+  updateLayerHeightStatus();
+}
+
+function updateLayerHeightStatus(message = null) {
+  const sceneHeight = state.annotations.scene_height || defaultSceneHeight();
+  const layerZ = sceneHeight.layer_z || {};
+  const parts = Object.keys(layerZ).sort().map((layer) => `${layer}=${layerZ[layer]}`);
+  layerHeightStatus.textContent = [
+    message,
+    `floor height: ${sceneHeight.floor_height ?? 5}`,
+    `default z: ${sceneHeight.default_z ?? 0}`,
+    parts.length ? `layer z: ${parts.join(", ")}` : "layer z: default by floor height",
+  ].filter(Boolean).join("\n");
+}
+
+function saveLayerHeights() {
+  state.annotations.scene_height = sceneHeightFromInputs();
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateLayerHeightStatus("Layer heights saved.");
+  });
+}
+
+function resetLayerHeights() {
+  state.annotations.scene_height = defaultSceneHeight();
+  populateSceneHeightInputs(state.annotations.scene_height);
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateLayerHeightStatus("Layer heights reset.");
+  });
+}
+
+function selectedZoneType() {
+  return zoneTypeInput?.value || "paid";
+}
+
+function nextZoneId() {
+  const numbers = (state.annotations.manual_zones || [])
+    .map((zone) => {
+      const match = String(zone.zone_id || "").match(/^zone_(\d+)$/);
+      return match ? Number(match[1]) : 0;
+    });
+  const next = Math.max(0, ...numbers) + 1;
+  return `zone_${String(next).padStart(3, "0")}`;
+}
+
+function updateZoneStatus(message = null) {
+  const count = (state.annotations.manual_zones || []).length;
+  if (!state.zone.active) {
+    zoneStatus.textContent = [
+      message,
+      "default: public",
+      `zones: ${count}`,
+      state.selectedZoneId ? `selected: ${state.selectedZoneId}` : null,
+    ].filter(Boolean).join("\n");
+    return;
+  }
+  zoneStatus.textContent = [
+    message,
+    `type: ${state.zone.zoneType}`,
+    `points: ${(state.zone.points || []).length}`,
+    state.zone.polygonId ? `polygon: ${state.zone.polygonId}` : "Click points around the zone. Shift applies.",
+  ].filter(Boolean).join("\n");
+}
+
+function updateZoneVisibilityControls() {
+  if (showZonesToggle) showZonesToggle.checked = state.showZones;
+  if (toggleZonesBtn) toggleZonesBtn.textContent = state.showZones ? "Hide Zones" : "Show Zones";
+}
+
+function setShowZones(show) {
+  state.showZones = Boolean(show);
+  if (!state.showZones) state.selectedZoneId = null;
+  updateZoneVisibilityControls();
+  updateZoneStatus();
+  draw();
+}
+
+function startZoneRegion() {
+  if (!canEdit()) return;
+  state.tool = "zone";
+  state.zone = {
+    active: true,
+    zoneType: selectedZoneType(),
+    points: [],
+    polygonId: null,
+    layer: null,
+  };
+  updateZoneStatus();
+  draw();
+}
+
+function resetZoneRegion() {
+  state.tool = "select";
+  state.zone = {
+    active: false,
+    zoneType: selectedZoneType(),
+    points: [],
+    polygonId: null,
+    layer: null,
+  };
+  updateZoneStatus();
+  draw();
+}
+
+function zoneRecordFromPoints(points, zoneType, polygonId = null, layer = null, source = "manual_region") {
+  const zoneId = nextZoneId();
+  return {
+    zone_id: zoneId,
+    type: "zone_region",
+    zone_type: zoneType || "paid",
+    default_outside_zone_type: "public",
+    label: zoneId,
+    polygon_id: polygonId,
+    layer,
+    points_source: points.map((point) => [Number(point[0].toFixed(2)), Number(point[1].toFixed(2))]),
+    source,
+  };
+}
+
+function addZonePoint(world, poly) {
+  if (!state.zone.active) return;
+  const point = [Number(world.x.toFixed(2)), Number(world.y.toFixed(2))];
+  if (!state.zone.points.length && poly) {
+    state.zone.polygonId = poly.polygon_id;
+    state.zone.layer = polygonLayerValue(poly);
+  }
+  state.zone.points.push(point);
+  updateZoneStatus();
+  draw();
+}
+
+function applyZoneRegion() {
+  if (!state.zone.active || (state.zone.points || []).length < 3) {
+    updateZoneStatus("Zone needs at least 3 points.");
+    return;
+  }
+  state.annotations.manual_zones = state.annotations.manual_zones || [];
+  const zone = zoneRecordFromPoints(
+    state.zone.points,
+    state.zone.zoneType,
+    state.zone.polygonId,
+    state.zone.layer,
+    "manual_region",
+  );
+  state.annotations.manual_zones.push(zone);
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    resetZoneRegion();
+    updateZoneStatus(`${zone.zone_id} saved.`);
+  });
+}
+
+function undoZonePoint() {
+  if (!state.zone.active || !(state.zone.points || []).length) return;
+  state.zone.points.pop();
+  if (!state.zone.points.length) {
+    state.zone.polygonId = null;
+    state.zone.layer = null;
+  }
+  updateZoneStatus();
+  draw();
+}
+
+function setSelectedPolygonZone() {
+  const polygonIds = selectedLayerPolygonIds();
+  if (!polygonIds.length) {
+    updateZoneStatus("Select polygon(s) first.");
+    return;
+  }
+  state.annotations.manual_zones = state.annotations.manual_zones || [];
+  const zoneType = selectedZoneType();
+  for (const polygonId of polygonIds) {
+    const poly = [...state.polygons, ...state.manualPolygons].find((item) => item.polygon_id === polygonId);
+    if (!poly || !poly.points_source || poly.points_source.length < 3) continue;
+    state.annotations.manual_zones.push(
+      zoneRecordFromPoints(
+        poly.points_source,
+        zoneType,
+        polygonId,
+        polygonLayerValue(poly),
+        "full_polygon",
+      ),
+    );
+  }
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateZoneStatus(`Set ${polygonIds.length} polygon zone(s) to ${zoneType}.`);
+    draw();
+  });
+}
+
+function nearestZoneRegion(world, maxScreenDistance = 12) {
+  if (!state.showZones) return null;
+  const mouse = worldToScreen([world.x, world.y]);
+  let best = null;
+  (state.annotations.manual_zones || []).forEach((zone, index) => {
+    const points = zone.points_source || [];
+    if (points.length < 3) return;
+    const edges = points.map((point, pointIndex) => [point, points[(pointIndex + 1) % points.length]]);
+    const distance = Math.min(...edges.map(([start, end]) => {
+      const projected = projectPointToSegment(world, start, end);
+      const screen = worldToScreen(projected);
+      return Math.hypot(screen.x - mouse.x, screen.y - mouse.y);
+    }));
+    if (distance <= maxScreenDistance && (!best || distance < best.distance)) {
+      best = {index, zoneId: zone.zone_id || zone.label || `zone_${index + 1}`, distance};
+    }
+  });
+  return best;
+}
+
+function selectZoneRegion(world) {
+  if (!state.showZones) return false;
+  const hit = nearestZoneRegion(world);
+  if (!hit) {
+    state.selectedZoneId = null;
+    updateZoneStatus();
+    draw();
+    return false;
+  }
+  state.selectedZoneId = hit.zoneId;
+  state.selectedId = null;
+  state.selectedIds = [];
+  state.selectedWallId = null;
+  state.selectedSubwayId = null;
+  state.selectedPlatformId = null;
+  state.selectedPlatformIds = [];
+  state.selectedElevatorPointId = null;
+  state.selectedElevatorPointIds = [];
+  updateSelectedInfo();
+  updateZoneStatus(`Selected ${hit.zoneId}.`);
+  draw();
+  return true;
+}
+
+function deleteSelectedZone() {
+  if (!state.selectedZoneId) {
+    updateZoneStatus("Select a zone first.");
+    return;
+  }
+  const before = (state.annotations.manual_zones || []).length;
+  state.annotations.manual_zones = (state.annotations.manual_zones || []).filter(
+    (zone) => (zone.zone_id || zone.label) !== state.selectedZoneId,
+  );
+  const removed = before - state.annotations.manual_zones.length;
+  state.selectedZoneId = null;
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateZoneStatus(`Deleted ${removed} zone(s).`);
+    draw();
+  });
+}
+
+function deleteAllZones() {
+  const removed = (state.annotations.manual_zones || []).length;
+  state.annotations.manual_zones = [];
+  state.selectedZoneId = null;
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateZoneStatus(`Deleted ${removed} zone(s).`);
+    draw();
+  });
+}
+
+function undoLastZone() {
+  state.annotations.manual_zones = state.annotations.manual_zones || [];
+  const removed = state.annotations.manual_zones.pop();
+  if (!removed) {
+    updateZoneStatus("No zone to undo.");
+    return;
+  }
+  state.selectedZoneId = null;
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateZoneStatus(`Removed ${removed.zone_id || removed.label}.`);
+    draw();
+  });
+}
+
 function syncLayerAnnotationsFromPolygons() {
   state.annotations.polygon_layers = state.annotations.polygon_layers || {};
   for (const poly of [...state.polygons, ...state.manualPolygons]) {
@@ -1957,6 +2354,7 @@ function syncLayerAnnotationsFromPolygons() {
 function saveAnnotations() {
   syncLayerAnnotationsFromPolygons();
   state.annotations.station_metadata = stationMetadataFromInputs();
+  state.annotations.scene_height = sceneHeightFromInputs();
   return fetch("/api/annotations", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
@@ -6714,14 +7112,18 @@ function loadProject() {
       state.annotations.manual_connections = state.annotations.manual_connections || [];
       state.annotations.manual_assets = state.annotations.manual_assets || [];
       state.annotations.manual_platforms = state.annotations.manual_platforms || [];
-  state.annotations.manual_elevator_points = state.annotations.manual_elevator_points || [];
+      state.annotations.manual_elevator_points = state.annotations.manual_elevator_points || [];
+      state.annotations.manual_zones = state.annotations.manual_zones || [];
       state.annotations.local_shift_corrections = state.annotations.local_shift_corrections || [];
       state.annotations.scale_calibration = state.annotations.scale_calibration || null;
       state.annotations.polygon_z_offsets = state.annotations.polygon_z_offsets || {};
       state.annotations.polygon_z_values = state.annotations.polygon_z_values || {};
       state.annotations.polygon_axis_corrections = state.annotations.polygon_axis_corrections || {};
+      state.annotations.scene_height = state.annotations.scene_height || defaultSceneHeight();
       state.annotations.station_metadata = state.annotations.station_metadata || {};
       populateStationInputs(state.annotations.station_metadata);
+      populateSceneHeightInputs(state.annotations.scene_height);
+      updateZoneStatus();
       state.manualPolygons = state.annotations.manual_polygons || [];
       const image = new Image();
       image.onload = () => {
@@ -6772,6 +7174,7 @@ function resetProjectWorkingState(message) {
     manual_merges: [],
     manual_connections: [],
     manual_walls: [],
+    manual_zones: [],
     manual_assets: [],
     manual_platforms: [],
     manual_elevator_points: [],
@@ -6779,12 +7182,14 @@ function resetProjectWorkingState(message) {
     local_shift_corrections: [],
     polygon_axis_corrections: {},
     scale_calibration: null,
+    scene_height: defaultSceneHeight(),
     station_metadata: {},
   };
   state.marker.points = [];
   state.marker.autoPoint = null;
   state.regionPick = {active: false, drawing: false, strokes: [], currentStroke: [], brushSize: selectedRegionBrushSize(), sourcePolygonId: null};
   state.wall = {active: false, label: "", height: selectedWallHeight(), points: [], layer: null, polygonId: null, hoverSnap: null};
+  state.zone = {active: false, zoneType: selectedZoneType(), points: [], polygonId: null, layer: null};
   state.crop = {active: false, start: null, current: null, rect: null, previousImagePath: state.crop.previousImagePath || null};
   state.loadedFinalWorkingSet = false;
   state.selectedId = null;
@@ -6793,12 +7198,15 @@ function resetProjectWorkingState(message) {
   state.selectedStairIds = [];
   state.selectedPlatformId = null;
   state.selectedPlatformIds = [];
+  state.selectedZoneId = null;
   pipelineStatus.textContent = message;
   populateStationInputs(state.annotations.station_metadata);
+  populateSceneHeightInputs(state.annotations.scene_height);
   updateScaleCalibrationStatus();
   updateLocalAxisStatus();
   updateRegionPickStatus();
   updateWallStatus();
+  updateZoneStatus();
 }
 
 function selectImagePath(imagePath, messagePrefix = "selected") {
@@ -7302,6 +7710,7 @@ function applyExportedFinalPayload(data, sourceLabel = null) {
     manual_merges: [],
     manual_connections: data.connections || [],
     manual_walls: data.walls || [],
+    manual_zones: data.zones || state.annotations.manual_zones || [],
     manual_assets: state.annotations.manual_assets || [],
     manual_platforms: state.annotations.manual_platforms || [],
     manual_elevator_points: state.annotations.manual_elevator_points || [],
@@ -7309,9 +7718,11 @@ function applyExportedFinalPayload(data, sourceLabel = null) {
     local_shift_corrections: state.annotations.local_shift_corrections || [],
     polygon_axis_corrections: state.annotations.polygon_axis_corrections || {},
     scale_calibration: state.annotations.scale_calibration || null,
+    scene_height: state.annotations.scene_height || defaultSceneHeight(),
     station_metadata: data.station_metadata || state.annotations.station_metadata || {},
   };
   populateStationInputs(state.annotations.station_metadata);
+  populateSceneHeightInputs(state.annotations.scene_height);
   state.tool = "select";
   state.selectedId = null;
   state.selectedIds = [];
@@ -7681,6 +8092,10 @@ canvas.addEventListener("click", (event) => {
     addWallPoint(world, poly);
     return;
   }
+  if (state.tool === "zone") {
+    addZonePoint(world, poly);
+    return;
+  }
   if (state.tool === "subway") {
     addSubwayAsset(world, poly);
     return;
@@ -7713,6 +8128,7 @@ canvas.addEventListener("click", (event) => {
   if (selectLocalShift(world)) return;
   if (selectSubwayAsset(world)) return;
   if (selectWallPath(world)) return;
+  if (selectZoneRegion(world)) return;
   if (selectPlatform(world, event.shiftKey || event.ctrlKey || event.metaKey)) return;
   if (selectElevatorPoint(world, event.shiftKey || event.ctrlKey || event.metaKey)) return;
   if (selectStairConnection(world, event)) return;
@@ -7726,6 +8142,7 @@ canvas.addEventListener("click", (event) => {
   state.selectedStairIds = [];
   state.selectedSubwayId = null;
   state.selectedWallId = null;
+  state.selectedZoneId = null;
   state.selectedPlatformId = null;
   state.selectedPlatformIds = [];
   state.selectedElevatorPointId = null;
@@ -7735,6 +8152,7 @@ canvas.addEventListener("click", (event) => {
   updateLayerAlignStatus();
   updateSubwayStatus();
   updateWallStatus();
+  updateZoneStatus();
   updateStairStatus();
   updateDeleteStatus();
   draw();
@@ -7766,6 +8184,12 @@ showCorrectionsToggle.addEventListener("change", (event) => {
 document.getElementById("showMarkersToggle").addEventListener("change", (event) => {
   state.showMarkers = event.target.checked;
   draw();
+});
+showZonesToggle.addEventListener("change", (event) => {
+  setShowZones(event.target.checked);
+});
+toggleZonesBtn.addEventListener("click", () => {
+  setShowZones(!state.showZones);
 });
 document.getElementById("showHiddenToggle").addEventListener("change", (event) => {
   state.showHidden = event.target.checked;
@@ -7810,6 +8234,8 @@ document.getElementById("clearZOverrideBtn").addEventListener("click", () => {
   updateSelectedInfo();
   draw();
 });
+document.getElementById("saveLayerHeightsBtn").addEventListener("click", saveLayerHeights);
+document.getElementById("resetLayerHeightsBtn").addEventListener("click", resetLayerHeights);
 document.getElementById("toggleHideBtn").addEventListener("click", () => {
   if (!state.selectedId) return;
   const hidden = new Set(state.annotations.hidden_polygon_ids || []);
@@ -7879,6 +8305,14 @@ document.getElementById("deleteWallBtn").addEventListener("click", deleteSelecte
 document.getElementById("deleteAllWallsBtn").addEventListener("click", deleteAllWalls);
 document.getElementById("undoWallBtn").addEventListener("click", undoLastWall);
 document.getElementById("resetWallBtn").addEventListener("click", resetWallPath);
+document.getElementById("setSelectedPolygonZoneBtn").addEventListener("click", setSelectedPolygonZone);
+document.getElementById("startZoneRegionBtn").addEventListener("click", startZoneRegion);
+document.getElementById("applyZoneRegionBtn").addEventListener("click", applyZoneRegion);
+document.getElementById("undoZonePointBtn").addEventListener("click", undoZonePoint);
+document.getElementById("deleteZoneBtn").addEventListener("click", deleteSelectedZone);
+document.getElementById("deleteAllZonesBtn").addEventListener("click", deleteAllZones);
+document.getElementById("undoZoneBtn").addEventListener("click", undoLastZone);
+document.getElementById("resetZoneRegionBtn").addEventListener("click", resetZoneRegion);
 document.getElementById("startSubwayBtn").addEventListener("click", startSubwayPlacement);
 document.getElementById("applySubwayBtn").addEventListener("click", applySubwayPlacement);
 document.getElementById("deleteSubwayBtn").addEventListener("click", deleteSelectedSubwayAsset);
@@ -8093,6 +8527,7 @@ document.addEventListener("keydown", (event) => {
     event.preventDefault();
     if (state.selectedSubwayId) deleteSelectedSubwayAsset();
     else if (state.selectedWallId) deleteSelectedWallPath();
+    else if (state.selectedZoneId) deleteSelectedZone();
     else if (selectedPlatformIds().length) deleteSelectedPlatform();
     else if (selectedElevatorPointIds().length) deleteSelectedElevatorPoint();
     else if (state.selectedLayerAlignIndex !== null) deleteSelectedLayerAlignPair();
@@ -8107,6 +8542,7 @@ document.addEventListener("keydown", (event) => {
     else if (state.tool === "splitPolygon") undoSplitPolygonPoint();
     else if (state.tool === "scaleCalibration") undoScaleCalibrationPoint();
     else if (state.tool === "wall") undoWallPoint();
+    else if (state.tool === "zone") undoZonePoint();
     else if (state.tool === "subway") undoSubwayPoint();
     else if (state.tool === "platform") undoPlatformInputPoint();
     else undoAddPolygonPoint();
@@ -8120,6 +8556,7 @@ document.addEventListener("keydown", (event) => {
     else if (state.tool === "crop") applyCrop();
     else if (state.tool === "straighten") applyStraighten();
     else if (state.tool === "wall") applyWallPath();
+    else if (state.tool === "zone") applyZoneRegion();
     else if (state.tool === "subway") applySubwayPlacement();
     else if (state.tool === "platform") applyPlatformLine();
   } else if (event.key === "Escape") {
@@ -8138,6 +8575,7 @@ document.addEventListener("keydown", (event) => {
     else if (state.tool === "elevatorLink") resetElevatorLink();
     else if (state.tool === "scaleCalibration") resetScaleCalibration();
     else if (state.tool === "wall") resetWallPath();
+    else if (state.tool === "zone") resetZoneRegion();
     else if (state.tool === "marker") {
       state.tool = "select";
       state.marker.active = false;
@@ -8162,6 +8600,9 @@ updateInsertVertexStatus();
 updateDeleteStatus();
 updateRegionPickStatus();
 updateWallStatus();
+updateZoneStatus();
+updateZoneVisibilityControls();
+populateSceneHeightInputs(state.annotations.scene_height);
 setupSidebarTabs();
 updateModeSummary();
 updateSharedEdgeStatus();

@@ -149,6 +149,11 @@
           manual markers
         </label>
         <label class="row">
+          <input id="showZonesToggle" type="checkbox" checked>
+          zone regions
+        </label>
+        <button id="toggleZonesBtn">Hide Zones</button>
+        <label class="row">
           <input id="showHiddenToggle" type="checkbox">
           hidden polygons
         </label>
@@ -183,6 +188,59 @@
         <button id="deletePolygonBtn">Delete Polygon (Delete)</button>
         <button id="undoDeletePolygonBtn">Undo Last Delete</button>
         <div id="deleteStatus">inactive</div>
+      </section>
+
+      <section>
+        <h2>Layer Heights</h2>
+        <label>
+          Floor height
+          <input id="floorHeightInput" type="number" value="5" step="0.1">
+        </label>
+        <label>
+          Default Z
+          <input id="defaultZInput" type="number" value="0" step="0.1">
+        </label>
+        <label>
+          B1 Z
+          <input id="layerZB1Input" type="number" placeholder="0" step="0.1">
+        </label>
+        <label>
+          B2 Z
+          <input id="layerZB2Input" type="number" placeholder="-5" step="0.1">
+        </label>
+        <label>
+          B3 Z
+          <input id="layerZB3Input" type="number" placeholder="-10" step="0.1">
+        </label>
+        <label>
+          B4 Z
+          <input id="layerZB4Input" type="number" placeholder="-15" step="0.1">
+        </label>
+        <button id="saveLayerHeightsBtn">Save Layer Heights</button>
+        <button id="resetLayerHeightsBtn">Reset Layer Heights</button>
+        <div id="layerHeightStatus">uses default floor height unless layer Z is set</div>
+      </section>
+
+      <section>
+        <h2>Zone Region</h2>
+        <label>
+          Zone type
+          <select id="zoneTypeInput">
+            <option value="paid">paid</option>
+            <option value="public">public</option>
+            <option value="outside">outside</option>
+            <option value="transfer">transfer</option>
+          </select>
+        </label>
+        <button id="setSelectedPolygonZoneBtn">Set Selected Polygon Zone</button>
+        <button id="startZoneRegionBtn">Start Zone Region</button>
+        <button id="applyZoneRegionBtn">Apply Zone Region (Shift)</button>
+        <button id="undoZonePointBtn">Undo Zone Point (Backspace)</button>
+        <button id="deleteZoneBtn">Delete Selected Zone</button>
+        <button id="deleteAllZonesBtn">Delete All Zones</button>
+        <button id="undoZoneBtn">Undo Last Zone</button>
+        <button id="resetZoneRegionBtn">Reset Zone Region (Esc)</button>
+        <div id="zoneStatus">default: public</div>
       </section>
 
       <section>

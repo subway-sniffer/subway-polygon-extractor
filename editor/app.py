@@ -412,6 +412,21 @@ def create_app(args):
             return load_json(icon_path)
         return None
 
+    def scene_height_options(annotations):
+        """Return editor-saved scene height options over CLI defaults."""
+        scene_height = (annotations or {}).get("scene_height") or {}
+        editor_layer_z = scene_height.get("layer_z") or {}
+        merged_layer_z = dict(layer_z)
+        for layer, value in editor_layer_z.items():
+            if value in (None, ""):
+                continue
+            merged_layer_z[layer] = float(value)
+        return {
+            "default_z": float(scene_height.get("default_z", args.default_z)),
+            "floor_height": float(scene_height.get("floor_height", args.floor_height)),
+            "layer_z": merged_layer_z,
+        }
+
     @app.route("/")
     def index():
         """Render the editor page."""
@@ -964,6 +979,7 @@ def create_app(args):
         """Export final polygons to examples/plane1.json-style plane records."""
         data = request.get_json(silent=True) or {}
         annotations = load_annotations(store.active["annotations_path"])
+        height_options = scene_height_options(annotations)
         icon_matches = load_active_icons()
         working_polygons = data.get("working_polygons")
         if working_polygons:
@@ -975,9 +991,9 @@ def create_app(args):
                 transform_metadata=store.active["transform_metadata"],
                 transform_info=final_payload.get("manual_export", {}).get("transform"),
                 scale=args.plane_scale,
-                default_z=args.default_z,
-                layer_z=layer_z,
-                floor_height=args.floor_height,
+                default_z=height_options["default_z"],
+                layer_z=height_options["layer_z"],
+                floor_height=height_options["floor_height"],
                 invert_x=args.invert_x,
                 invert_y=args.invert_y,
                 icon_matches=icon_matches,
@@ -988,9 +1004,9 @@ def create_app(args):
                 annotations,
                 store.active["transform_metadata"],
                 scale=args.plane_scale,
-                default_z=args.default_z,
-                layer_z=layer_z,
-                floor_height=args.floor_height,
+                default_z=height_options["default_z"],
+                layer_z=height_options["layer_z"],
+                floor_height=height_options["floor_height"],
                 invert_x=args.invert_x,
                 invert_y=args.invert_y,
                 icon_matches=icon_matches,
@@ -1034,6 +1050,7 @@ def create_app(args):
         """Export stair/escalator assets from scene connection records."""
         data = request.get_json(silent=True) or {}
         annotations = load_annotations(store.active["annotations_path"])
+        height_options = scene_height_options(annotations)
         icon_matches = load_active_icons()
         working_polygons = data.get("working_polygons")
         if working_polygons:
@@ -1045,9 +1062,9 @@ def create_app(args):
                 transform_metadata=store.active["transform_metadata"],
                 transform_info=final_payload.get("manual_export", {}).get("transform"),
                 scale=args.plane_scale,
-                default_z=args.default_z,
-                layer_z=layer_z,
-                floor_height=args.floor_height,
+                default_z=height_options["default_z"],
+                layer_z=height_options["layer_z"],
+                floor_height=height_options["floor_height"],
                 invert_x=args.invert_x,
                 invert_y=args.invert_y,
                 icon_matches=icon_matches,
@@ -1058,9 +1075,9 @@ def create_app(args):
                 annotations,
                 store.active["transform_metadata"],
                 scale=args.plane_scale,
-                default_z=args.default_z,
-                layer_z=layer_z,
-                floor_height=args.floor_height,
+                default_z=height_options["default_z"],
+                layer_z=height_options["layer_z"],
+                floor_height=height_options["floor_height"],
                 invert_x=args.invert_x,
                 invert_y=args.invert_y,
                 icon_matches=icon_matches,

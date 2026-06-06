@@ -227,6 +227,7 @@ def build_final_polygons_payload(polygons_path, annotations, transform_metadata=
         },
         "polygons": polygons,
         "walls": walls,
+        "zones": annotations.get("manual_zones", []),
         "connections": connections,
         "platforms": annotations.get("manual_platforms", []),
     }
@@ -307,6 +308,7 @@ def build_working_final_payload(polygons_path, working_polygons, annotations, tr
         },
         "polygons": polygons,
         "walls": walls,
+        "zones": annotations.get("manual_zones", []),
         "connections": connections,
         "platforms": annotations.get("manual_platforms", []),
     }
@@ -595,6 +597,8 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
         path_source = asset.get("points_source") or []
         start_source = asset.get("start_point_source")
         end_source = asset.get("end_point_source")
+        start_position = None
+        end_position = None
         if asset_type == "ticket_gate" and path_source and len(path_source) >= 2:
             transformed_path = [
                 scene_xy_for_polygon_point(
@@ -654,6 +658,8 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
             rotation_z = float(np.degrees(np.arctan2(dy, dx)))
             scale_value = [float(np.hypot(dx, dy)), 1.0, 1.0]
             gates = None
+            start_position = [float(start_xy[0]), float(start_xy[1]), float(z_value)]
+            end_position = [float(end_xy[0]), float(end_xy[1]), float(z_value)]
         else:
             gates = None
         facing_position = None
@@ -686,6 +692,8 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
             "points_source": path_source if path_source else None,
             "start_point_source": start_source,
             "end_point_source": end_source,
+            "start": start_position,
+            "end": end_position,
             "facing_point_source": asset.get("facing_point_source"),
             "facing_position": facing_position,
             "toilet_gender": asset.get("toilet_gender") if asset_type == "toilet" else None,
@@ -1009,13 +1017,36 @@ def build_platform_records(annotations=None, transform_metadata=None, transform_
     return records
 
 
-def build_navigation_graph(connection_records, icon_records=None, manual_assets=None, platform_records=None, elevator_point_records=None):
+def zone_type_for_position(position, layer, zone_records=None, default_zone_type="public"):
+    """Return the zone type for one scene-space node position."""
+    if not position:
+        return default_zone_type
+    point = [float(position[0]), float(position[1])]
+    for zone in zone_records or []:
+        if layer and zone.get("layer") and zone.get("layer") != layer:
+            continue
+        points = zone.get("points_xy") or [[vertex[0], vertex[1]] for vertex in zone.get("vertices", [])]
+        if point_in_polygon_xy(point, points):
+            return zone.get("zone_type") or default_zone_type
+    return default_zone_type
+
+
+def build_navigation_graph(connection_records, icon_records=None, manual_assets=None, platform_records=None, elevator_point_records=None, zone_records=None, default_zone_type="public"):
     """Build a lightweight graph for Unity NavMesh-assisted routing."""
     nodes = []
     edges = []
     nodes_by_layer = {}
 
     def add_node(node):
+        node.setdefault(
+            "zone_type",
+            zone_type_for_position(
+                node.get("position"),
+                node.get("layer"),
+                zone_records=zone_records,
+                default_zone_type=default_zone_type,
+            ),
+        )
         nodes.append(node)
         if node.get("layer"):
             nodes_by_layer.setdefault(node["layer"], []).append(node["node_id"])
@@ -1209,6 +1240,7 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
             "same_layer_routing": "unity_navmesh",
             "same_layer_edges": "computed_in_unity",
             "vertical_edges": "exported",
+            "default_zone_type": default_zone_type,
         },
         "nodes": nodes,
         "edges": edges,
@@ -1666,6 +1698,57 @@ def build_local_shift_offsets(corrections, alignment_transforms=None, transform_
     return offsets, metadata
 
 
+def build_zone_records(annotations=None, transform_metadata=None, transform_info=None, scale=0.01, layer_z=None, floor_height=5.0, default_z=0.0, invert_x=False, invert_y=False, alignment_transforms=None, local_shift_offsets=None):
+    """Build scene-space zone regions used to tag navigation nodes."""
+    annotations = annotations or {}
+    records = []
+    for zone in annotations.get("manual_zones", []) or []:
+        points = zone.get("points_source") or []
+        if len(points) < 3:
+            continue
+        layer = zone.get("layer")
+        polygon_id = zone.get("polygon_id")
+        z_value = polygon_id_z_value(
+            polygon_id,
+            layer,
+            annotations=annotations,
+            layer_z=layer_z,
+            default_z=default_z,
+            floor_height=floor_height,
+        )
+        points_xy = [
+            scene_xy_for_polygon_point(
+                point,
+                layer,
+                polygon_id=polygon_id,
+                alignment_transforms=alignment_transforms,
+                local_shift_offsets=local_shift_offsets,
+                transform_metadata=transform_metadata,
+                transform_info=transform_info,
+                scale=scale,
+                invert_x=invert_x,
+                invert_y=invert_y,
+            )
+            for point in points
+        ]
+        records.append(
+            {
+                "zone_id": zone.get("zone_id"),
+                "type": "zone_region",
+                "zone_type": zone.get("zone_type") or "paid",
+                "default_outside_zone_type": zone.get("default_outside_zone_type") or "public",
+                "label": zone.get("label"),
+                "layer": layer,
+                "polygon_id": polygon_id,
+                "source": zone.get("source"),
+                "points_source": points,
+                "points_xy": points_xy,
+                "vertices": [[float(point[0]), float(point[1]), float(z_value)] for point in points_xy],
+            }
+        )
+    return records
+
+
 def build_plane_payload_from_records(polygons, walls, annotations=None, transform_metadata=None, transform_info=None, scale=0.01, default_z=0.0, layer_z=None, floor_height=5.0, invert_x=False, invert_y=False, icon_matches=None):
     """Build examples/plane_with_color.json-style planes from polygon records."""
     annotations = annotations or {}
@@ -1999,7 +2082,25 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         alignment_transforms=alignment_transforms,
         local_shift_offsets=local_shift_offsets,
     )
-    assets = connection_assets + manual_assets
+    zone_records = build_zone_records(
+        annotations=annotations,
+        transform_metadata=transform_metadata,
+        transform_info=transform_info,
+        scale=effective_scale,
+        layer_z=layer_z,
+        floor_height=floor_height,
+        default_z=default_z,
+        invert_x=invert_x,
+        invert_y=invert_y,
+        alignment_transforms=alignment_transforms,
+        local_shift_offsets=local_shift_offsets,
+    )
+    asset_records = connection_assets + manual_assets
+    blender_assets = build_blender_scene_assets(
+        connection_assets=connection_assets,
+        manual_assets=manual_assets,
+        elevator_point_records=elevator_point_records,
+    )
     assets_by_connection_id = {
         asset.get("connection_id"): asset
         for asset in connection_assets
@@ -2068,14 +2169,18 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         "elevator_points": elevator_point_records,
         "icons": icon_records,
         "manual_assets": manual_assets,
+        "zone_regions": zone_records,
     }
-    payload["assets"] = assets
+    payload["assets"] = blender_assets
+    payload["asset_records"] = asset_records
     payload["navigation"] = build_navigation_graph(
         connection_records,
         icon_records=icon_records,
         manual_assets=manual_assets,
         platform_records=platform_records,
         elevator_point_records=elevator_point_records,
+        zone_records=zone_records,
+        default_zone_type="public",
     )
     return payload
 
@@ -2161,6 +2266,111 @@ def build_assets_from_connections(connections):
             )
         assets.append(asset)
     return assets
+
+
+def toilet_blend_name(toilet_gender):
+    """Return the Blender toilet asset filename for one toilet marker."""
+    if toilet_gender == "male":
+        return "Toilet_Men.blend"
+    if toilet_gender == "female":
+        return "Toilet_Women.blend"
+    return "Toilet_Both.blend"
+
+
+def blender_asset_from_connection_asset(asset):
+    """Convert one internal connection asset to blender-map-generator scene.json schema."""
+    blend = asset.get("blend")
+    if blend in {"Stair.blend", "Escalator.blend"} and asset.get("start_line") and asset.get("end_line"):
+        record = {
+            "name": asset.get("asset_id") or asset.get("connection_id"),
+            "blend": blend,
+            "start_line": asset.get("start_line"),
+            "end_line": asset.get("end_line"),
+        }
+        if blend == "Stair.blend":
+            record["target_height"] = float(asset.get("target_height") or 5.0)
+        return record
+    return None
+
+
+def blender_asset_from_manual_asset(asset):
+    """Convert one internal manual asset to blender-map-generator scene.json schema."""
+    asset_type = asset.get("type")
+    name = asset.get("asset_id") or asset.get("label")
+    if asset_type == "ticket_gate":
+        gates = asset.get("gates") or []
+        if gates:
+            return [
+                {
+                    "name": gate.get("gate_id"),
+                    "blend": "Gate.blend",
+                    "location": gate.get("location"),
+                    "rotation_z": float(gate.get("rotation_z") or 0.0),
+                    "scale": [1.0, 1.0, 1.0],
+                }
+                for gate in gates
+                if gate.get("location")
+            ]
+        if asset.get("location"):
+            return {
+                "name": name,
+                "blend": "Gate.blend",
+                "location": asset.get("location"),
+                "rotation_z": float(asset.get("rotation_z") or 0.0),
+                "scale": [1.0, 1.0, 1.0],
+            }
+    if asset_type == "toilet" and asset.get("location"):
+        return {
+            "name": name,
+            "blend": toilet_blend_name(asset.get("toilet_gender")),
+            "location": asset.get("location"),
+            "rotation_z": float(asset.get("rotation_z") or 0.0),
+            "scale": [1.0, 1.0, 1.0],
+        }
+    if asset_type in {"subway", "moving_walkway"} and asset.get("start") and asset.get("end"):
+        return {
+            "name": name,
+            "blend": "MovingWalkway.blend" if asset_type == "moving_walkway" else "Subway.blend",
+            "start": asset.get("start"),
+            "end": asset.get("end"),
+            "rotation_z": float(asset.get("rotation_z") or 0.0),
+            "scale": [float(value) for value in (asset.get("scale") or [1.0, 1.0, 1.0])],
+        }
+    return None
+
+
+def blender_asset_from_elevator_point(elevator):
+    """Convert one elevator point record to blender-map-generator scene.json schema."""
+    if not elevator.get("position"):
+        return None
+    return {
+        "name": elevator.get("elevator_point_id") or elevator.get("label"),
+        "blend": "Elevator.blend",
+        "location": elevator.get("position"),
+        "rotation_z": float(elevator.get("facing_angle_deg") or 0.0),
+        "scale": [1.0, 1.0, 1.0],
+        "elevator_id": elevator.get("elevator_id"),
+    }
+
+
+def build_blender_scene_assets(connection_assets=None, manual_assets=None, elevator_point_records=None):
+    """Build the exact assets array consumed by blender-map-generator/scene.py."""
+    output = []
+    for asset in connection_assets or []:
+        record = blender_asset_from_connection_asset(asset)
+        if record:
+            output.append(record)
+    for asset in manual_assets or []:
+        record = blender_asset_from_manual_asset(asset)
+        if isinstance(record, list):
+            output.extend(item for item in record if item)
+        elif record:
+            output.append(record)
+    for elevator in elevator_point_records or []:
+        record = blender_asset_from_elevator_point(elevator)
+        if record:
+            output.append(record)
+    return output
 
 
 def build_assets_payload(scene_payload):
