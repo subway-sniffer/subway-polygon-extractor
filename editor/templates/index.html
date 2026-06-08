@@ -574,8 +574,51 @@
           Zone change penalty
           <input id="routeZonePenaltyInput" type="number" value="100" min="0" step="10">
         </label>
+        <label>
+          Route preference
+          <select id="routePreferenceInput">
+            <option value="none">none</option>
+            <option value="escalator">prefer escalator</option>
+            <option value="elevator">prefer elevator</option>
+            <option value="stair">prefer stair</option>
+          </select>
+        </label>
+        <label>
+          <input id="routeToiletToggle" type="checkbox">
+          stop by toilet
+        </label>
+        <label>
+          Toilet condition
+          <select id="routeToiletGenderInput">
+            <option value="any">any toilet</option>
+            <option value="female">women</option>
+            <option value="male">men</option>
+            <option value="accessible">accessible</option>
+          </select>
+        </label>
+        <label>
+          Edge station name
+          <input id="routeEdgeStationInput" placeholder="서울역">
+        </label>
+        <label>
+          <input id="routeEdgePlatformPlatformToggle" type="checkbox" checked>
+          include platform to platform
+        </label>
+        <label>
+          <input id="routeEdgeSamePlatformToggle" type="checkbox">
+          include same platform cars
+        </label>
+        <label>
+          <input id="routeEdgeDirectedToggle" type="checkbox">
+          directed video edges
+        </label>
+        <label>
+          <input id="routeEdgeToiletToggle" type="checkbox">
+          include toilet waypoint video edges
+        </label>
         <button id="findRouteBtn">Find Route</button>
         <button id="exportRoutePathBtn">Export Route Path</button>
+        <button id="buildRouteEdgesBtn">Build Route Video Edges</button>
         <button id="clearRouteBtn">Clear Route</button>
         <div id="routeStatus">inactive</div>
       </section>

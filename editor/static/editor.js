@@ -347,6 +347,14 @@ const routeStartSelect = document.getElementById("routeStartSelect");
 const routeGoalSelect = document.getElementById("routeGoalSelect");
 const routePaidFreePenaltyInput = document.getElementById("routePaidFreePenaltyInput");
 const routeZonePenaltyInput = document.getElementById("routeZonePenaltyInput");
+const routePreferenceInput = document.getElementById("routePreferenceInput");
+const routeToiletToggle = document.getElementById("routeToiletToggle");
+const routeToiletGenderInput = document.getElementById("routeToiletGenderInput");
+const routeEdgeStationInput = document.getElementById("routeEdgeStationInput");
+const routeEdgePlatformPlatformToggle = document.getElementById("routeEdgePlatformPlatformToggle");
+const routeEdgeSamePlatformToggle = document.getElementById("routeEdgeSamePlatformToggle");
+const routeEdgeDirectedToggle = document.getElementById("routeEdgeDirectedToggle");
+const routeEdgeToiletToggle = document.getElementById("routeEdgeToiletToggle");
 const routeStatus = document.getElementById("routeStatus");
 const keepStatus = document.getElementById("keepStatus");
 const imageSelect = document.getElementById("imageSelect");
@@ -2487,7 +2495,7 @@ function workingPolygonsPayload() {
 
 function routeSourcePoints(route) {
   return (route?.nodes || [])
-    .map((node) => node.source_position)
+    .map((node) => node.source_position || node.point_source || node.center_source)
     .filter((point) => Array.isArray(point) && point.length >= 2)
     .map((point) => [Number(point[0]), Number(point[1])]);
 }
@@ -2498,6 +2506,8 @@ function updateRouteStatus(message = null) {
     message,
     route ? `cost: ${Number(route.total_cost || 0).toFixed(3)}` : null,
     route ? `nodes: ${route.node_count}, edges: ${route.edge_count}` : null,
+    route ? `preference: ${route.metadata?.route_preference || "none"}` : null,
+    route?.metadata?.waypoint_node_key_str ? `waypoint: ${route.metadata.waypoint_node_key_str} ${route.metadata.waypoint_label || ""} (${route.metadata.waypoint_toilet_gender || "toilet"})` : null,
     route ? `zones: ${(route.zone_sequence || []).join(" -> ")}` : null,
     route ? `path: ${(route.node_ids || []).join(" -> ")}` : null,
   ].filter(Boolean).join("\n") || "inactive";
@@ -2507,8 +2517,10 @@ function routeNodeLabel(node) {
   return [
     node.node_key_str || node.node_key,
     node.type,
+    node.exit_number ? `exit ${node.exit_number}` : null,
+    node.poi_type === "toilet" ? `toilet ${node.toilet_gender || "both"}` : null,
     node.layer,
-    node.zone_type,
+    [node.zone_type, node.zone_id].filter(Boolean).join(":"),
     node.label,
     node.node_id,
   ].filter(Boolean).join(" | ");
@@ -2575,6 +2587,9 @@ function findRouteFromUi() {
         synthetic_mode: "same-polygon",
         paid_free_penalty: Number(routePaidFreePenaltyInput.value || 1000),
         zone_change_penalty: Number(routeZonePenaltyInput.value || 100),
+        route_preference: routePreferenceInput.value || "none",
+        include_toilet: routeToiletToggle.checked,
+        toilet_gender: routeToiletGenderInput.value || "any",
       }),
     }))
     .then((response) => response.json().then((data) => ({ok: response.ok, data})))
@@ -2610,6 +2625,46 @@ function exportRoutePathFromUi() {
     .then(({ok, data}) => {
       if (!ok) throw new Error(data.error || "route path export failed");
       updateRouteStatus(`Route path exported.\noutput: ${data.output}\nexample: ${data.example_output}`);
+    })
+    .catch((error) => {
+      updateRouteStatus(String(error));
+    });
+}
+
+function buildRouteEdgesFromUi() {
+  updateRouteStatus("Building route video edges...");
+  saveAnnotations()
+    .then(() => fetch("/api/navigation/route_edges", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        working_polygons: workingPolygonsPayload(),
+        station_name: (routeEdgeStationInput.value || "").trim(),
+        no_platform_platform: !routeEdgePlatformPlatformToggle.checked,
+        include_same_platform: routeEdgeSamePlatformToggle.checked,
+        directed: routeEdgeDirectedToggle.checked,
+        include_toilet_routes: routeEdgeToiletToggle.checked,
+        toilet_genders: ["male", "female"],
+        synthetic_mode: "same-polygon",
+        paid_free_penalty: Number(routePaidFreePenaltyInput.value || 1000),
+        zone_change_penalty: Number(routeZonePenaltyInput.value || 100),
+        route_preference: routePreferenceInput.value || "none",
+      }),
+    }))
+    .then((response) => response.json().then((data) => ({ok: response.ok, data})))
+    .then(({ok, data}) => {
+      if (!ok) throw new Error(data.error || "route edge export failed");
+      const counts = data.counts || {};
+      updateRouteStatus([
+        "Route video edges exported.",
+        `output: ${data.output}`,
+        `platform car nodes: ${counts.platform_car_node_count || 0}`,
+        `exit nodes: ${counts.exit_node_count || 0}`,
+        `OD pairs: ${counts.od_pair_count || 0}`,
+        `route success/failure: ${counts.route_success_count || 0}/${counts.route_failure_count || 0}`,
+        `toilet route success: ${counts.toilet_route_success_count || 0}`,
+        `unique video edges: ${counts.unique_edge_count || 0}`,
+      ].join("\n"));
     })
     .catch((error) => {
       updateRouteStatus(String(error));
@@ -8796,6 +8851,7 @@ routeGoalSelect.addEventListener("change", () => {
 });
 document.getElementById("findRouteBtn").addEventListener("click", findRouteFromUi);
 document.getElementById("exportRoutePathBtn").addEventListener("click", exportRoutePathFromUi);
+document.getElementById("buildRouteEdgesBtn").addEventListener("click", buildRouteEdgesFromUi);
 document.getElementById("clearRouteBtn").addEventListener("click", clearRouteOverlay);
 document.getElementById("refreshImagesBtn").addEventListener("click", refreshImages);
 imageSelect.addEventListener("change", loadSelectedImage);

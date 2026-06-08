@@ -1133,16 +1133,22 @@ def build_platform_records(annotations=None, transform_metadata=None, transform_
 
 def zone_type_for_position(position, layer, zone_records=None, default_zone_type="public"):
     """Return the zone type for one scene-space node position."""
+    zone = zone_record_for_position(position, layer, zone_records=zone_records)
+    return (zone or {}).get("zone_type") or default_zone_type
+
+
+def zone_record_for_position(position, layer, zone_records=None):
+    """Return the first zone record containing one scene-space node position."""
     if not position:
-        return default_zone_type
+        return None
     point = [float(position[0]), float(position[1])]
     for zone in zone_records or []:
         if layer and zone.get("layer") and zone.get("layer") != layer:
             continue
         points = zone.get("points_xy") or [[vertex[0], vertex[1]] for vertex in zone.get("vertices", [])]
         if point_in_polygon_xy(point, points):
-            return zone.get("zone_type") or default_zone_type
-    return default_zone_type
+            return zone
+    return None
 
 
 def build_navigation_graph(connection_records, icon_records=None, manual_assets=None, platform_records=None, elevator_point_records=None, zone_records=None, default_zone_type="public"):
@@ -1152,15 +1158,10 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
     nodes_by_layer = {}
 
     def add_node(node):
-        node.setdefault(
-            "zone_type",
-            zone_type_for_position(
-                node.get("position"),
-                node.get("layer"),
-                zone_records=zone_records,
-                default_zone_type=default_zone_type,
-            ),
-        )
+        zone = zone_record_for_position(node.get("position"), node.get("layer"), zone_records=zone_records)
+        node.setdefault("zone_type", (zone or {}).get("zone_type") or default_zone_type)
+        node.setdefault("zone_id", (zone or {}).get("zone_id"))
+        node.setdefault("zone_label", (zone or {}).get("label"))
         nodes.append(node)
         if node.get("layer"):
             nodes_by_layer.setdefault(node["layer"], []).append(node["node_id"])
@@ -1176,6 +1177,35 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
         if not from_pos or not to_pos:
             continue
         connector_type = connection.get("asset_type") or connection.get("type") or "connector"
+        if connection.get("type") in {"exit_stair", "exit_escalator"}:
+            if from_data.get("polygon_id") and not to_data.get("polygon_id"):
+                endpoint_name, endpoint_data, endpoint_pos = "from", from_data, from_pos
+            elif to_data.get("polygon_id") and not from_data.get("polygon_id"):
+                endpoint_name, endpoint_data, endpoint_pos = "to", to_data, to_pos
+            elif from_data.get("layer") != "OUTSIDE" and to_data.get("layer") == "OUTSIDE":
+                endpoint_name, endpoint_data, endpoint_pos = "from", from_data, from_pos
+            elif to_data.get("layer") != "OUTSIDE" and from_data.get("layer") == "OUTSIDE":
+                endpoint_name, endpoint_data, endpoint_pos = "to", to_data, to_pos
+            else:
+                from_z = float(from_pos[2]) if len(from_pos) >= 3 else 0.0
+                to_z = float(to_pos[2]) if len(to_pos) >= 3 else 0.0
+                endpoint_name, endpoint_data, endpoint_pos = ("from", from_data, from_pos) if from_z <= to_z else ("to", to_data, to_pos)
+            add_node(
+                navigation_node(
+                    f"{connection_id}_{endpoint_name}",
+                    "exit",
+                    endpoint_data.get("layer"),
+                    endpoint_pos,
+                    polygon_id=endpoint_data.get("polygon_id"),
+                    source_position=endpoint_data.get("point_source"),
+                    connector_id=connection_id,
+                    connector_type=connector_type,
+                    exit_number=connection.get("exit_number"),
+                    endpoint=endpoint_name,
+                    access_transition="outside",
+                )
+            )
+            continue
         from_node_id = f"{connection_id}_from"
         to_node_id = f"{connection_id}_to"
         add_node(
@@ -1250,25 +1280,6 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
             )
         )
 
-    for icon in icon_records or []:
-        icon_id = icon.get("icon_id") or icon.get("id")
-        position = icon.get("position") or icon.get("location")
-        if not icon_id or not position:
-            continue
-        icon_type = icon.get("type") or icon.get("category") or icon.get("template_class")
-        add_node(
-            navigation_node(
-                f"{icon_id}_poi",
-                "poi",
-                icon.get("layer"),
-                position,
-                polygon_id=icon.get("polygon_id"),
-                source_position=icon.get("point_source") or icon.get("source_position"),
-                poi_id=icon_id,
-                poi_type=icon_type,
-            )
-        )
-
     for platform in platform_records or []:
         previous_node_id = None
         previous_position = None
@@ -1335,7 +1346,8 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
                 access_transition=elevator.get("access_transition") if is_exit_elevator else None,
             )
         )
-        elevator_groups.setdefault(elevator.get("elevator_id") or "elevator", []).append((node_id, position))
+        if not is_exit_elevator:
+            elevator_groups.setdefault(elevator.get("elevator_id") or "elevator", []).append((node_id, position))
     for elevator_id, items in elevator_groups.items():
         for index in range(len(items)):
             for next_index in range(index + 1, len(items)):

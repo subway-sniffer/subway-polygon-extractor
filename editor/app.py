@@ -72,6 +72,7 @@ from pipeline.polygon_grouping import (
     select_edges_for_target_groups,
 )
 from pipeline.navigation_routing import build_route_result, list_nodes
+from pipeline.route_edge_planner import build_route_edge_export
 from tests.render_scene_planes import draw_scene_planes, render_layers
 
 
@@ -97,6 +98,85 @@ def format_route_path_text(route):
         coords = [round(float(value), 6) for value in position[:3]]
         lines.append(f"{node_id} {coords}")
     return "\n".join(lines) + ("\n" if lines else "")
+
+
+def toilet_matches_gender(node, toilet_gender):
+    """Return whether one toilet node satisfies a requested gender condition."""
+    requested = str(toilet_gender or "any").strip().lower()
+    if requested in {"", "any", "all"}:
+        return True
+    node_gender = str(node.get("toilet_gender") or "both").strip().lower()
+    if requested in {"male", "female"}:
+        return node_gender in {requested, "both"}
+    if requested == "accessible":
+        return node_gender == "accessible"
+    return node_gender == requested
+
+
+def toilet_route_candidates(navigation_graph, toilet_gender):
+    """Return toilet POI nodes matching a gender filter."""
+    candidates = []
+    for node in navigation_graph.get("nodes", []):
+        if node.get("poi_type") != "toilet" and node.get("asset_type") != "toilet":
+            continue
+        if toilet_matches_gender(node, toilet_gender):
+            candidates.append(node)
+    return candidates
+
+
+def merge_waypoint_routes(first_route, second_route, waypoint_node):
+    """Merge start->waypoint and waypoint->goal route payloads into one route."""
+    first_nodes = first_route.get("nodes", [])
+    second_nodes = second_route.get("nodes", [])
+    merged_nodes = first_nodes + second_nodes[1:]
+    merged_edges = first_route.get("edges", []) + second_route.get("edges", [])
+    return {
+        "metadata": {
+            **first_route.get("metadata", {}),
+            "format": "navigation_route_with_waypoint",
+            "waypoint_type": "toilet",
+            "waypoint_node_id": waypoint_node.get("node_id"),
+            "waypoint_node_key_str": waypoint_node.get("node_key_str"),
+            "waypoint_label": waypoint_node.get("label"),
+            "waypoint_toilet_gender": waypoint_node.get("toilet_gender"),
+            "first_cost": first_route.get("total_cost", 0),
+            "second_cost": second_route.get("total_cost", 0),
+        },
+        "total_cost": float(first_route.get("total_cost", 0)) + float(second_route.get("total_cost", 0)),
+        "node_count": len(merged_nodes),
+        "edge_count": len(merged_edges),
+        "nodes": merged_nodes,
+        "edges": merged_edges,
+        "node_ids": [node.get("node_id") for node in merged_nodes],
+        "zone_sequence": first_route.get("zone_sequence", []) + second_route.get("zone_sequence", [])[1:],
+    }
+
+
+def build_best_toilet_route(navigation_graph, start, goal, toilet_gender, route_options):
+    """Find the cheapest start->toilet->goal route for matching toilet nodes."""
+    candidates = toilet_route_candidates(navigation_graph, toilet_gender)
+    if not candidates:
+        raise ValueError(f"조건에 맞는 화장실 노드가 없습니다: {toilet_gender}")
+    best = None
+    failures = []
+    for toilet in candidates:
+        toilet_id = toilet.get("node_id")
+        if not toilet_id:
+            continue
+        try:
+            first = build_route_result(navigation_graph, start, toilet_id, **route_options)
+            second = build_route_result(navigation_graph, toilet_id, goal, **route_options)
+        except Exception as exc:
+            failures.append({"toilet_node_id": toilet_id, "error": str(exc)})
+            continue
+        merged = merge_waypoint_routes(first, second, toilet)
+        if best is None or merged["total_cost"] < best["total_cost"]:
+            best = merged
+    if best is None:
+        raise ValueError(f"화장실 경유 경로를 찾을 수 없습니다: {failures}")
+    best["metadata"]["waypoint_candidate_count"] = len(candidates)
+    best["metadata"]["waypoint_failure_count"] = len(failures)
+    return best
 
 
 def pick_first(row, *names):
@@ -441,6 +521,40 @@ def create_app(args):
             "floor_height": float(scene_height.get("floor_height", args.floor_height)),
             "layer_z": merged_layer_z,
         }
+
+    def build_active_scene_payload(data, annotations):
+        """Build a scene payload from the current editor state."""
+        height_options = scene_height_options(annotations)
+        icon_matches = load_active_icons()
+        working_polygons = data.get("working_polygons")
+        if working_polygons:
+            final_payload = build_working_final_payload(store.active["polygons_path"], working_polygons, annotations, store.active["transform_metadata"])
+            return build_plane_payload_from_records(
+                final_payload["polygons"],
+                final_payload.get("walls", []),
+                annotations=annotations,
+                transform_metadata=store.active["transform_metadata"],
+                transform_info=final_payload.get("manual_export", {}).get("transform"),
+                scale=args.plane_scale,
+                default_z=height_options["default_z"],
+                layer_z=height_options["layer_z"],
+                floor_height=height_options["floor_height"],
+                invert_x=args.invert_x,
+                invert_y=args.invert_y,
+                icon_matches=icon_matches,
+            )
+        return build_plane_payload(
+            store.active["polygons_path"],
+            annotations,
+            store.active["transform_metadata"],
+            scale=args.plane_scale,
+            default_z=height_options["default_z"],
+            layer_z=height_options["layer_z"],
+            floor_height=height_options["floor_height"],
+            invert_x=args.invert_x,
+            invert_y=args.invert_y,
+            icon_matches=icon_matches,
+        )
 
     @app.route("/")
     def index():
@@ -1152,16 +1266,29 @@ def create_app(args):
         try:
             same_layer_radius = data.get("same_layer_radius")
             same_layer_radius = float(same_layer_radius) if same_layer_radius not in (None, "") else None
-            route = build_route_result(
-                scene_payload.get("navigation", {}),
-                start,
-                goal,
+            route_options = dict(
                 synthetic_same_layer=not bool(data.get("no_synthetic_same_layer")),
                 synthetic_mode=data.get("synthetic_mode") or "same-polygon",
                 same_layer_radius=same_layer_radius,
                 zone_change_penalty=float(data.get("zone_change_penalty", 100.0)),
                 paid_free_penalty=float(data.get("paid_free_penalty", 1000.0)),
+                route_preference=data.get("route_preference") or "none",
             )
+            if data.get("include_toilet"):
+                route = build_best_toilet_route(
+                    scene_payload.get("navigation", {}),
+                    start,
+                    goal,
+                    data.get("toilet_gender") or "any",
+                    route_options,
+                )
+            else:
+                route = build_route_result(
+                    scene_payload.get("navigation", {}),
+                    start,
+                    goal,
+                    **route_options,
+                )
         except Exception as exc:
             return jsonify({"error": str(exc)}), 400
         return jsonify(
@@ -1191,6 +1318,43 @@ def create_app(args):
                 "output": str(output_path),
                 "example_output": str(example_path),
                 "line_count": len(text.strip().splitlines()),
+            }
+        )
+
+    @app.route("/api/navigation/route_edges", methods=["POST"])
+    def navigation_route_edges():
+        """Export route-video edge requirements from car-level platform representatives."""
+        data = request.get_json(silent=True) or {}
+        annotations = load_annotations(store.active["annotations_path"])
+        try:
+            same_layer_radius = data.get("same_layer_radius")
+            same_layer_radius = float(same_layer_radius) if same_layer_radius not in (None, "") else None
+            scene_payload = build_active_scene_payload(data, annotations)
+            payload = build_route_edge_export(
+                scene_payload.get("navigation", {}),
+                station_name=data.get("station_name") or None,
+                include_platform_platform=not bool(data.get("no_platform_platform")),
+                include_same_platform=bool(data.get("include_same_platform")),
+                include_unnumbered_exits=bool(data.get("include_unnumbered_exits")),
+                include_toilet_routes=bool(data.get("include_toilet_routes")),
+                toilet_genders=data.get("toilet_genders") or ["male", "female"],
+                directed=bool(data.get("directed")),
+                synthetic_mode=data.get("synthetic_mode") or "same-polygon",
+                same_layer_radius=same_layer_radius,
+                zone_change_penalty=float(data.get("zone_change_penalty", 100.0)),
+                paid_free_penalty=float(data.get("paid_free_penalty", 1000.0)),
+                route_preference=data.get("route_preference") or "none",
+            )
+        except Exception as exc:
+            return jsonify({"error": str(exc)}), 400
+        output_path = store.named_output_path("route_video_edges")
+        saved_path = save_json_compact_vectors(payload, output_path)
+        return jsonify(
+            {
+                "saved": True,
+                "output": str(saved_path),
+                "counts": payload.get("counts", {}),
+                "metadata": payload.get("metadata", {}),
             }
         )
 
