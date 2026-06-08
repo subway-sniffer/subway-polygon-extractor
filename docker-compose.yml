@@ -2,6 +2,8 @@ services:
   editor:
     build: .
     container_name: subway-polygon-editor
+    environment:
+      - PYTHONPATH=/app
     ports:
       - "${EDITOR_PORT:-5050}:5050"
     volumes:
