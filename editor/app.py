@@ -1,5 +1,7 @@
 import argparse
 import csv
+import io
+import json
 import os
 import struct
 import sys
@@ -1355,6 +1357,129 @@ def create_app(args):
                 "output": str(saved_path),
                 "counts": payload.get("counts", {}),
                 "metadata": payload.get("metadata", {}),
+            }
+        )
+
+    @app.route("/api/route_server/upload", methods=["POST"])
+    def upload_route_package():
+        """Export the active route package and upload it to a route server."""
+        data = request.get_json(silent=True) or {}
+        server_url = str(data.get("server_url") or "").strip().rstrip("/")
+        if not server_url:
+            return jsonify({"error": "server_url이 필요합니다."}), 400
+
+        metadata = data.get("metadata") or {}
+        station_name = str(metadata.get("station_name") or "").strip()
+        station_id = str(metadata.get("station_id") or station_name).strip()
+        if not station_name:
+            return jsonify({"error": "metadata.station_name이 필요합니다. station_id는 비어 있으면 역명으로 자동 지정됩니다."}), 400
+
+        version = str(data.get("version") or metadata.get("version") or metadata.get("active_version") or "v001").strip()
+        line_ids = metadata.get("line_ids") or [
+            line.get("line_id") if isinstance(line, dict) else line
+            for line in metadata.get("lines", [])
+        ]
+        metadata = {
+            **metadata,
+            "station_id": station_id,
+            "station_name": station_name,
+            "line_ids": [str(line).strip() for line in line_ids if str(line).strip()],
+            "version": version,
+            "active_version": version,
+        }
+
+        annotations = load_annotations(store.active["annotations_path"])
+        annotations["station_metadata"] = {
+            key: value for key, value in metadata.items()
+            if key not in {"version", "active_version"}
+        }
+        save_json(annotations, store.active["annotations_path"])
+
+        try:
+            same_layer_radius = data.get("same_layer_radius")
+            same_layer_radius = float(same_layer_radius) if same_layer_radius not in (None, "") else None
+            scene_payload = build_active_scene_payload(data, annotations)
+            navigation_graph = scene_payload.get("navigation", {})
+            route_edge_payload = build_route_edge_export(
+                navigation_graph,
+                station_name=data.get("station_name") or station_name,
+                include_platform_platform=not bool(data.get("no_platform_platform")),
+                include_same_platform=bool(data.get("include_same_platform")),
+                include_unnumbered_exits=bool(data.get("include_unnumbered_exits")),
+                include_toilet_routes=bool(data.get("include_toilet_routes")),
+                toilet_genders=data.get("toilet_genders") or ["male", "female"],
+                directed=bool(data.get("directed")),
+                synthetic_mode=data.get("synthetic_mode") or "same-polygon",
+                same_layer_radius=same_layer_radius,
+                zone_change_penalty=float(data.get("zone_change_penalty", 100.0)),
+                paid_free_penalty=float(data.get("paid_free_penalty", 1000.0)),
+                route_preference=data.get("route_preference") or "none",
+            )
+        except Exception as exc:
+            return jsonify({"error": str(exc)}), 400
+
+        scene_path = save_json_compact_vectors(scene_payload, store.named_output_path("scene_planes"))
+        navigation_path = save_json_compact_vectors(navigation_graph, store.named_output_path("navigation_graph"))
+        route_edges_path = save_json_compact_vectors(route_edge_payload, store.named_output_path("route_video_edges"))
+        metadata_path = save_json_compact_vectors(metadata, store.named_output_path("route_server_metadata"))
+
+        def json_file_part(name, payload):
+            content = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
+            return (f"{name}.json", io.BytesIO(content), "application/json")
+
+        files = {
+            "metadata": json_file_part("metadata", metadata),
+            "navigation_graph": json_file_part("navigation_graph", navigation_graph),
+            "route_video_edges": json_file_part("route_video_edges", route_edge_payload),
+        }
+        if data.get("include_scene_planes"):
+            files["scene_planes"] = json_file_part("scene_planes", scene_payload)
+
+        headers = {}
+        admin_token = str(data.get("admin_token") or "").strip()
+        if admin_token:
+            headers["X-Admin-Token"] = admin_token
+
+        try:
+            response = requests.post(
+                f"{server_url}/admin/stations/import-files",
+                files=files,
+                headers=headers,
+                timeout=180,
+            )
+        except requests.RequestException as exc:
+            return jsonify({"error": f"route server upload failed: {exc}"}), 502
+
+        try:
+            response_payload = response.json()
+        except ValueError:
+            response_payload = {"raw": response.text[:1000]}
+        if response.status_code >= 400:
+            return jsonify(
+                {
+                    "error": response_payload.get("detail") or response_payload.get("error") or "route server rejected upload",
+                    "status_code": response.status_code,
+                    "response": response_payload,
+                }
+            ), response.status_code
+
+        return jsonify(
+            {
+                "uploaded": True,
+                "server_url": server_url,
+                "import_response": response_payload,
+                "outputs": {
+                    "metadata": str(metadata_path),
+                    "scene_planes": str(scene_path),
+                    "navigation_graph": str(navigation_path),
+                    "route_video_edges": str(route_edges_path),
+                },
+                "navigation_node_count": len(navigation_graph.get("nodes", [])),
+                "navigation_edge_count": len(navigation_graph.get("edges", [])),
+                "route_video_edges": {
+                    "counts": route_edge_payload.get("counts", {}),
+                    "metadata": route_edge_payload.get("metadata", {}),
+                },
             }
         )
 

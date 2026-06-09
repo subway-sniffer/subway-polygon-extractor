@@ -160,15 +160,32 @@ def db_platform_node(station_id, version=None, line_id=None, direction=None, pla
     return rows[0]["node_id"]
 
 
-def db_exit_node(station_id, version=None, exit_number=None):
+def db_exit_node(station_id, version=None, exit_number=None, route_preference="none"):
     """Resolve an exit endpoint from SQLite indexes."""
     selected_version = active_version_for_station(station_id, version)
+    preference = normalize_text(route_preference).lower()
+    if preference == "elevator":
+        order_clause = """
+            CASE
+              WHEN node_type = 'exit_elevator' THEN 0
+              ELSE 1
+            END,
+            node_key_str
+        """
+    else:
+        order_clause = """
+            CASE
+              WHEN node_type = 'exit_elevator' THEN 1
+              ELSE 0
+            END,
+            node_key_str
+        """
     with connect() as conn:
         rows = conn.execute(
-            """
+            f"""
             SELECT node_id FROM exit_nodes
             WHERE station_id = ? AND version = ? AND exit_number = ?
-            ORDER BY node_key_str
+            ORDER BY {order_clause}
             """,
             (str(station_id), selected_version, str(exit_number)),
         ).fetchall()
@@ -213,7 +230,7 @@ def db_facility_nodes(station_id, version=None, facility_type=None, facility_sub
     return [row["node_id"] for row in rows]
 
 
-def resolve_route_endpoint_db(station_id, version, endpoint):
+def resolve_route_endpoint_db(station_id, version, endpoint, route_preference="none"):
     """Resolve app-facing endpoint data to a node id using SQLite indexes."""
     if isinstance(endpoint, str):
         return endpoint
@@ -234,7 +251,12 @@ def resolve_route_endpoint_db(station_id, version, endpoint):
             car=endpoint.get("car"),
         )
     if endpoint_type == "exit":
-        return db_exit_node(station_id, version, endpoint.get("exit_number"))
+        return db_exit_node(
+            station_id,
+            version,
+            endpoint.get("exit_number"),
+            route_preference=route_preference,
+        )
     if endpoint_type == "facility":
         return db_facility_node(
             station_id,

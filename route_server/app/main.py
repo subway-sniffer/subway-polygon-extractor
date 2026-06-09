@@ -197,8 +197,18 @@ def route(request: RouteRequest):
         metadata, graph, _ = load_station_package(request.station_id, version)
         start_endpoint = request.start.model_dump() if hasattr(request.start, "model_dump") else request.start
         goal_endpoint = request.goal.model_dump() if hasattr(request.goal, "model_dump") else request.goal
-        start = resolve_route_endpoint_db(request.station_id, version, start_endpoint)
-        goal = resolve_route_endpoint_db(request.station_id, version, goal_endpoint)
+        start = resolve_route_endpoint_db(
+            request.station_id,
+            version,
+            start_endpoint,
+            route_preference=request.route_preference,
+        )
+        goal = resolve_route_endpoint_db(
+            request.station_id,
+            version,
+            goal_endpoint,
+            route_preference=request.route_preference,
+        )
         route_options = dict(
             synthetic_mode=request.synthetic_mode,
             same_layer_radius=request.same_layer_radius,

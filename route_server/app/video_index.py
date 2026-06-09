@@ -59,10 +59,16 @@ def match_route_videos(station_id, metadata, navigation_graph, route, route_vide
     videos = []
     missing = []
     for route_edge in route.get("edges", []):
-        edge_id = route_edge_video_id(route_edge, nodes_by_id, directed=False)
+        edge_id = route_edge_video_id(route_edge, nodes_by_id, directed=True)
         if not edge_id:
             continue
         edge = lookup.get(edge_id)
+        if not edge:
+            legacy_edge_id = route_edge_video_id(route_edge, nodes_by_id, directed=False)
+            if legacy_edge_id != edge_id:
+                edge = lookup.get(legacy_edge_id)
+                if edge:
+                    edge_id = legacy_edge_id
         if not edge:
             missing.append(edge_id)
             continue
@@ -84,10 +90,16 @@ def match_route_videos_db(station_id, version, metadata, navigation_graph, route
     matches = []
     missing = []
     for route_edge in route.get("edges", []):
-        edge_id = route_edge_video_id(route_edge, nodes_by_id, directed=False)
+        edge_id = route_edge_video_id(route_edge, nodes_by_id, directed=True)
         if not edge_id:
             continue
         edge = db_video_edge(station_id, version, edge_id)
+        if not edge:
+            legacy_edge_id = route_edge_video_id(route_edge, nodes_by_id, directed=False)
+            if legacy_edge_id != edge_id:
+                edge = db_video_edge(station_id, version, legacy_edge_id)
+                if edge:
+                    edge_id = legacy_edge_id
         if not edge:
             missing.append(edge_id)
             matches.append({"edge_id": edge_id, "route_edge": route_edge, "video_url": None})

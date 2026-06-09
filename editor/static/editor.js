@@ -351,10 +351,10 @@ const routePreferenceInput = document.getElementById("routePreferenceInput");
 const routeToiletToggle = document.getElementById("routeToiletToggle");
 const routeToiletGenderInput = document.getElementById("routeToiletGenderInput");
 const routeEdgeStationInput = document.getElementById("routeEdgeStationInput");
-const routeEdgePlatformPlatformToggle = document.getElementById("routeEdgePlatformPlatformToggle");
-const routeEdgeSamePlatformToggle = document.getElementById("routeEdgeSamePlatformToggle");
-const routeEdgeDirectedToggle = document.getElementById("routeEdgeDirectedToggle");
-const routeEdgeToiletToggle = document.getElementById("routeEdgeToiletToggle");
+const routeServerUrlInput = document.getElementById("routeServerUrlInput");
+const routeServerTokenInput = document.getElementById("routeServerTokenInput");
+const routeServerVersionInput = document.getElementById("routeServerVersionInput");
+const routeServerSceneToggle = document.getElementById("routeServerSceneToggle");
 const routeStatus = document.getElementById("routeStatus");
 const keepStatus = document.getElementById("keepStatus");
 const imageSelect = document.getElementById("imageSelect");
@@ -1283,11 +1283,12 @@ function splitListInput(value) {
 function stationMetadataFromInputs() {
   const stationId = stationIdInput.value.trim();
   const stationName = stationNameInput.value.trim();
+  const resolvedStationId = stationId || stationName;
   const lines = splitListInput(stationLinesInput.value);
   const floors = splitListInput(stationFloorsInput.value);
   const mapId = stationMapIdInput.value.trim();
   return {
-    station_id: stationId || null,
+    station_id: resolvedStationId || null,
     station_name: stationName || null,
     lines: lines.map((line) => ({line_id: line, line_name: line})),
     line_ids: lines,
@@ -2637,19 +2638,7 @@ function buildRouteEdgesFromUi() {
     .then(() => fetch("/api/navigation/route_edges", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        working_polygons: workingPolygonsPayload(),
-        station_name: (routeEdgeStationInput.value || "").trim(),
-        no_platform_platform: !routeEdgePlatformPlatformToggle.checked,
-        include_same_platform: routeEdgeSamePlatformToggle.checked,
-        directed: routeEdgeDirectedToggle.checked,
-        include_toilet_routes: routeEdgeToiletToggle.checked,
-        toilet_genders: ["male", "female"],
-        synthetic_mode: "same-polygon",
-        paid_free_penalty: Number(routePaidFreePenaltyInput.value || 1000),
-        zone_change_penalty: Number(routeZonePenaltyInput.value || 100),
-        route_preference: routePreferenceInput.value || "none",
-      }),
+      body: JSON.stringify(routeEdgeRequestPayload()),
     }))
     .then((response) => response.json().then((data) => ({ok: response.ok, data})))
     .then(({ok, data}) => {
@@ -2668,6 +2657,74 @@ function buildRouteEdgesFromUi() {
     })
     .catch((error) => {
       updateRouteStatus(String(error));
+    });
+}
+
+function routeEdgeRequestPayload(extra = {}) {
+  const stationMetadata = stationMetadataFromInputs();
+  return {
+    working_polygons: workingPolygonsPayload(),
+    station_name: (routeEdgeStationInput.value || stationMetadata.station_name || "").trim(),
+    no_platform_platform: false,
+    include_same_platform: false,
+    directed: true,
+    include_toilet_routes: true,
+    toilet_genders: ["male", "female"],
+    synthetic_mode: "same-polygon",
+    paid_free_penalty: Number(routePaidFreePenaltyInput.value || 1000),
+    zone_change_penalty: Number(routeZonePenaltyInput.value || 100),
+    route_preference: routePreferenceInput.value || "none",
+    ...extra,
+  };
+}
+
+function uploadRoutePackageToServer() {
+  const metadata = stationMetadataFromInputs();
+  const serverUrl = (routeServerUrlInput.value || "").trim();
+  if (!metadata.station_name) {
+    updateRouteStatus("Station name을 먼저 입력하세요. Station ID는 비어 있으면 역명으로 자동 지정됩니다.");
+    saveResult.textContent = "Station name을 먼저 입력하세요. Station ID는 비어 있으면 역명으로 자동 지정됩니다.";
+    return;
+  }
+  if (!serverUrl) {
+    updateRouteStatus("Route server URL을 입력하세요.");
+    saveResult.textContent = "Route server URL을 입력하세요.";
+    return;
+  }
+  updateRouteStatus("Exporting and uploading route package...");
+  saveResult.textContent = "Exporting scene/navigation, building route video edges, and uploading route package...";
+  state.annotations.station_metadata = metadata;
+  saveAnnotations()
+    .then(() => fetch("/api/route_server/upload", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(routeEdgeRequestPayload({
+        metadata,
+        server_url: serverUrl,
+        admin_token: routeServerTokenInput.value || "",
+        version: (routeServerVersionInput.value || "v001").trim(),
+        include_scene_planes: routeServerSceneToggle.checked,
+      })),
+    }))
+    .then((response) => response.json().then((data) => ({ok: response.ok, data})))
+    .then(({ok, data}) => {
+      if (!ok) throw new Error(data.error || data.detail || "route server upload failed");
+      const imported = data.import_response || {};
+      const counts = data.route_video_edges?.counts || {};
+      updateRouteStatus([
+        "Route package uploaded.",
+        `station: ${imported.station_id || metadata.station_id}`,
+        `version: ${imported.version || routeServerVersionInput.value || "v001"}`,
+        `server: ${data.server_url}`,
+        `navigation nodes/edges: ${data.navigation_node_count || 0}/${data.navigation_edge_count || 0}`,
+        `unique video edges: ${counts.unique_edge_count || 0}`,
+        `local output: ${data.outputs?.navigation_graph || ""}`,
+      ].filter(Boolean).join("\n"));
+      saveResult.textContent = JSON.stringify(data, null, 2);
+    })
+    .catch((error) => {
+      updateRouteStatus(String(error));
+      saveResult.textContent = String(error);
     });
 }
 
@@ -8852,6 +8909,7 @@ routeGoalSelect.addEventListener("change", () => {
 document.getElementById("findRouteBtn").addEventListener("click", findRouteFromUi);
 document.getElementById("exportRoutePathBtn").addEventListener("click", exportRoutePathFromUi);
 document.getElementById("buildRouteEdgesBtn").addEventListener("click", buildRouteEdgesFromUi);
+document.getElementById("uploadRoutePackageBtn").addEventListener("click", uploadRoutePackageToServer);
 document.getElementById("clearRouteBtn").addEventListener("click", clearRouteOverlay);
 document.getElementById("refreshImagesBtn").addEventListener("click", refreshImages);
 imageSelect.addEventListener("change", loadSelectedImage);

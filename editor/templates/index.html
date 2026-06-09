@@ -600,22 +600,6 @@
           Edge station name
           <input id="routeEdgeStationInput" placeholder="서울역">
         </label>
-        <label>
-          <input id="routeEdgePlatformPlatformToggle" type="checkbox" checked>
-          include platform to platform
-        </label>
-        <label>
-          <input id="routeEdgeSamePlatformToggle" type="checkbox">
-          include same platform cars
-        </label>
-        <label>
-          <input id="routeEdgeDirectedToggle" type="checkbox">
-          directed video edges
-        </label>
-        <label>
-          <input id="routeEdgeToiletToggle" type="checkbox">
-          include toilet waypoint video edges
-        </label>
         <button id="findRouteBtn">Find Route</button>
         <button id="exportRoutePathBtn">Export Route Path</button>
         <button id="buildRouteEdgesBtn">Build Route Video Edges</button>
@@ -639,6 +623,23 @@
         </label>
         <button id="exportPlanesBtn">Export Scene Planes</button>
         <button id="exportAssetsBtn">Export Assets</button>
+        <label>
+          Route server URL
+          <input id="routeServerUrlInput" placeholder="http://127.0.0.1:8080">
+        </label>
+        <label>
+          Route server token
+          <input id="routeServerTokenInput" type="password" autocomplete="off">
+        </label>
+        <label>
+          Upload version
+          <input id="routeServerVersionInput" value="v001">
+        </label>
+        <label>
+          <input id="routeServerSceneToggle" type="checkbox">
+          include scene planes
+        </label>
+        <button id="uploadRoutePackageBtn">Upload Route Package</button>
         <pre id="saveResult"></pre>
       </section>
     </aside>
