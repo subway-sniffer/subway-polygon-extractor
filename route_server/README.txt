@@ -6,6 +6,12 @@ Subway Route Server
 Editor에서 만든 navigation_graph.json, route_video_edges.json을 별도 Python 서버에 등록하고,
 앱 요청을 실제 node route와 R2 영상 URL 목록으로 변환한다.
 
+앱 연동 문서
+------------
+앱에서 호출할 API 흐름, 요청/응답 예시, segment/video_url 사용법은 아래 문서를 본다.
+
+route_server/APP_API.md
+
 폴더 구조
 ---------
 route_server/
