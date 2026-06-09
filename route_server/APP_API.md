@@ -195,25 +195,25 @@ curl -X POST https://api.busantax.com/route \
       "index": 1,
       "from_type": "platform",
       "to_type": "stair",
-      "video_url": "서울역/routes/서울역_N0119_N0209.mp4"
+      "video_url": "videos/서울역/서울역_N0119_N0209.mp4"
     },
     {
       "index": 2,
       "from_type": "stair",
       "to_type": "stair",
-      "video_url": "서울역/routes/서울역_N0209_N0208.mp4"
+      "video_url": "videos/서울역/서울역_N0209_N0208.mp4"
     },
     {
       "index": 3,
       "from_type": "stair",
       "to_type": "gate",
-      "video_url": "서울역/routes/서울역_N0208_N0237.mp4"
+      "video_url": "videos/서울역/서울역_N0208_N0237.mp4"
     },
     {
       "index": 4,
       "from_type": "gate",
       "to_type": "exit",
-      "video_url": "서울역/routes/서울역_N0237_N0024.mp4"
+      "video_url": "videos/서울역/서울역_N0237_N0024.mp4"
     }
   ],
   "debug": {
@@ -409,7 +409,7 @@ toilet
 현재 로컬/테스트 응답 예:
 
 ```text
-서울역/routes/서울역_N0119_N0209.mp4
+videos/서울역/서울역_N0119_N0209.mp4
 ```
 
 `ROUTE_SERVER_VIDEO_BASE_URL` 환경변수가 설정되면 완전한 R2 URL 형태로 내려갈 수 있습니다.
@@ -417,7 +417,7 @@ toilet
 예:
 
 ```text
-https://pub-xxxx.r2.dev/서울역/routes/서울역_N0119_N0209.mp4
+https://pub-xxxx.r2.dev/videos/서울역/서울역_N0119_N0209.mp4
 ```
 
 앱 구현 권장:

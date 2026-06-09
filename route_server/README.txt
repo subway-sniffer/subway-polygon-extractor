@@ -148,7 +148,7 @@ segments 예:
       "index": 1,
       "from_type": "platform",
       "to_type": "stair",
-      "video_url": "https://pub-xxxx.r2.dev/stations/133/v001/videos/서울역_N0127_N0209.mp4"
+      "video_url": "https://pub-xxxx.r2.dev/videos/서울역/서울역_N0127_N0209.mp4"
     }
   ],
   "debug": {

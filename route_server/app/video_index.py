@@ -32,9 +32,11 @@ def video_url(station_id, station_name, edge):
         return edge["r2_url"]
     title = edge.get("video_title") or f"{safe_title_part(station_name or station_id)}_{edge.get('edge_id')}"
     filename = f"{title}.mp4"
+    station_dir = safe_title_part(station_name or station_id)
+    path = f"videos/{station_dir}/{filename}"
     if settings.video_base_url:
-        return f"{settings.video_base_url}/{safe_title_part(station_id)}/routes/{filename}"
-    return f"{safe_title_part(station_id)}/routes/{filename}"
+        return f"{settings.video_base_url}/{path}"
+    return path
 
 
 def db_video_edge(station_id, version, edge_id):
