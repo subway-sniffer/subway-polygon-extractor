@@ -5,13 +5,13 @@
 현재 테스트 서버:
 
 ```text
-http://54.116.23.72:8080
+https://api.busantax.com
 ```
 
 Swagger 문서:
 
 ```text
-http://54.116.23.72:8080/docs
+https://api.busantax.com/docs
 ```
 
 ## 핵심 흐름
@@ -35,7 +35,7 @@ station_name = 서울역
 ## 1. 서버 상태 확인
 
 ```bash
-curl http://54.116.23.72:8080/health
+curl https://api.busantax.com/health
 ```
 
 응답:
@@ -47,7 +47,7 @@ curl http://54.116.23.72:8080/health
 ## 2. 역 목록 조회
 
 ```bash
-curl http://54.116.23.72:8080/stations
+curl https://api.busantax.com/stations
 ```
 
 응답 예시:
@@ -70,7 +70,7 @@ curl http://54.116.23.72:8080/stations
 역별로 선택 가능한 승강장, 출구, 시설 목록을 조회합니다.
 
 ```bash
-curl http://54.116.23.72:8080/stations/%EC%84%9C%EC%9A%B8%EC%97%AD/route-options
+curl https://api.busantax.com/stations/%EC%84%9C%EC%9A%B8%EC%97%AD/route-options
 ```
 
 응답 주요 필드:
@@ -167,7 +167,7 @@ type=exit_elevator  출구 엘리베이터
 승강장 1호선 남영 방면 1호차에서 3번 출구까지:
 
 ```bash
-curl -X POST http://54.116.23.72:8080/route \
+curl -X POST https://api.busantax.com/route \
   -H 'Content-Type: application/json' \
   -d '{
     "station_id": "서울역",
@@ -251,7 +251,7 @@ elevator   엘리베이터 선호
 엘리베이터 우선 요청:
 
 ```bash
-curl -X POST http://54.116.23.72:8080/route \
+curl -X POST https://api.busantax.com/route \
   -H 'Content-Type: application/json' \
   -d '{
     "station_id": "서울역",
@@ -281,7 +281,7 @@ route_preference=elevator  같은 출구 번호에서 exit_elevator 우선
 경로 중간에 화장실을 들르는 최단 경로를 찾습니다.
 
 ```bash
-curl -X POST http://54.116.23.72:8080/route \
+curl -X POST https://api.busantax.com/route \
   -H 'Content-Type: application/json' \
   -d '{
     "station_id": "서울역",
