@@ -386,6 +386,21 @@ const regionOpenKernelInput = document.getElementById("regionOpenKernelInput");
 const regionEpsilonInput = document.getElementById("regionEpsilonInput");
 const MANUAL_ASSET_TYPES = ["subway", "moving_walkway", "ticket_gate", "exit", "toilet"];
 const VERTICAL_CONNECTION_TYPES = ["stair", "escalator", "exit_stair", "exit_escalator"];
+const DEFAULT_PLATFORM_LINES = [
+  "1호선",
+  "2호선",
+  "3호선",
+  "4호선",
+  "5호선",
+  "6호선",
+  "7호선",
+  "8호선",
+  "9호선",
+  "공항철도",
+  "경의중앙선",
+  "수인분당선",
+  "신분당선",
+];
 const SIDEBAR_PANELS = [
   {id: "setup", label: "Setup", titles: new Set(["Station Info", "View"])},
   {id: "extract", label: "Extract", titles: new Set(["Batch Pipeline", "Region Pick"])},
@@ -5657,11 +5672,12 @@ function linesForStation(stationName) {
 
 function populatePlatformLineOptions() {
   const previous = platformLineInput.value;
-  const lines = linesForStation(platformStationInput.value);
+  const localLines = linesForStation(platformStationInput.value);
+  const lines = localLines.length ? localLines : DEFAULT_PLATFORM_LINES;
   platformLineInput.innerHTML = "";
   const empty = document.createElement("option");
   empty.value = "";
-  empty.textContent = lines.length ? "select line" : "no local line data";
+  empty.textContent = localLines.length ? "select line" : "select line (manual fallback)";
   platformLineInput.appendChild(empty);
   for (const line of lines) {
     const option = document.createElement("option");
@@ -5998,29 +6014,93 @@ function undoPlatformInputPoint() {
 function fetchQuickExitDoors() {
   const station = normalizeStationDisplayName(platformStationInput.value);
   const line = platformLineInput.value.trim();
-  if (!station || !line) {
-    quickExitStatus.textContent = "quick exit: station and line are required";
+  if (!station) {
+    quickExitStatus.textContent = "quick exit: station is required";
     return;
   }
+  if (!line) {
+    fetchQuickExitLinesForStation(station);
+    return;
+  }
+  fetchQuickExitForLine(station, line);
+}
+
+function quickExitUrl(station, line) {
+  return `/api/quick_exit?station=${encodeURIComponent(station)}&line=${encodeURIComponent(line)}&facility=${encodeURIComponent("계단")}`;
+}
+
+function applyQuickExitRows(line, rows) {
+  platformLineInput.value = line;
+  populatePlatformDirectionOptions(rows);
+  const direction = platformDirectionInput.value;
+  const directionRows = sortedQuickExitRowsForDirection(rows, direction, selectedPlatformDoorsPerCar());
+  state.platform.quickExitRows = rows;
+  const doors = directionRows.map((row) => row.door_no).join(", ");
+  quickExitStatus.textContent = [
+    `quick exit: ${rows.length} rows loaded`,
+    `line: ${line}`,
+    direction ? `${direction} 방면: ${directionRows.length} door(s)` : "select direction",
+    doors || null,
+  ].filter(Boolean).join("\n");
+  updatePlatformStatus();
+  draw();
+}
+
+function fetchQuickExitForLine(station, line) {
   quickExitStatus.textContent = "quick exit: loading...";
-  const url = `/api/quick_exit?station=${encodeURIComponent(station)}&line=${encodeURIComponent(line)}&facility=${encodeURIComponent("계단")}`;
-  fetch(url)
+  fetch(quickExitUrl(station, line))
     .then((response) => response.json().then((data) => ({ok: response.ok, data})))
     .then(({ok, data}) => {
       if (!ok) throw new Error(data.error || "quick exit request failed");
       const rows = data.rows || [];
-      populatePlatformDirectionOptions(rows);
-      const direction = platformDirectionInput.value;
-      const directionRows = sortedQuickExitRowsForDirection(rows, direction, selectedPlatformDoorsPerCar());
-      state.platform.quickExitRows = rows;
-      const doors = directionRows.map((row) => row.door_no).join(", ");
-      quickExitStatus.textContent = [
-        `quick exit: ${rows.length} rows loaded`,
-        direction ? `${direction} 방면: ${directionRows.length} door(s)` : "select direction",
-        doors || null,
-      ].filter(Boolean).join("\n");
-      updatePlatformStatus();
-      draw();
+      applyQuickExitRows(line, rows);
+    })
+    .catch((error) => {
+      quickExitStatus.textContent = `quick exit: ${error.message || error}`;
+    });
+}
+
+function fetchQuickExitLinesForStation(station) {
+  quickExitStatus.textContent = "quick exit: finding lines...";
+  Promise.all(DEFAULT_PLATFORM_LINES.map((line) => (
+    fetch(quickExitUrl(station, line))
+      .then((response) => response.json().then((data) => ({ok: response.ok, line, data})))
+      .catch((error) => ({ok: false, line, data: {error: String(error)}}))
+  )))
+    .then((results) => {
+      const matches = results
+        .filter((result) => result.ok && (result.data.rows || []).length)
+        .map((result) => ({line: result.line, rows: result.data.rows || []}));
+      if (!matches.length) {
+        const errors = results
+          .filter((result) => !result.ok && result.data?.error)
+          .slice(0, 2)
+          .map((result) => `${result.line}: ${result.data.error}`);
+        quickExitStatus.textContent = [
+          "quick exit: no line data found",
+          errors.join("\n") || null,
+        ].filter(Boolean).join("\n");
+        return;
+      }
+      platformLineInput.innerHTML = "";
+      const empty = document.createElement("option");
+      empty.value = "";
+      empty.textContent = "select line";
+      platformLineInput.appendChild(empty);
+      for (const match of matches) {
+        const option = document.createElement("option");
+        option.value = match.line;
+        option.textContent = match.line;
+        platformLineInput.appendChild(option);
+      }
+      applyQuickExitRows(matches[0].line, matches[0].rows);
+      if (matches.length > 1) {
+        quickExitStatus.textContent = [
+          quickExitStatus.textContent,
+          `found lines: ${matches.map((match) => match.line).join(", ")}`,
+          "line can be changed from the dropdown.",
+        ].join("\n");
+      }
     })
     .catch((error) => {
       quickExitStatus.textContent = `quick exit: ${error.message || error}`;

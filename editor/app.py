@@ -1058,36 +1058,50 @@ def create_app(args):
         if not station or not line:
             return jsonify({"error": "station and line are required"}), 400
         service_key = os.environ.get("DATA_GO_KR_SERVICE_KEY", DEFAULT_QUICK_EXIT_SERVICE_KEY)
-        params = {
-            "serviceKey": service_key,
-            "pageNo": 1,
-            "numOfRows": 500,
-            "dataType": "JSON",
-            "stnNm": station,
-            "lineNm": line,
-        }
-        try:
-            response = requests.get(QUICK_EXIT_URL, params=params, timeout=10)
-        except requests.RequestException as exc:
-            return jsonify({"error": f"quick exit request failed: {exc}"}), 502
-        if response.status_code == 401:
-            return jsonify({"error": "quick exit API authorization failed"}), 401
-        if not response.ok:
-            return jsonify({"error": f"quick exit API failed: HTTP {response.status_code}", "body": response.text[:300]}), 502
-        try:
-            payload = response.json()
-        except ValueError:
-            return jsonify({"error": f"quick exit API did not return JSON: {parse_xml_error(response.text)[:300]}"}), 502
-        header = payload.get("response", {}).get("header", {})
-        result_code = str(header.get("resultCode", "")).strip()
-        if result_code and result_code not in {"00", "0"}:
-            return jsonify({"error": f"quick exit API error {result_code}: {header.get('resultMsg', '')}"}), 502
-        rows = [normalize_quick_exit_row(row) for row in parse_api_items(payload)]
+        station_candidates = [station]
+        if station.endswith("역") and len(station) > 1:
+            station_candidates.append(station[:-1])
+        else:
+            station_candidates.append(f"{station}역")
+        station_candidates = list(dict.fromkeys(candidate for candidate in station_candidates if candidate))
+        rows = []
+        matched_station = station
+        for station_candidate in station_candidates:
+            params = {
+                "serviceKey": service_key,
+                "pageNo": 1,
+                "numOfRows": 500,
+                "dataType": "JSON",
+                "stnNm": station_candidate,
+                "lineNm": line,
+            }
+            try:
+                response = requests.get(QUICK_EXIT_URL, params=params, timeout=10)
+            except requests.RequestException as exc:
+                return jsonify({"error": f"quick exit request failed: {exc}"}), 502
+            if response.status_code == 401:
+                return jsonify({"error": "quick exit API authorization failed"}), 401
+            if not response.ok:
+                return jsonify({"error": f"quick exit API failed: HTTP {response.status_code}", "body": response.text[:300]}), 502
+            try:
+                payload = response.json()
+            except ValueError:
+                return jsonify({"error": f"quick exit API did not return JSON: {parse_xml_error(response.text)[:300]}"}), 502
+            header = payload.get("response", {}).get("header", {})
+            result_code = str(header.get("resultCode", "")).strip()
+            if result_code and result_code not in {"00", "0"}:
+                return jsonify({"error": f"quick exit API error {result_code}: {header.get('resultMsg', '')}"}), 502
+            rows = [normalize_quick_exit_row(row) for row in parse_api_items(payload)]
+            if rows:
+                matched_station = station_candidate
+                break
         if facility:
             rows = [row for row in rows if facility in str(row.get("facility") or "")]
         return jsonify(
             {
                 "station": station,
+                "matched_station": matched_station,
+                "tried_stations": station_candidates,
                 "line": line,
                 "facility": facility,
                 "count": len(rows),
