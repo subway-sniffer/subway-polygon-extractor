@@ -1,0 +1,14 @@
+services:
+  route-server:
+    build:
+      context: ..
+      dockerfile: route_server/Dockerfile
+    container_name: subway-route-server
+    ports:
+      - "8080:8080"
+    environment:
+      ROUTE_SERVER_DATA_ROOT: /data/route_server
+      ROUTE_SERVER_VIDEO_BASE_URL: ${ROUTE_SERVER_VIDEO_BASE_URL:-}
+      ROUTE_SERVER_ADMIN_TOKEN: ${ROUTE_SERVER_ADMIN_TOKEN:-}
+    volumes:
+      - ./data:/data/route_server

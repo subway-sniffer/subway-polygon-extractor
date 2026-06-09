@@ -4,3 +4,5 @@ debug_output/
 output/
 tests/output*/
 venv/
+route_server/data/
+*.sqlite
