@@ -242,10 +242,8 @@ segments[].video_url
 이동 수단 우선순위입니다.
 
 ```text
-none       기본
-stair      계단 선호
-escalator  에스컬레이터 선호
-elevator   엘리베이터 선호
+none       기본. 계단과 에스컬레이터를 같은 이동 수단 비용으로 처리
+elevator   엘리베이터와 에스컬레이터 우선
 ```
 
 엘리베이터 우선 요청:
@@ -272,8 +270,8 @@ curl -X POST https://api.busantax.com/route \
 동작:
 
 ```text
-route_preference=elevator  같은 출구 번호에서 exit_elevator 우선
-그 외 값                      같은 출구 번호에서 계단/일반 출구 우선
+route_preference=elevator  같은 출구 번호에서 exit_elevator 우선, 이동 중 엘리베이터/에스컬레이터 비용 우대
+route_preference=none      같은 출구 번호에서 계단/일반 출구 우선, 계단/에스컬레이터 동일 비용
 ```
 
 ### include_toilet
@@ -503,4 +501,3 @@ station_id가 등록되지 않음
 3. toilet_gender=male/female/accessible
 4. debug.missing_video_edges 개발자 로그 표시
 ```
-

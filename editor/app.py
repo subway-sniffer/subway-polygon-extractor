@@ -24,6 +24,7 @@ from editor.export_payload import (
     build_plane_payload,
     build_plane_payload_from_records,
     build_working_final_payload,
+    is_exit_stair_asset,
     load_transform_metadata,
     parse_layer_z,
     resolve_marker_config_path,
@@ -234,6 +235,14 @@ def normalize_quick_exit_row(row):
         "car_no": car_no,
         "raw": row,
     }
+
+
+def quick_exit_station_key(name):
+    """Return a station key that avoids confusing 동대문 with 동대문역사문화공원."""
+    value = str(name or "").strip()
+    if value.endswith("역") and len(value) > 1:
+        value = value[:-1]
+    return value
 
 
 def normalize_station_name(name):
@@ -1091,7 +1100,12 @@ def create_app(args):
             result_code = str(header.get("resultCode", "")).strip()
             if result_code and result_code not in {"00", "0"}:
                 return jsonify({"error": f"quick exit API error {result_code}: {header.get('resultMsg', '')}"}), 502
-            rows = [normalize_quick_exit_row(row) for row in parse_api_items(payload)]
+            station_key = quick_exit_station_key(station_candidate)
+            rows = [
+                row
+                for row in (normalize_quick_exit_row(row) for row in parse_api_items(payload))
+                if quick_exit_station_key(row.get("station")) == station_key
+            ]
             if rows:
                 matched_station = station_candidate
                 break
@@ -1127,6 +1141,14 @@ def create_app(args):
         height_options = scene_height_options(annotations)
         icon_matches = load_active_icons()
         working_polygons = data.get("working_polygons")
+        wall_height_override = data.get("wall_height_override")
+        if wall_height_override in ("", None):
+            wall_height_override = None
+        else:
+            wall_height_override = float(wall_height_override)
+        stair_has_pillar = data.get("stair_has_pillar")
+        if stair_has_pillar is not None:
+            stair_has_pillar = bool(stair_has_pillar)
         if working_polygons:
             final_payload = build_working_final_payload(store.active["polygons_path"], working_polygons, annotations, store.active["transform_metadata"])
             payload = build_plane_payload_from_records(
@@ -1142,6 +1164,7 @@ def create_app(args):
                 invert_x=args.invert_x,
                 invert_y=args.invert_y,
                 icon_matches=icon_matches,
+                wall_height_override=wall_height_override,
             )
         else:
             payload = build_plane_payload(
@@ -1155,10 +1178,17 @@ def create_app(args):
                 invert_x=args.invert_x,
                 invert_y=args.invert_y,
                 icon_matches=icon_matches,
+                wall_height_override=wall_height_override,
             )
+        if stair_has_pillar is not None:
+            payload["assets"] = [
+                {**asset, "hasPillar": stair_has_pillar if not is_exit_stair_asset(asset) else False}
+                if asset.get("blend") == "Stair.blend" else asset
+                for asset in payload.get("assets", [])
+            ]
         saved_path = save_json_compact_vectors(payload, store.named_output_path("scene_planes"))
         example_path = save_json_compact_vectors(payload, ROOT_DIR / "examples" / "polygon_example.json")
-        assets_payload = build_assets_payload(payload)
+        assets_payload = build_assets_payload(payload, stair_has_pillar=stair_has_pillar)
         assets_path = save_json_compact_vectors(assets_payload, store.named_output_path("assets"))
         navigation_path = save_json_compact_vectors(payload.get("navigation", {}), store.named_output_path("navigation_graph"))
         navigation_example_path = save_json_compact_vectors(payload.get("navigation", {}), ROOT_DIR / "examples" / "navigation_graph_example.json")
@@ -2178,7 +2208,8 @@ def parse_args():
     parser.add_argument("--default-z", type=float, default=0.0)
     parser.add_argument("--floor-height", type=float, default=5.0, help="Default floor height multiplier for layer indices.")
     parser.add_argument("--layer-z", help="Optional explicit layer z override, for example 'B1=0,B2=-5,B3=-10'.")
-    parser.add_argument("--invert-x", action="store_true")
+    parser.add_argument("--invert-x", dest="invert_x", action="store_true", default=True)
+    parser.add_argument("--no-invert-x", dest="invert_x", action="store_false")
     parser.add_argument("--invert-y", action="store_true")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=5050)

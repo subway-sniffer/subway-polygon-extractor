@@ -152,6 +152,10 @@
           <input id="showZonesToggle" type="checkbox" checked>
           zone regions
         </label>
+        <label class="row">
+          <input id="showPlatformsToggle" type="checkbox">
+          platform points
+        </label>
         <button id="toggleZonesBtn">Hide Zones</button>
         <label class="row">
           <input id="showHiddenToggle" type="checkbox">
@@ -446,8 +450,8 @@
           <input id="subwayLabelInput" placeholder="auto">
         </label>
         <label>
-          Gate count
-          <input id="gateCountInput" type="number" value="1" min="1" step="1">
+          Min gate count
+          <input id="gateCountInput" type="number" value="2" min="2" step="1">
         </label>
         <label>
           Exit number
@@ -578,9 +582,7 @@
           Route preference
           <select id="routePreferenceInput">
             <option value="none">none</option>
-            <option value="escalator">prefer escalator</option>
             <option value="elevator">prefer elevator</option>
-            <option value="stair">prefer stair</option>
           </select>
         </label>
         <label>
@@ -621,11 +623,19 @@
           <input id="renderScenePreviewToggle" type="checkbox">
           render scene preview
         </label>
+        <label>
+          Export wall height
+          <input id="exportWallHeightInput" type="number" placeholder="use wall values" min="0" step="0.1">
+        </label>
+        <label class="row">
+          <input id="exportStairNoPillarToggle" type="checkbox">
+          export stairs without pillars
+        </label>
         <button id="exportPlanesBtn">Export Scene Planes</button>
         <button id="exportAssetsBtn">Export Assets</button>
         <label>
           Route server URL
-          <input id="routeServerUrlInput" placeholder="http://127.0.0.1:8080">
+          <input id="routeServerUrlInput" value="https://api.busantax.com" placeholder="https://api.busantax.com">
         </label>
         <label>
           Route server token

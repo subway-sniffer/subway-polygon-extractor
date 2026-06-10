@@ -146,6 +146,18 @@ def route_pair_specs(platform_representatives, exits, include_platform_platform=
                     "exit_number": goal.get("exit_number"),
                 }
             )
+    for start in exits:
+        for goal in platform_representatives:
+            pairs.append(
+                {
+                    "type": "exit_platform",
+                    "start_node_id": start["node_id"],
+                    "goal_node_id": goal["node_id"],
+                    "start_node_key_str": start.get("node_key_str"),
+                    "goal_node_key_str": goal.get("node_key_str"),
+                    "exit_number": start.get("exit_number"),
+                }
+            )
     return pairs
 
 
@@ -400,7 +412,7 @@ def parse_args():
     parser.add_argument("--same-layer-radius", type=float, default=None)
     parser.add_argument("--zone-change-penalty", type=float, default=100.0)
     parser.add_argument("--paid-free-penalty", type=float, default=1000.0)
-    parser.add_argument("--route-preference", choices=["none", "stair", "escalator", "elevator"], default="none")
+    parser.add_argument("--route-preference", choices=["none", "elevator"], default="none")
     return parser.parse_args()
 
 

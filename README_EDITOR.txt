@@ -29,8 +29,10 @@ python3 editor/app.py \
   --marker-config ../test_image_output/test1/output/marker_config.json \
   --image-root . \
   --project-output-root ../test_image_output/web_projects \
-  --port 5050 \
-  --invert-x
+  --port 5050
+
+기본 export는 Blender 좌표계에 맞춰 X축을 좌우 반전한다.
+필요할 때만 --no-invert-x 옵션으로 끌 수 있다.
 
 브라우저에서 아래 주소를 연다.
 

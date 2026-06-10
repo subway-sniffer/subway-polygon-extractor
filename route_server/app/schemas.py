@@ -63,7 +63,7 @@ class RouteRequest(BaseModel):
     version: str | None = None
     start: Endpoint
     goal: Endpoint
-    route_preference: Literal["none", "stair", "escalator", "elevator"] = "none"
+    route_preference: Literal["none", "elevator"] = "none"
     include_toilet: bool = False
     toilet_gender: Literal["any", "male", "female", "accessible"] = "any"
     synthetic_mode: Literal["same-polygon", "all"] = "same-polygon"

@@ -52,6 +52,7 @@ const state = {
   showCorrections: true,
   showMarkers: true,
   showZones: true,
+  showPlatforms: false,
   showHidden: false,
   previewFinal: false,
   exportedFinalPolygons: null,
@@ -311,6 +312,7 @@ const wallHeightInput = document.getElementById("wallHeightInput");
 const zoneStatus = document.getElementById("zoneStatus");
 const zoneTypeInput = document.getElementById("zoneTypeInput");
 const showZonesToggle = document.getElementById("showZonesToggle");
+const showPlatformsToggle = document.getElementById("showPlatformsToggle");
 const toggleZonesBtn = document.getElementById("toggleZonesBtn");
 const layerHeightStatus = document.getElementById("layerHeightStatus");
 const floorHeightInput = document.getElementById("floorHeightInput");
@@ -944,10 +946,12 @@ function drawManualAssets() {
 }
 
 function drawPlatforms() {
+  if (!state.showPlatforms && !state.platform.active) return;
   ctx.save();
   const selectedIds = new Set(selectedPlatformIds());
   for (const platform of state.annotations.manual_platforms || []) {
-    const points = platformDisplayPoints(platform);
+    const entries = platformDisplayEntries(platform);
+    const points = entries.map((entry) => entry.point).filter(Boolean);
     if (points.length < 1) continue;
     const platformId = platform.platform_id || platform.label;
     const selected = selectedIds.has(platformId);
@@ -956,7 +960,8 @@ function drawPlatforms() {
       drawPath(points, color, selected ? 6 : 4);
       drawPathArrow(points, color);
     }
-    points.forEach((point, index) => {
+    entries.forEach((entry, index) => {
+      const point = entry.point;
       const screen = worldToScreen(point);
       ctx.beginPath();
       ctx.arc(screen.x, screen.y, selected ? 7 : 5, 0, Math.PI * 2);
@@ -965,6 +970,9 @@ function drawPlatforms() {
       ctx.lineWidth = 1;
       ctx.fill();
       ctx.stroke();
+      if (state.showPlatforms && entry.label) {
+        drawCanvasLabel(point, entry.label, selected ? "#ffd200" : "#7b2cff", 8, index % 2 === 0 ? -8 : 16);
+      }
     });
     const labelPoint = points[0];
     drawCanvasLabel(
@@ -2093,6 +2101,19 @@ function selectedPolygon() {
 
 function selectedLayerPolygonIds() {
   return state.selectedIds.length ? state.selectedIds : (state.selectedId ? [state.selectedId] : []);
+}
+
+function selectedLocalAxisTargetIds(basePolygonId) {
+  const existingIds = new Set(allPolygons().map((poly) => poly.polygon_id));
+  const selectedIds = state.selectedIds || [];
+  const targets = new Set();
+  if (selectedIds.length) {
+    selectedIds.forEach((polygonId) => {
+      if (existingIds.has(polygonId)) targets.add(polygonId);
+    });
+  }
+  if (basePolygonId && existingIds.has(basePolygonId)) targets.add(basePolygonId);
+  return Array.from(targets);
 }
 
 function clearMultiSelection() {
@@ -4178,10 +4199,14 @@ function undoLastLocalShift() {
 
 function updateLocalAxisStatus(message = null) {
   const count = Object.keys(state.annotations.polygon_axis_corrections || {}).length;
+  const targetCount = state.localAxis.active && state.localAxis.polygonId
+    ? selectedLocalAxisTargetIds(state.localAxis.polygonId).length
+    : (state.selectedIds || []).length;
   if (!state.localAxis.active) {
     localAxisStatus.textContent = [
       message,
       `saved: ${count}`,
+      targetCount > 1 ? `selected targets: ${targetCount}` : null,
       state.selectedId ? `selected: ${state.selectedId}` : null,
     ].filter(Boolean).join("\n") || "inactive";
     return;
@@ -4196,6 +4221,7 @@ function updateLocalAxisStatus(message = null) {
   localAxisStatus.textContent = [
     message,
     `polygon: ${state.localAxis.polygonId || "-"}`,
+    targetCount > 1 ? `targets: ${targetCount}` : null,
     `points: ${state.localAxis.points.length}/3`,
     next,
   ].filter(Boolean).join("\n");
@@ -4252,35 +4278,43 @@ function addLocalAxisPoint(world, poly) {
   }
   const [origin, xAxisPoint, yAxisPoint] = state.localAxis.points;
   state.annotations.polygon_axis_corrections = state.annotations.polygon_axis_corrections || {};
-  state.annotations.polygon_axis_corrections[state.localAxis.polygonId] = {
-    type: "orthogonal_3point",
-    origin,
-    x_axis_point: xAxisPoint,
-    y_axis_point: yAxisPoint,
-    target_angle_degrees: 90,
-  };
-  const polygonId = state.localAxis.polygonId;
+  const sourcePolygonId = state.localAxis.polygonId;
+  const targetPolygonIds = selectedLocalAxisTargetIds(sourcePolygonId);
+  targetPolygonIds.forEach((polygonId) => {
+    state.annotations.polygon_axis_corrections[polygonId] = {
+      type: "orthogonal_3point",
+      source_polygon_id: sourcePolygonId,
+      origin,
+      x_axis_point: xAxisPoint,
+      y_axis_point: yAxisPoint,
+      target_angle_degrees: 90,
+    };
+  });
   saveAnnotations().then((result) => {
     saveResult.textContent = JSON.stringify(result, null, 2);
     resetLocalAxisCorrection();
-    updateLocalAxisStatus(`Saved local axis for ${polygonId}.`);
+    updateLocalAxisStatus(`Saved local axis for ${targetPolygonIds.length} polygon(s).`);
   });
 }
 
 function deleteSelectedLocalAxisCorrection() {
-  if (!state.selectedId) {
+  const targetIds = state.selectedIds.length ? state.selectedIds : (state.selectedId ? [state.selectedId] : []);
+  if (!targetIds.length) {
     updateLocalAxisStatus("Select a polygon first.");
     return;
   }
   state.annotations.polygon_axis_corrections = state.annotations.polygon_axis_corrections || {};
-  if (!state.annotations.polygon_axis_corrections[state.selectedId]) {
-    updateLocalAxisStatus(`No local axis on ${state.selectedId}.`);
+  const deletedIds = targetIds.filter((polygonId) => state.annotations.polygon_axis_corrections[polygonId]);
+  if (!deletedIds.length) {
+    updateLocalAxisStatus(`No local axis on selected polygon(s).`);
     return;
   }
-  delete state.annotations.polygon_axis_corrections[state.selectedId];
+  deletedIds.forEach((polygonId) => {
+    delete state.annotations.polygon_axis_corrections[polygonId];
+  });
   saveAnnotations().then((result) => {
     saveResult.textContent = JSON.stringify(result, null, 2);
-    updateLocalAxisStatus(`Deleted local axis for ${state.selectedId}.`);
+    updateLocalAxisStatus(`Deleted local axis for ${deletedIds.length} polygon(s).`);
     draw();
   });
 }
@@ -4882,6 +4916,7 @@ function selectedWallHeight() {
 
 function updateWallStatus(message = null) {
   const count = (state.annotations.manual_walls || []).length;
+  const sourceCount = new Set(state.wall.pointPolygonIds || []).size;
   if (!state.wall.active) {
     wallStatus.textContent = [
       message,
@@ -4895,6 +4930,7 @@ function updateWallStatus(message = null) {
     `height: ${state.wall.height}`,
     `layer: ${state.wall.layer || "-"}`,
     `points: ${(state.wall.points || []).length}`,
+    sourceCount > 1 ? `polygons: ${sourceCount}` : null,
     state.wall.lastSnap ? `snap: ${state.wall.lastSnap}` : null,
     "Click points to continue the wall path.",
   ].filter(Boolean).join("\n");
@@ -4908,6 +4944,8 @@ function startWallPath() {
     label: wallLabelInput.value.trim(),
     height: selectedWallHeight(),
     points: [],
+    pointPolygonIds: [],
+    pointLayers: [],
     layer: null,
     polygonId: null,
     hoverSnap: null,
@@ -4923,6 +4961,8 @@ function resetWallPath() {
     label: wallLabelInput.value.trim(),
     height: selectedWallHeight(),
     points: [],
+    pointPolygonIds: [],
+    pointLayers: [],
     layer: null,
     polygonId: null,
     hoverSnap: null,
@@ -4949,8 +4989,21 @@ function addWallPoint(world, poly) {
     state.wall.layer = layer;
     state.wall.polygonId = poly.polygon_id;
   }
+  if (!poly) {
+    updateWallStatus("Click inside or near a polygon edge/vertex.");
+    return;
+  }
+  const layer = polygonLayerValue(poly);
+  if (!layer) {
+    updateWallStatus(`Set layer first: ${poly.polygon_id}`);
+    return;
+  }
   state.wall.points = state.wall.points || [];
+  state.wall.pointPolygonIds = state.wall.pointPolygonIds || [];
+  state.wall.pointLayers = state.wall.pointLayers || [];
   state.wall.points.push(point);
+  state.wall.pointPolygonIds.push(poly.polygon_id);
+  state.wall.pointLayers.push(layer);
   state.wall.lastSnap = snap.source;
   updateWallStatus();
   draw();
@@ -4959,9 +5012,13 @@ function addWallPoint(world, poly) {
 function undoWallPoint() {
   if (!state.wall.active || !(state.wall.points || []).length) return;
   state.wall.points.pop();
+  if (state.wall.pointPolygonIds) state.wall.pointPolygonIds.pop();
+  if (state.wall.pointLayers) state.wall.pointLayers.pop();
   if (state.wall.points.length === 0) {
     state.wall.layer = null;
     state.wall.polygonId = null;
+    state.wall.pointPolygonIds = [];
+    state.wall.pointLayers = [];
   }
   updateWallStatus();
   draw();
@@ -4974,13 +5031,18 @@ function applyWallPath() {
     return;
   }
   const wallId = nextWallId();
+  const pointPolygonIds = state.wall.pointPolygonIds || [];
+  const pointLayers = state.wall.pointLayers || [];
+  const sourcePolygonIds = Array.from(new Set(pointPolygonIds.filter(Boolean)));
   state.annotations.manual_walls = state.annotations.manual_walls || [];
   state.annotations.manual_walls.push({
     wall_id: wallId,
     type: "manual_wall_path",
     label: state.wall.label || wallId,
     height: state.wall.height,
-    source_polygon_ids: state.wall.polygonId ? [state.wall.polygonId] : [],
+    source_polygon_ids: sourcePolygonIds,
+    point_polygon_ids: pointPolygonIds,
+    point_layers: pointLayers,
     points_source: state.wall.points,
     semantic: {
       layer: state.wall.layer || null,
@@ -5105,8 +5167,8 @@ function selectedManualAssetType() {
 }
 
 function selectedGateCount() {
-  const value = Number(gateCountInput?.value || 1);
-  return Number.isFinite(value) && value >= 1 ? Math.round(value) : 1;
+  const value = Number(gateCountInput?.value || 2);
+  return Number.isFinite(value) && value >= 2 ? Math.round(value) : 2;
 }
 
 function selectedPlatformMode() {
@@ -5491,6 +5553,8 @@ function applySubwayPlacement() {
     rotation_z: pathRotationDegrees(points),
     scale: [1.0, 1.0, 1.0],
     gate_count: state.subway.gateCount || selectedGateCount(),
+    gate_width: 1.0,
+    passage_width: 1.0,
     gate_type: "ticket_gate",
     navigation: {node_type: "gate", access_transition: "public_paid", cost: 10},
   });
@@ -5728,37 +5792,60 @@ function projectedPointOnPlatformLine(world) {
 }
 
 function platformDisplayPoints(platform) {
+  return platformDisplayEntries(platform).map((entry) => entry.point);
+}
+
+function platformAnchorLabel(anchor) {
+  if (!anchor) return "";
+  if (anchor.car_door) return String(anchor.car_door);
+  if (anchor.car && anchor.door) return `${anchor.car}-${anchor.door}`;
+  if (anchor.door_no) return String(anchor.door_no);
+  return "";
+}
+
+function platformDisplayEntries(platform) {
   if (platform.point_source) {
-    return [platform.point_source, platform.facing_point_source].filter(Boolean);
+    return [
+      {point: platform.point_source, label: platform.platform_id || platform.label || "platform"},
+      platform.facing_point_source ? {point: platform.facing_point_source, label: "facing"} : null,
+    ].filter(Boolean);
   }
   const doorsPerCar = Number(platform.doors_per_car || platform.doorsPerCar || 4);
   let anchors = (platform.anchors || [])
-    .filter((anchor) => anchor.point_source && anchor.car && anchor.door)
+    .filter((anchor) => anchor.point_source)
     .map((anchor) => ({
-      car: Number(anchor.car),
-      door: Number(anchor.door),
+      ...anchor,
+      car: Number(anchor.car || 0),
+      door: Number(anchor.door || 0),
       point_source: anchor.point_source,
-      ordinal: (Number(anchor.car) - 1) * doorsPerCar + Number(anchor.door),
+      ordinal: anchor.ordinal || (((Number(anchor.car) || 1) - 1) * doorsPerCar) + (Number(anchor.door) || 1),
       near_connection_id: anchor.near_connection_id || null,
     }));
   if (!anchors.length && platform.start_point_source && platform.end_point_source) {
     const carCount = Number(platform.car_count || 10);
     anchors = [
-      {car: 1, door: 1, point_source: platform.start_point_source, ordinal: 1, near_connection_id: null},
+      {car: 1, door: 1, point_source: platform.start_point_source, ordinal: 1, near_connection_id: null, car_door: "1-1"},
       {
         car: carCount,
         door: doorsPerCar,
         point_source: platform.end_point_source,
         ordinal: (carCount - 1) * doorsPerCar + doorsPerCar,
         near_connection_id: null,
+        car_door: `${carCount}-${doorsPerCar}`,
       },
     ];
   }
-  const anchorPoints = anchors.sort((a, b) => a.ordinal - b.ordinal).map((anchor) => anchor.point_source);
+  const anchorEntries = anchors
+    .sort((a, b) => a.ordinal - b.ordinal)
+    .map((anchor) => ({point: anchor.point_source, label: platformAnchorLabel(anchor)}));
   if (platform.start_point_source && platform.end_point_source) {
-    return [platform.start_point_source, ...anchorPoints, platform.end_point_source];
+    return [
+      {point: platform.start_point_source, label: "front"},
+      ...anchorEntries,
+      {point: platform.end_point_source, label: "tail"},
+    ];
   }
-  return anchorPoints;
+  return anchorEntries;
 }
 
 function selectedPlatformIds() {
@@ -6029,6 +6116,20 @@ function quickExitUrl(station, line) {
   return `/api/quick_exit?station=${encodeURIComponent(station)}&line=${encodeURIComponent(line)}&facility=${encodeURIComponent("계단")}`;
 }
 
+function quickExitDoorSummary(rows) {
+  const groups = new Map();
+  for (const row of rows || []) {
+    const key = row.toward || row.up_down || "unknown";
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(row);
+  }
+  return Array.from(groups.entries()).map(([direction, items]) => {
+    const sorted = sortedQuickExitRowsForDirection(items, "", selectedPlatformDoorsPerCar());
+    const doors = sorted.map((row) => row.door_no).filter(Boolean).join(", ");
+    return `${direction}: ${doors || "-"}`;
+  });
+}
+
 function applyQuickExitRows(line, rows) {
   platformLineInput.value = line;
   populatePlatformDirectionOptions(rows);
@@ -6036,11 +6137,14 @@ function applyQuickExitRows(line, rows) {
   const directionRows = sortedQuickExitRowsForDirection(rows, direction, selectedPlatformDoorsPerCar());
   state.platform.quickExitRows = rows;
   const doors = directionRows.map((row) => row.door_no).join(", ");
+  const summary = quickExitDoorSummary(rows);
   quickExitStatus.textContent = [
     `quick exit: ${rows.length} rows loaded`,
     `line: ${line}`,
     direction ? `${direction} 방면: ${directionRows.length} door(s)` : "select direction",
     doors || null,
+    summary.length ? "all doors:" : null,
+    ...summary,
   ].filter(Boolean).join("\n");
   updatePlatformStatus();
   draw();
@@ -6159,6 +6263,7 @@ function nearestPlatform(world, maxScreenDistance = 14) {
 }
 
 function selectPlatform(world, additive = false) {
+  if (!state.showPlatforms) return false;
   const hit = nearestPlatform(world);
   if (!hit) {
     if (!additive) {
@@ -8808,6 +8913,12 @@ document.getElementById("showMarkersToggle").addEventListener("change", (event) 
 showZonesToggle.addEventListener("change", (event) => {
   setShowZones(event.target.checked);
 });
+if (showPlatformsToggle) {
+  showPlatformsToggle.addEventListener("change", (event) => {
+    state.showPlatforms = event.target.checked;
+    draw();
+  });
+}
 toggleZonesBtn.addEventListener("click", () => {
   setShowZones(!state.showZones);
 });
@@ -9041,6 +9152,17 @@ document.getElementById("exportFinalBtn").addEventListener("click", () => {
     });
 });
 document.getElementById("validateSceneBtn").addEventListener("click", validateScene);
+function exportSceneOptionsPayload() {
+  const wallHeightRaw = document.getElementById("exportWallHeightInput")?.value;
+  const wallHeight = wallHeightRaw === "" || wallHeightRaw === null || wallHeightRaw === undefined
+    ? null
+    : Number(wallHeightRaw);
+  return {
+    wall_height_override: Number.isFinite(wallHeight) && wallHeight >= 0 ? wallHeight : null,
+    stair_has_pillar: !document.getElementById("exportStairNoPillarToggle")?.checked,
+  };
+}
+
 document.getElementById("exportPlanesBtn").addEventListener("click", () => {
   saveAnnotations()
     .then(() => fetch("/api/export/planes", {
@@ -9049,6 +9171,7 @@ document.getElementById("exportPlanesBtn").addEventListener("click", () => {
       body: JSON.stringify({
         working_polygons: workingPolygonsPayload(),
         render_preview: document.getElementById("renderScenePreviewToggle").checked,
+        ...exportSceneOptionsPayload(),
       }),
     }))
     .then((response) => response.json())
