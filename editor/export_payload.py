@@ -158,12 +158,16 @@ def final_polygon_records(polygons_path, annotations, transform_metadata=None):
         for poly in source_polygons
         if poly.get("polygon_id") not in hidden_ids
     ]
-    visible_manuals = [
-        dict(poly)
-        for poly in manual_polygons
-        if poly.get("polygon_id") not in hidden_ids
-    ]
-    final_polygons = visible_originals + visible_manuals
+    source_is_final_export = bool(polygon_data.get("manual_export"))
+    if source_is_final_export:
+        final_polygons = visible_originals
+    else:
+        visible_manuals = [
+            dict(poly)
+            for poly in manual_polygons
+            if poly.get("polygon_id") not in hidden_ids
+        ]
+        final_polygons = visible_originals + visible_manuals
 
     if transform_metadata:
         matrix = transform_metadata["perspective_matrix"]
@@ -466,6 +470,49 @@ def icon_polygon_context(icon, polygons, annotations=None, layer_z=None, default
         )
         return poly.get("polygon_id"), layer, z_value, "nearest_plane", distance
     return None, None, default_z, "default", None
+
+
+def source_points_centroid(points):
+    """Return the average source point for a point ring."""
+    if not points:
+        return None
+    arr = np.array(points, dtype=float)
+    if arr.size == 0:
+        return None
+    return [float(np.mean(arr[:, 0])), float(np.mean(arr[:, 1]))]
+
+
+def zone_polygon_context(zone, polygons, annotations=None):
+    """Infer polygon/layer context for a zone drawn without explicit context."""
+    polygon_id = zone.get("polygon_id")
+    layer = zone.get("layer")
+    if polygon_id or layer:
+        return polygon_id, layer, "explicit"
+
+    points = zone.get("points_source") or []
+    center = source_points_centroid(points)
+    if center:
+        containing = []
+        for poly in polygons or []:
+            if polygon_contains_source_point(poly, center):
+                containing.append(poly)
+        if containing:
+            def source_area(poly):
+                if poly.get("area_source") is not None:
+                    return float(poly.get("area_source"))
+                if poly.get("points_source"):
+                    return float(polygon_metrics(poly.get("points_source")).get("area_source") or 0.0)
+                return 0.0
+
+            containing.sort(key=source_area)
+            poly = containing[0]
+            return poly.get("polygon_id"), polygon_layer(poly, annotations=annotations), "centroid_contains"
+
+    nearest = nearest_polygon_to_source_point(polygons, center) if center else None
+    if nearest:
+        _, poly = nearest
+        return poly.get("polygon_id"), polygon_layer(poly, annotations=annotations), "nearest_plane"
+    return None, None, "default"
 
 
 def source_bbox_to_scene_size(bbox, transform_metadata=None, transform_info=None, scale=0.01, invert_x=False, invert_y=False):
@@ -1320,6 +1367,45 @@ def build_platform_records(annotations=None, transform_metadata=None, transform_
                 )
                 anchor["position"] = [float(xy[0]), float(xy[1]), float(z_value)]
                 anchor["near_connection_id"] = None
+        elif platform.get("start_point_source") and platform.get("end_point_source"):
+            endpoint_anchors = [
+                {
+                    "car": 1,
+                    "door": 1,
+                    "ordinal": 1,
+                    "point_source": platform["start_point_source"],
+                    "near_connection_id": None,
+                },
+                {
+                    "car": car_count,
+                    "door": doors_per_car,
+                    "ordinal": total_positions,
+                    "point_source": platform["end_point_source"],
+                    "near_connection_id": None,
+                },
+            ]
+            for anchor in endpoint_anchors:
+                xy = scene_xy_for_polygon_point(
+                    anchor["point_source"],
+                    layer,
+                    polygon_id=polygon_id,
+                    alignment_transforms=alignment_transforms,
+                    local_shift_offsets=local_shift_offsets,
+                    axis_corrections=axis_corrections,
+                    transform_metadata=transform_metadata,
+                    transform_info=transform_info,
+                    scale=scale,
+                    invert_x=invert_x,
+                    invert_y=invert_y,
+                )
+                anchor["position"] = [float(xy[0]), float(xy[1]), float(z_value)]
+            anchors.extend(endpoint_anchors)
+        deduped_anchors = {}
+        for anchor in anchors:
+            ordinal = int(anchor["ordinal"])
+            if ordinal not in deduped_anchors or ordinal in {1, total_positions}:
+                deduped_anchors[ordinal] = anchor
+        anchors = list(deduped_anchors.values())
         anchors = sorted(anchors, key=lambda item: item["ordinal"])
         if len(anchors) < 2:
             continue
@@ -1337,6 +1423,7 @@ def build_platform_records(annotations=None, transform_metadata=None, transform_
                         break
             span = right["ordinal"] - left["ordinal"]
             t = 0.0 if span == 0 else (ordinal - left["ordinal"]) / span
+            t = max(0.0, min(1.0, float(t)))
             return left, right, t
 
         def interpolate_position(ordinal):
@@ -1687,8 +1774,9 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
                 navigation_offset=0.4,
             )
         )
-        if not is_exit_elevator:
-            elevator_groups.setdefault(elevator.get("elevator_id") or "elevator", []).append((node_id, node_position))
+        elevator_id = elevator.get("elevator_id")
+        if elevator_id and not is_exit_elevator:
+            elevator_groups.setdefault(elevator_id, []).append((node_id, node_position))
     for elevator_id, items in elevator_groups.items():
         for index in range(len(items)):
             for next_index in range(index + 1, len(items)):
@@ -2245,7 +2333,7 @@ def build_local_shift_offsets(corrections, alignment_transforms=None, axis_corre
     return offsets, metadata
 
 
-def build_zone_records(annotations=None, transform_metadata=None, transform_info=None, scale=0.01, layer_z=None, floor_height=5.0, default_z=0.0, invert_x=False, invert_y=False, alignment_transforms=None, local_shift_offsets=None, axis_corrections=None):
+def build_zone_records(annotations=None, polygons=None, transform_metadata=None, transform_info=None, scale=0.01, layer_z=None, floor_height=5.0, default_z=0.0, invert_x=False, invert_y=False, alignment_transforms=None, local_shift_offsets=None, axis_corrections=None):
     """Build scene-space zone regions used to tag navigation nodes."""
     annotations = annotations or {}
     records = []
@@ -2253,8 +2341,7 @@ def build_zone_records(annotations=None, transform_metadata=None, transform_info
         points = zone.get("points_source") or []
         if len(points) < 3:
             continue
-        layer = zone.get("layer")
-        polygon_id = zone.get("polygon_id")
+        polygon_id, layer, context_source = zone_polygon_context(zone, polygons, annotations=annotations)
         z_value = polygon_id_z_value(
             polygon_id,
             layer,
@@ -2288,6 +2375,7 @@ def build_zone_records(annotations=None, transform_metadata=None, transform_info
                 "label": zone.get("label"),
                 "layer": layer,
                 "polygon_id": polygon_id,
+                "context_source": context_source,
                 "source": zone.get("source"),
                 "points_source": points,
                 "points_xy": points_xy,
@@ -2715,6 +2803,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
     )
     zone_records = build_zone_records(
         annotations=annotations,
+        polygons=polygons,
         transform_metadata=transform_metadata,
         transform_info=transform_info,
         scale=effective_scale,

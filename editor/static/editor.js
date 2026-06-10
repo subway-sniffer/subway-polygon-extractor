@@ -1366,26 +1366,37 @@ function drawNavigationNodes() {
     const screen = worldToScreen(point);
     const color = navigationNodeColor(node);
     const selected = node.node_id && node.node_id === state.selectedNavigationNodeId;
+    const isGate = node?.type === "gate";
+    const radius = isGate ? (selected ? 10 : 8) : (selected ? 6 : 5);
     if (selected) {
       ctx.beginPath();
-      ctx.arc(screen.x, screen.y, 10, 0, Math.PI * 2);
+      ctx.arc(screen.x, screen.y, isGate ? 15 : 10, 0, Math.PI * 2);
       ctx.strokeStyle = "#ffd600";
       ctx.lineWidth = 4;
       ctx.stroke();
     }
+    if (isGate) {
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, radius + 5, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.96)";
+      ctx.strokeStyle = "#111111";
+      ctx.lineWidth = 2.5;
+      ctx.fill();
+      ctx.stroke();
+    }
     ctx.beginPath();
-    ctx.arc(screen.x, screen.y, selected ? 6 : 5, 0, Math.PI * 2);
+    ctx.arc(screen.x, screen.y, radius, 0, Math.PI * 2);
     ctx.fillStyle = color;
-    ctx.strokeStyle = node?.zone_type === "public" ? "#ffffff" : "#111111";
-    ctx.lineWidth = node?.type === "gate" ? 2.5 : 1.5;
+    ctx.strokeStyle = isGate ? "#111111" : node?.zone_type === "public" ? "#ffffff" : "#111111";
+    ctx.lineWidth = isGate ? 3 : 1.5;
     ctx.fill();
     ctx.stroke();
     drawCanvasLabel(
       point,
       navigationNodeLabel(node),
       color,
-      7,
-      -9,
+      isGate ? 11 : 7,
+      isGate ? -14 : -9,
     );
   });
   ctx.restore();
@@ -2262,7 +2273,6 @@ function draw() {
   drawManualAssets();
   drawPlatforms();
   drawElevatorPoints();
-  drawNavigationNodes();
   drawRouteOverlay();
   drawManualMarkerPreview();
   drawCropPreview();
@@ -2280,6 +2290,7 @@ function draw() {
   drawScaleCalibrationPreview();
   drawLocalAxisCorrections();
   drawSharedEdgePreview();
+  drawNavigationNodes();
 }
 
 function fitView() {
@@ -6204,9 +6215,9 @@ function platformDisplayEntries(platform) {
       ordinal: anchor.ordinal || (((Number(anchor.car) || 1) - 1) * doorsPerCar) + (Number(anchor.door) || 1),
       near_connection_id: anchor.near_connection_id || null,
     }));
-  if (!anchors.length && platform.start_point_source && platform.end_point_source) {
+  if (platform.start_point_source && platform.end_point_source) {
     const carCount = Number(platform.car_count || 10);
-    anchors = [
+    anchors.push(
       {car: 1, door: 1, point_source: platform.start_point_source, ordinal: 1, near_connection_id: null, car_door: "1-1"},
       {
         car: carCount,
@@ -6216,18 +6227,19 @@ function platformDisplayEntries(platform) {
         near_connection_id: null,
         car_door: `${carCount}-${doorsPerCar}`,
       },
-    ];
+    );
   }
-  const anchorEntries = anchors
+  const dedupedAnchors = new Map();
+  anchors.forEach((anchor) => {
+    const ordinal = Number(anchor.ordinal || 0);
+    if (!Number.isFinite(ordinal) || ordinal <= 0) return;
+    if (!dedupedAnchors.has(ordinal) || anchor.point_source === platform.start_point_source || anchor.point_source === platform.end_point_source) {
+      dedupedAnchors.set(ordinal, anchor);
+    }
+  });
+  const anchorEntries = Array.from(dedupedAnchors.values())
     .sort((a, b) => a.ordinal - b.ordinal)
     .map((anchor) => ({point: anchor.point_source, label: platformAnchorLabel(anchor)}));
-  if (platform.start_point_source && platform.end_point_source) {
-    return [
-      {point: platform.start_point_source, label: "front"},
-      ...anchorEntries,
-      {point: platform.end_point_source, label: "tail"},
-    ];
-  }
   return anchorEntries;
 }
 

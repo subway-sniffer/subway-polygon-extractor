@@ -44,6 +44,12 @@ def is_paid_free_transition(zone_a, zone_b):
     return (a in PAID_ZONE_TYPES and b in FREE_ZONE_TYPES) or (b in PAID_ZONE_TYPES and a in FREE_ZONE_TYPES)
 
 
+def edge_allows_paid_free_transition(edge):
+    """Return true when an edge is allowed to cross paid/public boundaries."""
+    edge_type = str(edge.get("type") or "").lower()
+    return edge_type == "gate_crossing"
+
+
 def build_node_maps(nodes):
     """Build lookup dictionaries for node_id and numeric node keys."""
     by_id = {}
@@ -159,6 +165,8 @@ def build_adjacency(
         to_id = edge.get("to")
         if from_id not in nodes_by_id or to_id not in nodes_by_id:
             continue
+        if is_paid_free_transition(nodes_by_id[from_id].get("zone_type"), nodes_by_id[to_id].get("zone_type")) and not edge_allows_paid_free_transition(edge):
+            continue
         base_cost = float(edge.get("cost") or distance_3d(nodes_by_id[from_id]["position"], nodes_by_id[to_id]["position"]))
         transport_mode = edge_transport_mode(edge)
         multiplier = preference_multiplier(transport_mode, route_preference)
@@ -196,6 +204,8 @@ def build_adjacency(
         for index, from_node in enumerate(layer_nodes):
             for to_node in layer_nodes[index + 1:]:
                 if not same_walkable_region(from_node, to_node, synthetic_mode):
+                    continue
+                if is_paid_free_transition(from_node.get("zone_type"), to_node.get("zone_type")):
                     continue
                 base_cost = distance_3d(from_node["position"], to_node["position"])
                 if same_layer_radius is not None and base_cost > same_layer_radius:

@@ -88,12 +88,16 @@ def collect_scene_bounds(data):
 
 def navigation_node_bgr(node):
     """Return debug BGR color for a navigation node."""
+    if node.get("type") == "gate":
+        if node.get("zone_type") == "paid":
+            return (35, 35, 245)
+        if node.get("zone_type") == "public":
+            return (245, 125, 20)
+        return (220, 80, 170)
     if node.get("zone_type") == "paid":
         return (40, 40, 230)
     if node.get("zone_type") == "public":
         return (230, 110, 20)
-    if node.get("type") == "gate":
-        return (220, 80, 170)
     return (0, 210, 255)
 
 
@@ -109,9 +113,10 @@ def draw_gate_navigation_nodes(canvas, data, bounds, image_size, margin):
             continue
         point = project_points([[float(position[0]), float(position[1])]], bounds, image_size, margin)[0]
         color = navigation_node_bgr(node)
-        stroke = (255, 255, 255) if node.get("zone_type") == "public" else (20, 20, 20)
-        cv2.circle(canvas, tuple(point), 8, stroke, -1, lineType=cv2.LINE_AA)
-        cv2.circle(canvas, tuple(point), 5, color, -1, lineType=cv2.LINE_AA)
+        cv2.circle(canvas, tuple(point), 13, (255, 255, 255), -1, lineType=cv2.LINE_AA)
+        cv2.circle(canvas, tuple(point), 13, (20, 20, 20), 2, lineType=cv2.LINE_AA)
+        cv2.circle(canvas, tuple(point), 8, color, -1, lineType=cv2.LINE_AA)
+        cv2.circle(canvas, tuple(point), 8, (20, 20, 20), 1, lineType=cv2.LINE_AA)
         label = "P" if node.get("zone_type") == "paid" else "U" if node.get("zone_type") == "public" else "G"
         cv2.putText(
             canvas,
@@ -241,6 +246,12 @@ def render_layers(data, output_dir, image_size=(1600, 1000), margin=40):
                 if str((connection.get("from") or {}).get("layer") or "unassigned") == layer
                 or str((connection.get("to") or {}).get("layer") or "unassigned") == layer
             ],
+            "navigation": {
+                "nodes": [
+                    node for node in (data.get("navigation") or {}).get("nodes", [])
+                    if str(node.get("layer") or "unassigned") == layer
+                ]
+            },
         }
         image = draw_scene_planes(layer_data, image_size=image_size, margin=margin)
         file_path = output_path / f"scene_planes_{layer}.png"

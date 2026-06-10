@@ -150,11 +150,13 @@ class ProjectStore:
         image_path = Path(image_path).resolve()
         output_dir = self.output_dir_for_image(image_path)
         marker_config_path = output_dir / "marker_config.json"
+        intermediate_path = output_dir / "intermediate_polygons.json"
+        final_output_path = output_dir / f"final_polygons_{image_path.stem}.json"
         return self.build_project(
             image_path,
-            polygons_path=output_dir / "intermediate_polygons.json",
+            polygons_path=final_output_path if final_output_path.exists() else intermediate_path,
             annotations_path=output_dir / "manual_annotations.json",
-            final_output_path=output_dir / f"final_polygons_{image_path.stem}.json",
+            final_output_path=final_output_path,
             plane_output_path=output_dir / f"scene_planes_{image_path.stem}.json",
             asset_output_path=output_dir / f"assets_{image_path.stem}.json",
             icon_matches_path=self.resolve_icon_matches_path(output_dir, image_path),
