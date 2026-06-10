@@ -2,6 +2,7 @@ import argparse
 import csv
 import io
 import json
+import mimetypes
 import os
 import struct
 import sys
@@ -1478,6 +1479,13 @@ def create_app(args):
         }
         if data.get("include_scene_planes"):
             files["scene_planes"] = json_file_part("scene_planes", scene_payload)
+        image_path = Path(store.active["image_path"])
+        if image_path.exists():
+            files["station_image"] = (
+                image_path.name,
+                io.BytesIO(image_path.read_bytes()),
+                mimetypes.guess_type(image_path.name)[0] or "application/octet-stream",
+            )
 
         headers = {}
         admin_token = str(data.get("admin_token") or "").strip()

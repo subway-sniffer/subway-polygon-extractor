@@ -216,6 +216,18 @@ curl -X POST https://api.busantax.com/route \
       "video_url": "videos/서울역/서울역_N0237_N0024.mp4"
     }
   ],
+  "overlay": {
+    "image_url": "https://api.busantax.com/stations/%EC%84%9C%EC%9A%B8%EC%97%AD/image?version=v001",
+    "coordinate_space": "source_image",
+    "points": [
+      [1833.877692, 701.107692],
+      [1964.79, 649.2],
+      [2068.88, 428.815],
+      [2131.215, 414.015],
+      [2697.995, 178.89]
+    ],
+    "missing_node_ids": []
+  },
   "debug": {
     "start_node": "platform_003_car_1_door_2",
     "goal_node": "exit_stair_015_from",
@@ -231,6 +243,15 @@ curl -X POST https://api.busantax.com/route \
 segments[].from_type
 segments[].to_type
 segments[].video_url
+```
+
+지도 이미지 위에 경로선을 그릴 때는 `overlay`를 사용합니다.
+
+```text
+overlay.image_url          안내도 이미지 URL
+overlay.coordinate_space   points 좌표계. 현재 source_image
+overlay.points             원본 이미지 픽셀 좌표 경로
+overlay.missing_node_ids   source 좌표가 없어 overlay에서 빠진 노드
 ```
 
 `debug`는 개발/검증용입니다.

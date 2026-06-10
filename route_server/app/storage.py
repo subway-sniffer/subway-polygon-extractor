@@ -1,4 +1,5 @@
 from pathlib import Path
+import shutil
 
 from route_server.app.config import settings
 from route_server.app.json_utils import load_json, save_json
@@ -77,6 +78,7 @@ def station_files(station_id, version=None):
         "navigation_graph": root / "navigation_graph.json",
         "route_video_edges": root / "route_video_edges.json",
         "scene_planes": root / "scene_planes.json",
+        "image": root / "image.png",
     }
 
 
@@ -106,3 +108,26 @@ def save_station_package(metadata, navigation_graph, route_video_edges=None, sce
         save_json(scene_planes, files["scene_planes"])
     upsert_station(metadata)
     return files
+
+
+def save_station_image_file(station_id, version, upload_file, filename=None):
+    """Save one station guide image and return its path."""
+    files = station_files(station_id, version)
+    files["root"].mkdir(parents=True, exist_ok=True)
+    suffix = Path(filename or "").suffix.lower()
+    if suffix not in {".png", ".jpg", ".jpeg", ".webp"}:
+        suffix = ".png"
+    image_path = files["root"] / f"image{suffix}"
+    with image_path.open("wb") as output:
+        shutil.copyfileobj(upload_file, output)
+    return image_path
+
+
+def station_image_path(station_id, version=None):
+    """Return the saved station image path when one exists."""
+    root = station_files(station_id, version)["root"]
+    for suffix in [".png", ".jpg", ".jpeg", ".webp"]:
+        candidate = root / f"image{suffix}"
+        if candidate.exists():
+            return candidate
+    return None

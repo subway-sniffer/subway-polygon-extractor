@@ -1,6 +1,8 @@
 import json
+from urllib.parse import quote
 
-from fastapi import FastAPI, File, Header, HTTPException, UploadFile
+from fastapi import FastAPI, File, Header, HTTPException, Request, UploadFile
+from fastapi.responses import FileResponse
 
 from pipeline.navigation_routing import build_route_result, list_nodes
 from route_server.app.config import settings
@@ -18,6 +20,8 @@ from route_server.app.indexing import (
 from route_server.app.schemas import ImportStationRequest, RouteRequest
 from route_server.app.storage import (
     load_station_package,
+    save_station_image_file,
+    station_image_path,
 )
 from route_server.app.video_index import match_route_videos_db
 
@@ -137,6 +141,34 @@ def route_segments(route, video_matches):
     return segments
 
 
+def station_image_url(request: Request, station_id, version):
+    """Return an absolute URL for the station guide image when available."""
+    if not station_image_path(station_id, version):
+        return None
+    base_url = settings.public_base_url or str(request.base_url).rstrip("/")
+    station_part = quote(str(station_id), safe="")
+    version_part = quote(str(version), safe="")
+    return f"{base_url}/stations/{station_part}/image?version={version_part}"
+
+
+def route_overlay(route, request: Request, station_id, version):
+    """Build source-image overlay points from route nodes."""
+    points = []
+    missing = []
+    for node in route.get("nodes", []):
+        source = node.get("source_position") or node.get("point_source") or node.get("center_source")
+        if isinstance(source, list) and len(source) >= 2:
+            points.append([float(source[0]), float(source[1])])
+        else:
+            missing.append(node.get("node_id"))
+    return {
+        "image_url": station_image_url(request, station_id, version),
+        "coordinate_space": "source_image",
+        "points": points,
+        "missing_node_ids": [node_id for node_id in missing if node_id],
+    }
+
+
 @app.get("/health")
 def health():
     """Return server health."""
@@ -178,6 +210,19 @@ def station_nodes(station_id: str, version: str | None = None):
     return {"station_id": station_id, "nodes": list_nodes(graph)}
 
 
+@app.get("/stations/{station_id}/image")
+def station_image(station_id: str, version: str | None = None):
+    """Return the stored station guide image."""
+    try:
+        selected_version = active_version_for_station(station_id, version)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    image_path = station_image_path(station_id, selected_version)
+    if not image_path:
+        raise HTTPException(status_code=404, detail="station image not found")
+    return FileResponse(image_path)
+
+
 @app.get("/stations/{station_id}/route-options")
 def station_route_options(station_id: str, version: str | None = None):
     """Return app-facing route options such as platform cars and exits."""
@@ -190,50 +235,51 @@ def station_route_options(station_id: str, version: str | None = None):
 
 
 @app.post("/route")
-def route(request: RouteRequest):
+def route(request_data: RouteRequest, request: Request):
     """Find a route and return matching pre-rendered video edges."""
     try:
-        version = active_version_for_station(request.station_id, request.version)
-        metadata, graph, _ = load_station_package(request.station_id, version)
-        start_endpoint = request.start.model_dump() if hasattr(request.start, "model_dump") else request.start
-        goal_endpoint = request.goal.model_dump() if hasattr(request.goal, "model_dump") else request.goal
+        version = active_version_for_station(request_data.station_id, request_data.version)
+        metadata, graph, _ = load_station_package(request_data.station_id, version)
+        start_endpoint = request_data.start.model_dump() if hasattr(request_data.start, "model_dump") else request_data.start
+        goal_endpoint = request_data.goal.model_dump() if hasattr(request_data.goal, "model_dump") else request_data.goal
         start = resolve_route_endpoint_db(
-            request.station_id,
+            request_data.station_id,
             version,
             start_endpoint,
-            route_preference=request.route_preference,
+            route_preference=request_data.route_preference,
         )
         goal = resolve_route_endpoint_db(
-            request.station_id,
+            request_data.station_id,
             version,
             goal_endpoint,
-            route_preference=request.route_preference,
+            route_preference=request_data.route_preference,
         )
         route_options = dict(
-            synthetic_mode=request.synthetic_mode,
-            same_layer_radius=request.same_layer_radius,
-            zone_change_penalty=request.zone_change_penalty,
-            paid_free_penalty=request.paid_free_penalty,
-            route_preference=request.route_preference,
+            synthetic_mode=request_data.synthetic_mode,
+            same_layer_radius=request_data.same_layer_radius,
+            zone_change_penalty=request_data.zone_change_penalty,
+            paid_free_penalty=request_data.paid_free_penalty,
+            route_preference=request_data.route_preference,
         )
-        if request.include_toilet:
+        if request_data.include_toilet:
             toilet_nodes = db_facility_nodes(
-                request.station_id,
+                request_data.station_id,
                 version,
                 facility_type="toilet",
-                facility_subtypes=toilet_subtypes_for_request(request.toilet_gender),
+                facility_subtypes=toilet_subtypes_for_request(request_data.toilet_gender),
             )
             result = best_toilet_route(graph, start, goal, toilet_nodes, route_options)
         else:
             result = build_route_result(graph, start, goal, **route_options)
-        video_matches, missing_videos = match_route_videos_db(request.station_id, version, metadata, graph, result)
+        video_matches, missing_videos = match_route_videos_db(request_data.station_id, version, metadata, graph, result)
     except (FileNotFoundError, KeyError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     segments = route_segments(result, video_matches)
     return {
-        "station_id": request.station_id,
+        "station_id": request_data.station_id,
         "version": version,
         "segments": segments,
+        "overlay": route_overlay(result, request, request_data.station_id, version),
         "debug": {
             "start_node": start,
             "goal_node": goal,
@@ -271,6 +317,7 @@ async def import_station_files(
     navigation_graph: UploadFile = File(...),
     route_video_edges: UploadFile | None = File(default=None),
     scene_planes: UploadFile | None = File(default=None),
+    station_image: UploadFile | None = File(default=None),
     x_admin_token: str | None = Header(default=None),
 ):
     """Import one station package from multipart JSON files."""
@@ -282,9 +329,18 @@ async def import_station_files(
     if not metadata_json or not graph_json:
         raise HTTPException(status_code=400, detail="metadata와 navigation_graph가 필요합니다.")
     files = import_station_package(metadata_json, graph_json, video_edges_json, scene_planes_json)
+    image_path = None
+    if station_image is not None:
+        image_path = save_station_image_file(
+            metadata_json.get("station_id"),
+            metadata_json.get("version", "v001"),
+            station_image.file,
+            filename=station_image.filename,
+        )
     return {
         "saved": True,
         "station_id": metadata_json.get("station_id"),
         "version": metadata_json.get("version", "v001"),
         "output_dir": str(files["root"]),
+        "image_path": str(image_path) if image_path else None,
     }
