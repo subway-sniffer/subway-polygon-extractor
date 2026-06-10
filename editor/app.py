@@ -311,6 +311,18 @@ def quick_exit_station_key(name):
     return value
 
 
+def quick_exit_station_aliases(station, line):
+    """Return API station-name aliases for known transfer station naming differences."""
+    station_key = quick_exit_station_key(station)
+    line_key = normalize_line_name(line)
+    aliases = []
+    if station_key in {"총신대입구", "총신대입구(이수)"} and line_key == "7호선":
+        aliases.append("이수")
+    if station_key in {"이수", "총신대입구(이수)"} and line_key == "4호선":
+        aliases.append("총신대입구")
+    return aliases
+
+
 def normalize_station_name(name):
     """Return station name in API-friendly display form."""
     value = str(name or "").strip()
@@ -1165,6 +1177,12 @@ def create_app(args):
             station_candidates.append(station[:-1])
         else:
             station_candidates.append(f"{station}역")
+        for alias in quick_exit_station_aliases(station, line):
+            station_candidates.append(alias)
+            if alias.endswith("역") and len(alias) > 1:
+                station_candidates.append(alias[:-1])
+            else:
+                station_candidates.append(f"{alias}역")
         station_candidates = list(dict.fromkeys(candidate for candidate in station_candidates if candidate))
         rows = []
         matched_station = station

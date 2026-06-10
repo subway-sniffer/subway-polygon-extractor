@@ -160,7 +160,13 @@ def final_polygon_records(polygons_path, annotations, transform_metadata=None):
     ]
     source_is_final_export = bool(polygon_data.get("manual_export"))
     if source_is_final_export:
-        final_polygons = visible_originals
+        existing_ids = {poly.get("polygon_id") for poly in visible_originals}
+        visible_manuals = [
+            dict(poly)
+            for poly in manual_polygons
+            if poly.get("polygon_id") not in hidden_ids and poly.get("polygon_id") not in existing_ids
+        ]
+        final_polygons = visible_originals + visible_manuals
     else:
         visible_manuals = [
             dict(poly)
