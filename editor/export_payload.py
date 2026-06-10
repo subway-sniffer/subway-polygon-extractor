@@ -521,7 +521,7 @@ def build_scene_icon_records(icon_matches, polygons, annotations=None, transform
     return records
 
 
-def gate_instances_along_path(path_points, gate_count, z_value, asset_id, gate_width=1.0, passage_width=1.0, start_clearance=0.0, end_clearance=0.0):
+def gate_instances_along_path(path_points, gate_count, z_value, asset_id, gate_width=1.0, passage_width=1.5, start_clearance=0.0, end_clearance=0.0):
     """Return per-gate locations along a gate path while leaving a center passage gap."""
     if not path_points or len(path_points) < 2:
         return [], None
@@ -552,26 +552,25 @@ def gate_instances_along_path(path_points, gate_count, z_value, asset_id, gate_w
         return x, y, rotation_z
 
     gate_width = max(0.01, float(gate_width or 1.0))
-    passage_width = max(0.0, float(passage_width or 1.0))
+    passage_width = max(0.0, float(passage_width or 1.5))
     start_clearance = max(0.0, float(start_clearance or 0.0))
     end_clearance = max(0.0, float(end_clearance or 0.0))
     gap_start = max(0.0, (total_length - passage_width) / 2.0)
     gap_end = min(total_length, gap_start + passage_width)
     targets = []
 
-    left_target = start_clearance + (gate_width * 0.5)
-    while left_target <= gap_start - (gate_width * 0.5) + 1e-9:
+    left_target = gap_start - (gate_width * 0.5)
+    while left_target >= start_clearance + (gate_width * 0.5) - 1e-9:
         targets.append(left_target)
-        left_target += gate_width
+        left_target -= gate_width
 
     right_target = gap_end + (gate_width * 0.5)
     while right_target <= total_length - end_clearance - (gate_width * 0.5) + 1e-9:
         targets.append(right_target)
         right_target += gate_width
 
-    if len(targets) < 2 and total_length >= gate_width:
-        fallback = [gate_width * 0.5, total_length - (gate_width * 0.5)]
-        targets = [target for target in fallback if 0.0 <= target <= total_length]
+    if not targets and total_length >= gate_width:
+        targets = [total_length * 0.5]
     targets = sorted(targets)
 
     gates = []
@@ -594,6 +593,11 @@ def gate_instances_along_path(path_points, gate_count, z_value, asset_id, gate_w
         "range": [float(gap_start), float(gap_end)],
     }
     return gates, passage
+
+
+def effective_gate_passage_width(asset):
+    """Return the exported gate passage width, enforcing the minimum clear passage."""
+    return max(1.5, float(asset.get("passage_width") or 1.5))
 
 
 def build_manual_asset_records(annotations=None, transform_metadata=None, transform_info=None, scale=0.01, layer_z=None, floor_height=5.0, default_z=0.0, invert_x=False, invert_y=False, alignment_transforms=None, local_shift_offsets=None, axis_corrections=None):
@@ -656,6 +660,40 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
         end_source = asset.get("end_point_source")
         start_position = None
         end_position = None
+        public_side_position = None
+        paid_side_position = None
+        public_side_point_source = asset.get("public_side_point_source")
+        paid_side_point_source = asset.get("paid_side_point_source")
+        if public_side_point_source:
+            public_side_xy = scene_xy_for_polygon_point(
+                public_side_point_source,
+                layer,
+                polygon_id=polygon_id,
+                alignment_transforms=alignment_transforms,
+                local_shift_offsets=local_shift_offsets,
+                axis_corrections=axis_corrections,
+                transform_metadata=transform_metadata,
+                transform_info=transform_info,
+                scale=scale,
+                invert_x=invert_x,
+                invert_y=invert_y,
+            )
+            public_side_position = [float(public_side_xy[0]), float(public_side_xy[1]), float(z_value)]
+        if paid_side_point_source:
+            paid_side_xy = scene_xy_for_polygon_point(
+                paid_side_point_source,
+                layer,
+                polygon_id=polygon_id,
+                alignment_transforms=alignment_transforms,
+                local_shift_offsets=local_shift_offsets,
+                axis_corrections=axis_corrections,
+                transform_metadata=transform_metadata,
+                transform_info=transform_info,
+                scale=scale,
+                invert_x=invert_x,
+                invert_y=invert_y,
+            )
+            paid_side_position = [float(paid_side_xy[0]), float(paid_side_xy[1]), float(z_value)]
         effective_gate_count = None
         if asset_type == "ticket_gate" and path_source and len(path_source) >= 2:
             transformed_path = []
@@ -685,14 +723,16 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
             ]
             for segment_index, source_start, source_end, scene_start, scene_end in valid_segments:
                 segment_asset_id = base_asset_id if len(valid_segments) == 1 else f"{base_asset_id}_seg_{segment_index:03d}"
+                segment_flip = bool((asset.get("gate_segment_flips") or {}).get(str(segment_index), asset.get("gate_public_side_flipped")))
                 gate_width = float(asset.get("gate_width") or 1.0)
+                passage_width = effective_gate_passage_width(asset)
                 gates, gate_passage = gate_instances_along_path(
                     [scene_start, scene_end],
                     None,
                     z_value,
                     segment_asset_id,
                     gate_width=gate_width,
-                    passage_width=float(asset.get("passage_width") or 1.0),
+                    passage_width=passage_width,
                     end_clearance=gate_width if segment_index < len(valid_segments) else 0.0,
                 )
                 if not gates or not gate_passage:
@@ -719,11 +759,18 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
                         "points_source": [source_start, source_end],
                         "start_point_source": source_start,
                         "end_point_source": source_end,
+                        "public_side_point_source": public_side_point_source,
+                        "public_side_position": public_side_position,
+                        "paid_side_point_source": paid_side_point_source,
+                        "paid_side_position": paid_side_position,
+                        "gate_public_side_flipped": segment_flip,
+                        "gate_segment_index": segment_index,
+                        "gate_segment_flipped": segment_flip,
                         "start": [float(scene_start[0]), float(scene_start[1]), float(z_value)],
                         "end": [float(scene_end[0]), float(scene_end[1]), float(z_value)],
                         "gate_count": len(gates),
                         "gate_width": float(asset.get("gate_width") or 1.0),
-                        "passage_width": float(asset.get("passage_width") or 1.0),
+                        "passage_width": passage_width,
                         "passage": gate_passage,
                         "gate_type": asset.get("gate_type"),
                         "navigation": asset.get("navigation"),
@@ -829,6 +876,11 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
             "end": end_position,
             "facing_point_source": asset.get("facing_point_source"),
             "facing_position": facing_position,
+            "public_side_point_source": public_side_point_source if asset_type == "ticket_gate" else None,
+            "public_side_position": public_side_position if asset_type == "ticket_gate" else None,
+            "paid_side_point_source": paid_side_point_source if asset_type == "ticket_gate" else None,
+            "paid_side_position": paid_side_position if asset_type == "ticket_gate" else None,
+            "gate_public_side_flipped": bool(asset.get("gate_public_side_flipped")) if asset_type == "ticket_gate" else None,
             "direction_points_source": asset.get("direction_points_source") if asset_type == "toilet" else None,
             "direction_vertex_refs": asset.get("direction_vertex_refs") if asset_type == "toilet" else None,
             "direction_positions": direction_positions if direction_positions else None,
@@ -838,7 +890,7 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
             "toilet_gender": asset.get("toilet_gender") if asset_type == "toilet" else None,
             "gate_count": effective_gate_count or max(2, int(asset.get("gate_count") or 2)) if asset_type == "ticket_gate" else None,
             "gate_width": float(asset.get("gate_width") or 1.0) if asset_type == "ticket_gate" else None,
-            "passage_width": float(asset.get("passage_width") or 1.0) if asset_type == "ticket_gate" else None,
+            "passage_width": effective_gate_passage_width(asset) if asset_type == "ticket_gate" else None,
             "passage": gate_passage if asset_type == "ticket_gate" else None,
             "gate_type": asset.get("gate_type") if asset_type == "ticket_gate" else None,
             "navigation": asset.get("navigation") if asset_type in {"ticket_gate", "exit", "toilet"} else None,
@@ -997,6 +1049,110 @@ def navigation_edge(edge_id, from_node, to_node, edge_type, cost=None, bidirecti
         record["cost"] = float(cost)
     record.update({key: value for key, value in extra.items() if value is not None})
     return record
+
+
+def offset_position_by_angle(position, angle_deg=None, distance=0.0, fallback_target=None):
+    """Return a scene position offset from a point toward a facing direction."""
+    if not position:
+        return position
+    base = [float(value) for value in position]
+    if len(base) < 3:
+        base = [base[0], base[1], 0.0]
+    dx = dy = None
+    if angle_deg is not None:
+        radians = np.radians(float(angle_deg or 0.0))
+        dx = float(np.cos(radians))
+        dy = float(np.sin(radians))
+    elif fallback_target and len(fallback_target) >= 2:
+        dx = float(fallback_target[0]) - base[0]
+        dy = float(fallback_target[1]) - base[1]
+        length = float(np.hypot(dx, dy))
+        if length > 1e-9:
+            dx /= length
+            dy /= length
+        else:
+            dx = dy = None
+    if dx is None or dy is None:
+        dx = 1.0
+        dy = 0.0
+    return [base[0] + dx * float(distance), base[1] + dy * float(distance), base[2]]
+
+
+def offset_source_towards(source, target=None, angle_deg=None, distance=0.0, scale=0.01):
+    """Return an approximate source-image point offset toward a facing direction."""
+    if not source or len(source) < 2:
+        return source
+    base = [float(source[0]), float(source[1])]
+    dx = dy = None
+    if angle_deg is not None:
+        radians = np.radians(float(angle_deg or 0.0))
+        dx = float(np.cos(radians))
+        dy = float(np.sin(radians))
+    elif target and len(target) >= 2:
+        dx = float(target[0]) - base[0]
+        dy = float(target[1]) - base[1]
+        length = float(np.hypot(dx, dy))
+        if length > 1e-9:
+            dx /= length
+            dy /= length
+        else:
+            dx = dy = None
+    if dx is None or dy is None:
+        dx = 1.0
+        dy = 0.0
+    pixel_distance = float(distance) / max(abs(float(scale or 0.01)), 1e-9)
+    return [base[0] + dx * pixel_distance, base[1] + dy * pixel_distance]
+
+
+def gate_navigation_node_positions(asset, offset=1.0, scale=0.01):
+    """Return the two navigation node positions placed on both sides of one ticket gate."""
+    location = asset.get("location")
+    if not location or len(location) < 3:
+        return None
+    radians = np.radians(float(asset.get("rotation_z") or 0.0))
+    normal = [-float(np.sin(radians)), float(np.cos(radians))]
+    base = [float(location[0]), float(location[1]), float(location[2])]
+    positions = [
+        [base[0] + normal[0] * float(offset), base[1] + normal[1] * float(offset), base[2]],
+        [base[0] - normal[0] * float(offset), base[1] - normal[1] * float(offset), base[2]],
+    ]
+    source = asset.get("point_source")
+    source_positions = None
+    if source and len(source) >= 2:
+        source_positions = [
+            offset_source_towards(source, angle_deg=float(asset.get("rotation_z") or 0.0) + 90.0, distance=offset, scale=scale),
+            offset_source_towards(source, angle_deg=float(asset.get("rotation_z") or 0.0) - 90.0, distance=offset, scale=scale),
+        ]
+    return positions, source_positions
+
+
+def gate_public_position_index(asset, gate_positions):
+    """Return which generated gate side should be treated as public/front."""
+    def position_distance(a, b):
+        if not a or not b:
+            return float("inf")
+        ax = float(a[0])
+        ay = float(a[1])
+        az = float(a[2]) if len(a) >= 3 else 0.0
+        bx = float(b[0])
+        by = float(b[1])
+        bz = float(b[2]) if len(b) >= 3 else 0.0
+        return float(np.linalg.norm(np.array([ax - bx, ay - by, az - bz], dtype=np.float64)))
+
+    paid_position = asset.get("paid_side_position")
+    if paid_position and len(paid_position) >= 2:
+        distances = [position_distance(paid_position, position) for position in gate_positions]
+        public_index = 1 - (0 if distances[0] <= distances[1] else 1)
+    else:
+        public_position = asset.get("public_side_position")
+        if public_position and len(public_position) >= 2:
+            distances = [position_distance(public_position, position) for position in gate_positions]
+            public_index = 0 if distances[0] <= distances[1] else 1
+        else:
+            public_index = 0
+    if asset.get("gate_public_side_flipped"):
+        public_index = 1 - public_index
+    return public_index
 
 
 def distance_3d(a, b):
@@ -1249,7 +1405,7 @@ def zone_record_for_position(position, layer, zone_records=None):
     return None
 
 
-def build_navigation_graph(connection_records, icon_records=None, manual_assets=None, platform_records=None, elevator_point_records=None, zone_records=None, default_zone_type="public"):
+def build_navigation_graph(connection_records, icon_records=None, manual_assets=None, platform_records=None, elevator_point_records=None, zone_records=None, default_zone_type="public", source_scale=0.01):
     """Build a lightweight graph for Unity NavMesh-assisted routing."""
     nodes = []
     edges = []
@@ -1358,23 +1514,84 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
         is_exit = asset.get("type") == "exit"
         is_toilet = asset.get("type") == "toilet"
         navigation_extra = asset.get("navigation") or {}
+        if is_gate:
+            gate_nodes = gate_navigation_node_positions(asset, offset=1.0, scale=source_scale)
+            if not gate_nodes:
+                continue
+            gate_positions, gate_source_positions = gate_nodes
+            public_index = gate_public_position_index(asset, gate_positions)
+            ordered_indices = [public_index, 1 - public_index]
+            node_ids = [f"{asset_id}_front_node", f"{asset_id}_back_node"]
+            for output_index, source_index in enumerate(ordered_indices):
+                node_id = node_ids[output_index]
+                gate_side = "front" if output_index == 0 else "back"
+                add_node(
+                    navigation_node(
+                        node_id,
+                        "gate",
+                        asset.get("layer"),
+                        gate_positions[source_index],
+                        polygon_id=asset.get("polygon_id"),
+                        source_position=(gate_source_positions or [asset.get("point_source"), asset.get("point_source")])[source_index],
+                        asset_id=asset_id,
+                        asset_type=asset.get("type"),
+                        label=asset.get("label"),
+                        gate_type=asset.get("gate_type"),
+                        gate_side=gate_side,
+                        public_side_point_source=asset.get("public_side_point_source") if gate_side == "front" else None,
+                        paid_side_point_source=asset.get("paid_side_point_source") if gate_side == "back" else None,
+                        zone_type="public" if gate_side == "front" else "paid",
+                        zone_id=f"{asset_id}_{gate_side}",
+                        access_transition=navigation_extra.get("access_transition"),
+                        cost=navigation_extra.get("cost"),
+                    )
+                )
+            edges.append(
+                navigation_edge(
+                    f"{asset_id}_gate_crossing",
+                    node_ids[0],
+                    node_ids[1],
+                    "gate_crossing",
+                    cost=float(navigation_extra.get("cost") or 10.0),
+                    bidirectional=True,
+                    asset_id=asset_id,
+                    gate_type=asset.get("gate_type"),
+                )
+            )
+            continue
+        node_position = asset.get("location")
+        node_source_position = asset.get("point_source")
+        if is_toilet:
+            node_position = offset_position_by_angle(
+                asset.get("location"),
+                angle_deg=asset.get("rotation_z"),
+                distance=0.4,
+                fallback_target=asset.get("facing_position"),
+            )
+            node_source_position = offset_source_towards(
+                asset.get("point_source"),
+                target=asset.get("facing_point_source"),
+                angle_deg=asset.get("rotation_z"),
+                distance=0.4,
+                scale=source_scale,
+            )
         add_node(
             navigation_node(
                 f"{asset_id}_node",
-                "gate" if is_gate else ("exit" if is_exit else ("poi" if is_toilet else "asset")),
+                "exit" if is_exit else ("poi" if is_toilet else "asset"),
                 asset.get("layer"),
-                asset.get("location"),
+                node_position,
                 polygon_id=asset.get("polygon_id"),
-                source_position=asset.get("point_source"),
+                source_position=node_source_position,
                 asset_id=asset_id,
                 asset_type=asset.get("type"),
                 label=asset.get("label"),
-                gate_type=asset.get("gate_type") if is_gate else None,
                 poi_type="toilet" if is_toilet else None,
                 toilet_gender=asset.get("toilet_gender") if is_toilet else None,
                 facing_angle_deg=asset.get("rotation_z") if is_toilet else None,
-                access_transition=navigation_extra.get("access_transition") if (is_gate or is_exit) else None,
-                cost=navigation_extra.get("cost") if (is_gate or is_exit or is_toilet) else None,
+                navigation_offset=0.4 if is_toilet else None,
+                access_transition=navigation_extra.get("access_transition") if is_exit else None,
+                cost=navigation_extra.get("cost") if (is_exit or is_toilet) else None,
             )
         )
 
@@ -1428,24 +1645,38 @@ def build_navigation_graph(connection_records, icon_records=None, manual_assets=
             continue
         node_id = f"{elevator_point_id}_node"
         is_exit_elevator = bool(elevator.get("exit"))
+        node_position = offset_position_by_angle(
+            position,
+            angle_deg=elevator.get("facing_angle_deg"),
+            distance=0.4,
+            fallback_target=elevator.get("facing_position"),
+        )
+        node_source_position = offset_source_towards(
+            elevator.get("point_source"),
+            target=elevator.get("facing_point_source"),
+            angle_deg=elevator.get("facing_angle_deg"),
+            distance=0.4,
+            scale=source_scale,
+        )
         add_node(
             navigation_node(
                 node_id,
                 "exit_elevator" if is_exit_elevator else "elevator",
                 elevator.get("layer"),
-                position,
+                node_position,
                 polygon_id=elevator.get("polygon_id"),
-                source_position=elevator.get("point_source"),
+                source_position=node_source_position,
                 elevator_id=elevator.get("elevator_id"),
                 elevator_point_id=elevator_point_id,
                 label=elevator.get("label"),
                 facing_angle_deg=elevator.get("facing_angle_deg"),
                 exit_number=elevator.get("exit_number") if is_exit_elevator else None,
                 access_transition=elevator.get("access_transition") if is_exit_elevator else None,
+                navigation_offset=0.4,
             )
         )
         if not is_exit_elevator:
-            elevator_groups.setdefault(elevator.get("elevator_id") or "elevator", []).append((node_id, position))
+            elevator_groups.setdefault(elevator.get("elevator_id") or "elevator", []).append((node_id, node_position))
     for elevator_id, items in elevator_groups.items():
         for index in range(len(items)):
             for next_index in range(index + 1, len(items)):
@@ -2570,6 +2801,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         elevator_point_records=elevator_point_records,
         zone_records=zone_records,
         default_zone_type="public",
+        source_scale=effective_scale,
     )
     return payload
 

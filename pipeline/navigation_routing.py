@@ -85,16 +85,22 @@ def edge_zone_penalty(from_node, to_node, zone_change_penalty, paid_free_penalty
 
 def node_zone_signature(node):
     """Return the routing zone identity for one node."""
+    if node.get("type") == "gate":
+        zone_type = normalize_zone(node.get("zone_type"))
+        if zone_type == "paid" and node.get("zone_label"):
+            return (zone_type, str(node.get("zone_label") or ""))
+        if zone_type in FREE_ZONE_TYPES:
+            return (zone_type, "")
     return (normalize_zone(node.get("zone_type")), str(node.get("zone_id") or ""))
 
 
 def same_walkable_region(from_node, to_node, synthetic_mode):
     """Return whether two nodes can receive a synthetic walking edge."""
+    if from_node.get("type") == "gate" and to_node.get("type") == "gate":
+        return False
     if synthetic_mode == "same-polygon" and from_node.get("polygon_id") != to_node.get("polygon_id"):
         return False
-    if node_zone_signature(from_node) == node_zone_signature(to_node):
-        return True
-    return is_zone_transition_gate(from_node) or is_zone_transition_gate(to_node)
+    return node_zone_signature(from_node) == node_zone_signature(to_node)
 
 
 def is_zone_transition_gate(node):
@@ -297,9 +303,17 @@ def list_nodes(navigation_graph):
                 "node_key_str": node.get("node_key_str"),
                 "node_id": node.get("node_id"),
                 "type": node.get("type"),
+                "connector_type": node.get("connector_type"),
+                "connector_id": node.get("connector_id"),
+                "endpoint": node.get("endpoint"),
+                "asset_id": node.get("asset_id"),
+                "asset_type": node.get("asset_type"),
+                "gate_side": node.get("gate_side"),
                 "layer": node.get("layer"),
+                "polygon_id": node.get("polygon_id"),
                 "zone_type": node.get("zone_type"),
                 "zone_id": node.get("zone_id"),
+                "zone_label": node.get("zone_label"),
                 "exit_number": node.get("exit_number"),
                 "poi_type": node.get("poi_type"),
                 "toilet_gender": node.get("toilet_gender"),

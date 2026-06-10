@@ -40,12 +40,14 @@ const state = {
   selectedStairId: null,
   selectedStairIds: [],
   selectedSubwayId: null,
+  selectedSubwaySegmentIndex: null,
   selectedWallId: null,
   selectedZoneId: null,
   selectedPlatformId: null,
   selectedPlatformIds: [],
   selectedElevatorPointId: null,
   selectedElevatorPointIds: [],
+  selectedNavigationNodeId: null,
   showIds: false,
   showConnections: false,
   showIcons: false,
@@ -215,6 +217,8 @@ const state = {
     polygonId: null,
     layer: null,
     gateCount: 1,
+    awaitingPaidSide: false,
+    paidSidePoint: null,
   },
   platform: {
     active: false,
@@ -878,6 +882,9 @@ function drawManualAssets() {
       || (asset.start_point_source && asset.end_point_source ? [asset.start_point_source, asset.end_point_source] : null)
       || (directionPoints?.length >= 2 ? directionPoints : null)
       || (asset.point_source && asset.facing_point_source ? [asset.point_source, asset.facing_point_source] : null);
+    if (asset.type === "ticket_gate" && (asset.paid_side_point_source || asset.public_side_point_source)) {
+      drawGatePublicSidePreview(asset, assetPath, selected);
+    }
     if (assetPath && assetPath.length >= 2) {
       drawPath(assetPath, selected ? selectedColor : baseColor, selected ? 5 : 3);
       if (directionPoints?.length >= 2 && asset.point_source) {
@@ -908,6 +915,12 @@ function drawManualAssets() {
     const points = state.subway.points || [];
     const color = manualAssetColor(state.subway.assetType, 0.95);
     const directionVertices = state.subway.assetType === "toilet" ? (state.subway.directionVertices || []) : [];
+    if (state.subway.assetType === "ticket_gate" && state.subway.paidSidePoint && points.length >= 1) {
+      const center = pathCenter(points) || points[0];
+      drawPath([center, state.subway.paidSidePoint], "rgba(210, 60, 60, 0.95)", 3);
+      drawPathArrow([center, state.subway.paidSidePoint], "rgba(210, 60, 60, 0.95)");
+      drawCanvasLabel(state.subway.paidSidePoint, "paid", "#d23c3c", 8, -8);
+    }
     if (directionVertices.length >= 2 && points.length >= 1) {
       drawPath(directionVertices, "rgba(160, 120, 255, 0.9)", 4);
       const facing = perpendicularFacingFromLine(points[0], directionVertices[0], directionVertices[1], 50);
@@ -1183,15 +1196,161 @@ function navigationNodeSourcePoint(node) {
   return [x, y];
 }
 
+function formatCoordinatePoint(point, digits = 3) {
+  if (!Array.isArray(point) || point.length < 2) return "-";
+  return `[${point.map((value) => {
+    const number = Number(value);
+    return Number.isFinite(number) ? number.toFixed(digits) : String(value);
+  }).join(", ")}]`;
+}
+
+function navigationNodeDetailText(node) {
+  if (!node) return "";
+  return [
+    "Navigation node selected",
+    `key: ${node.node_key_str || node.node_key || "-"}`,
+    `node_id: ${node.node_id || "-"}`,
+    `type: ${navigationNodeTypeLabel(node) || "-"}`,
+    node.gate_side ? `gate_side: ${node.gate_side}` : null,
+    node.endpoint ? `endpoint: ${node.endpoint}` : null,
+    `layer: ${node.layer || "-"}`,
+    `polygon: ${node.polygon_id || "-"}`,
+    `zone: ${node.zone_type || "-"} ${node.zone_id || ""}`.trim(),
+    node.zone_label ? `zone_label: ${node.zone_label}` : null,
+    `source xy: ${formatCoordinatePoint(navigationNodeSourcePoint(node), 2)}`,
+    `scene xyz: ${formatCoordinatePoint(node.position, 3)}`,
+  ].filter(Boolean).join("\n");
+}
+
+function findNavigationNodeAtScreen(screenX, screenY, maxDistance = 13) {
+  if (!state.showNavigationNodes) return null;
+  let best = null;
+  let bestDistance = maxDistance;
+  for (const node of state.navigationNodes || []) {
+    const point = navigationNodeSourcePoint(node);
+    if (!point) continue;
+    const screen = worldToScreen(point);
+    const distance = Math.hypot(screen.x - screenX, screen.y - screenY);
+    if (distance <= bestDistance) {
+      best = node;
+      bestDistance = distance;
+    }
+  }
+  return best;
+}
+
+function selectNavigationNode(node) {
+  state.selectedNavigationNodeId = node?.node_id || null;
+  updateRouteStatus(navigationNodeDetailText(node));
+  draw();
+}
+
+function gatePathMiddleFrame(points) {
+  if (!points || points.length < 2) return null;
+  const totalLength = points.slice(0, -1).reduce((total, point, index) => {
+    const next = points[index + 1];
+    return total + Math.hypot(Number(next[0]) - Number(point[0]), Number(next[1]) - Number(point[1]));
+  }, 0);
+  if (!Number.isFinite(totalLength) || totalLength <= 1e-6) return null;
+  const target = totalLength / 2;
+  let walked = 0;
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const start = points[index];
+    const end = points[index + 1];
+    const dx = Number(end[0]) - Number(start[0]);
+    const dy = Number(end[1]) - Number(start[1]);
+    const length = Math.hypot(dx, dy);
+    if (length <= 1e-6) continue;
+    if (walked + length >= target) {
+      const ratio = (target - walked) / length;
+      return {
+        center: [
+          Number(start[0]) + dx * ratio,
+          Number(start[1]) + dy * ratio,
+        ],
+        normal: [-dy / length, dx / length],
+      };
+    }
+    walked += length;
+  }
+  return null;
+}
+
+function drawGatePublicSidePreview(asset, assetPath, selected = false) {
+  const referencePoint = asset.paid_side_point_source || asset.public_side_point_source;
+  const points = assetPath && assetPath.length >= 2 ? assetPath : null;
+  if (points && selected) {
+    for (let index = 0; index < points.length - 1; index += 1) {
+      const segmentIndex = index + 1;
+      if (state.selectedSubwaySegmentIndex !== segmentIndex) continue;
+      const start = points[index];
+      const end = points[index + 1];
+      const center = [(Number(start[0]) + Number(end[0])) / 2, (Number(start[1]) + Number(end[1])) / 2];
+      drawPath([start, end], "rgba(255, 210, 0, 0.95)", 8);
+      drawCanvasLabel(center, `segment ${segmentIndex}`, "#ffd200", 10, -24);
+    }
+  }
+  if (!referencePoint) return;
+  const screen = worldToScreen(referencePoint);
+  const isPaidReference = Boolean(asset.paid_side_point_source);
+  const fillColor = isPaidReference ? "rgba(255, 45, 45, 0.92)" : "rgba(25, 118, 255, 0.92)";
+  const strokeColor = selected ? "#ffd600" : "#111111";
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(screen.x, screen.y, selected ? 9 : 7, 0, Math.PI * 2);
+  ctx.fillStyle = fillColor;
+  ctx.strokeStyle = strokeColor;
+  ctx.lineWidth = selected ? 3 : 2;
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+  drawCanvasLabel(
+    referencePoint,
+    isPaidReference ? "PAID REF" : "PUBLIC REF",
+    isPaidReference ? "#ff2d2d" : "#1976ff",
+    8,
+    -12,
+  );
+  }
+
 function navigationNodeColor(node) {
+  if (node?.zone_type === "paid") return "#ff2d2d";
+  if (node?.zone_type === "public") return "#1976ff";
   const type = node?.type || node?.node_type;
+  const connectorType = node?.connector_type;
   if (type === "platform") return "#00b7ff";
   if (type === "exit") return "#ff4d5f";
   if (type === "gate") return "#b26cff";
-  if (type === "stair" || type === "escalator") return "#ff9f1c";
+  if (type === "stair" || type === "escalator" || connectorType === "stair" || connectorType === "escalator") {
+    return "#ff9f1c";
+  }
   if (type === "elevator") return "#00d084";
   if (node?.poi_type === "toilet") return "#35d0ba";
   return "#ffd600";
+}
+
+function navigationNodeTypeLabel(node) {
+  const type = node?.type || node?.node_type || "";
+  if (type === "connector" && node?.connector_type) return node.connector_type;
+  if (type === "platform_position") return "platform";
+  if (type === "poi" && node?.poi_type) return node.poi_type;
+  return type;
+}
+
+function navigationNodeZoneLabel(node) {
+  const zoneType = node?.zone_type || "";
+  const zoneId = node?.zone_id || "";
+  if (!zoneType && !zoneId) return "";
+  if (!zoneId || String(zoneId).startsWith("ticket_gate_")) return zoneType;
+  return zoneType ? `${zoneType}:${zoneId}` : zoneId;
+}
+
+function navigationNodeLabel(node) {
+  const key = node?.node_key_str || node?.node_key || node?.node_id || "";
+  const type = navigationNodeTypeLabel(node);
+  const side = node?.gate_side || node?.endpoint || "";
+  const zone = navigationNodeZoneLabel(node);
+  return [key, type, side, zone].filter(Boolean).join(" ");
 }
 
 function drawNavigationNodes() {
@@ -1204,16 +1363,24 @@ function drawNavigationNodes() {
     if (!point) return;
     const screen = worldToScreen(point);
     const color = navigationNodeColor(node);
+    const selected = node.node_id && node.node_id === state.selectedNavigationNodeId;
+    if (selected) {
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, 10, 0, Math.PI * 2);
+      ctx.strokeStyle = "#ffd600";
+      ctx.lineWidth = 4;
+      ctx.stroke();
+    }
     ctx.beginPath();
-    ctx.arc(screen.x, screen.y, 5, 0, Math.PI * 2);
+    ctx.arc(screen.x, screen.y, selected ? 6 : 5, 0, Math.PI * 2);
     ctx.fillStyle = color;
-    ctx.strokeStyle = "#111111";
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = node?.zone_type === "public" ? "#ffffff" : "#111111";
+    ctx.lineWidth = node?.type === "gate" ? 2.5 : 1.5;
     ctx.fill();
     ctx.stroke();
     drawCanvasLabel(
       point,
-      `${node.node_key_str || node.node_key || node.node_id || ""} ${node.type || node.node_type || ""}`.trim(),
+      navigationNodeLabel(node),
       color,
       7,
       -9,
@@ -2645,9 +2812,9 @@ function populateRouteNodeSelects(nodes) {
   if (previousGoal) routeGoalSelect.value = previousGoal;
 }
 
-function loadRouteNodesFromUi() {
-  updateRouteStatus("Loading route nodes...");
-  saveAnnotations()
+function loadRouteNodesFromUi(message = "Loading route nodes...") {
+  updateRouteStatus(message);
+  return saveAnnotations()
     .then(() => fetch("/api/navigation/nodes", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
@@ -2659,6 +2826,9 @@ function loadRouteNodesFromUi() {
     .then(({ok, data}) => {
       if (!ok) throw new Error(data.error || "node loading failed");
       state.navigationNodes = data.nodes || [];
+      if (state.selectedNavigationNodeId && !state.navigationNodes.some((node) => node.node_id === state.selectedNavigationNodeId)) {
+        state.selectedNavigationNodeId = null;
+      }
       populateRouteNodeSelects(data.nodes || []);
       updateRouteStatus(`Loaded ${data.node_count || 0} nodes.`);
       draw();
@@ -2666,6 +2836,10 @@ function loadRouteNodesFromUi() {
     .catch((error) => {
       updateRouteStatus(String(error));
     });
+}
+
+function showAndRefreshNavigationNodes(message = "Refreshing navigation nodes...") {
+  return loadRouteNodesFromUi(message);
 }
 
 function findRouteFromUi() {
@@ -2708,43 +2882,44 @@ function findRouteFromUi() {
     });
 }
 
-function exportRoutePathFromUi() {
+function exportRoutePathFromUi(gateOnly = false) {
   if (!state.route?.result) {
     updateRouteStatus("Find a route first.");
     return;
   }
-  updateRouteStatus("Exporting route path...");
+  updateRouteStatus(gateOnly ? "Exporting gate-only route path..." : "Exporting route path...");
   fetch("/api/navigation/export_path", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
     body: JSON.stringify({
       route: state.route.result,
+      gate_only: gateOnly,
     }),
   })
     .then((response) => response.json().then((data) => ({ok: response.ok, data})))
     .then(({ok, data}) => {
       if (!ok) throw new Error(data.error || "route path export failed");
-      updateRouteStatus(`Route path exported.\noutput: ${data.output}\nexample: ${data.example_output}`);
+      updateRouteStatus(`${gateOnly ? "Gate route path" : "Route path"} exported.\noutput: ${data.output}\nexample: ${data.example_output}\nlines: ${data.line_count || 0}\nedges: ${data.edge_count || 0}`);
     })
     .catch((error) => {
       updateRouteStatus(String(error));
     });
 }
 
-function buildRouteEdgesFromUi() {
-  updateRouteStatus("Building route video edges...");
+function buildRouteEdgesFromUi(gateOnly = false) {
+  updateRouteStatus(gateOnly ? "Building gate route video edges..." : "Building route video edges...");
   saveAnnotations()
     .then(() => fetch("/api/navigation/route_edges", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(routeEdgeRequestPayload()),
+      body: JSON.stringify(routeEdgeRequestPayload({gate_only: gateOnly})),
     }))
     .then((response) => response.json().then((data) => ({ok: response.ok, data})))
     .then(({ok, data}) => {
       if (!ok) throw new Error(data.error || "route edge export failed");
       const counts = data.counts || {};
       updateRouteStatus([
-        "Route video edges exported.",
+        gateOnly ? "Gate route video edges exported." : "Route video edges exported.",
         `output: ${data.output}`,
         `platform car nodes: ${counts.platform_car_node_count || 0}`,
         `exit nodes: ${counts.exit_node_count || 0}`,
@@ -2752,7 +2927,8 @@ function buildRouteEdgesFromUi() {
         `route success/failure: ${counts.route_success_count || 0}/${counts.route_failure_count || 0}`,
         `toilet route success: ${counts.toilet_route_success_count || 0}`,
         `unique video edges: ${counts.unique_edge_count || 0}`,
-      ].join("\n"));
+        gateOnly ? `gate video edges: ${counts.gate_unique_edge_count || counts.unique_edge_count || 0}` : null,
+      ].filter(Boolean).join("\n"));
     })
     .catch((error) => {
       updateRouteStatus(String(error));
@@ -5422,7 +5598,7 @@ function updateSubwayStatus(message = null) {
       `ticket gates: ${gateCount}`,
       `exits: ${exitCount}`,
       `toilets: ${toiletCount}`,
-      state.selectedSubwayId ? `selected: ${state.selectedSubwayId}` : null,
+      state.selectedSubwayId ? `selected: ${state.selectedSubwayId}${state.selectedSubwaySegmentIndex ? ` segment ${state.selectedSubwaySegmentIndex}` : ""}` : null,
     ].filter(Boolean).join("\n") || "inactive";
     return;
   }
@@ -5435,12 +5611,13 @@ function updateSubwayStatus(message = null) {
     `mode: ${manualAssetDisplayName(currentType)}`,
     `label: ${state.subway.label || "auto"}`,
     pathAsset ? `gate count: ${state.subway.gateCount || selectedGateCount()}` : null,
+    pathAsset && state.subway.awaitingPaidSide ? "paid side: click paid/inside direction point" : null,
     pointOnly ? `exit: ${state.subway.exitNumber || selectedOrNextManualExitNumber()}` : null,
     facingPointAsset ? `toilet: ${toiletGenderInput?.value || "both"}` : null,
     `points: ${(state.subway.points || []).length}/${pointOnly ? 1 : (pathAsset ? "path" : 2)}`,
     facingPointAsset && (state.subway.points || []).length >= 1 ? `direction vertices: ${toiletDirectionCount}/2` : null,
     pathAsset
-      ? "Click gate path points. Shift applies."
+      ? (state.subway.awaitingPaidSide ? "Click paid side point." : "Click gate path points. Shift asks paid side.")
       : facingPointAsset
       ? ((state.subway.points || []).length < 1 ? "Click toilet point inside a polygon" : `Click existing polygon vertex for direction ${toiletDirectionCount + 1}/2.`)
       : pointOnly
@@ -5463,6 +5640,8 @@ function startSubwayPlacement() {
     exitNumber: selectedOrNextManualExitNumber(),
     directionVertices: [],
     directionVertexRefs: [],
+    awaitingPaidSide: false,
+    paidSidePoint: null,
   };
   updateSubwayStatus();
   draw();
@@ -5481,6 +5660,8 @@ function resetSubwayPlacement() {
     exitNumber: selectedOrNextManualExitNumber(),
     directionVertices: [],
     directionVertexRefs: [],
+    awaitingPaidSide: false,
+    paidSidePoint: null,
   };
   updateSubwayStatus();
   draw();
@@ -5502,6 +5683,13 @@ function addSubwayAsset(world, poly) {
     return;
   }
   if (assetType === "ticket_gate") {
+    if (state.subway.awaitingPaidSide) {
+      state.subway.paidSidePoint = point;
+      updateSubwayStatus("Paid side point set. Saving ticket gate...");
+      draw();
+      applySubwayPlacement();
+      return;
+    }
     state.subway.points.push(point);
     if (!state.subway.polygonId) state.subway.polygonId = poly.polygon_id;
     if (!state.subway.layer) state.subway.layer = layer;
@@ -5661,6 +5849,12 @@ function applySubwayPlacement() {
     updateSubwayStatus("Ticket gate needs at least 2 path points.");
     return;
   }
+  if (!state.subway.paidSidePoint) {
+    state.subway.awaitingPaidSide = true;
+    updateSubwayStatus("Click paid/inside side point for this ticket gate.");
+    draw();
+    return;
+  }
   const assetId = nextManualAssetId(assetType);
   const center = pathCenter(points);
   state.annotations.manual_assets = state.annotations.manual_assets || [];
@@ -5675,11 +5869,13 @@ function applySubwayPlacement() {
     points_source: points,
     start_point_source: points[0],
     end_point_source: points[points.length - 1],
+    paid_side_point_source: state.subway.paidSidePoint,
+    gate_public_side_flipped: false,
     rotation_z: pathRotationDegrees(points),
     scale: [1.0, 1.0, 1.0],
     gate_count: state.subway.gateCount || selectedGateCount(),
     gate_width: 1.0,
-    passage_width: 1.0,
+    passage_width: 1.5,
     gate_type: "ticket_gate",
     navigation: {node_type: "gate", access_transition: "public_paid", cost: 10},
   });
@@ -5691,7 +5887,21 @@ function applySubwayPlacement() {
 }
 
 function undoSubwayPoint() {
-  if (!state.subway.active || !(state.subway.points || []).length) return;
+  if (!state.subway.active) return;
+  if (state.subway.paidSidePoint) {
+    state.subway.paidSidePoint = null;
+    state.subway.awaitingPaidSide = true;
+    updateSubwayStatus("Removed paid side point.");
+    draw();
+    return;
+  }
+  if (state.subway.awaitingPaidSide) {
+    state.subway.awaitingPaidSide = false;
+    updateSubwayStatus("Back to gate path editing.");
+    draw();
+    return;
+  }
+  if (!(state.subway.points || []).length) return;
   state.subway.points.pop();
   if (!state.subway.points.length) {
     state.subway.polygonId = null;
@@ -5701,25 +5911,35 @@ function undoSubwayPoint() {
   draw();
 }
 
-function nearestSubwayAsset(world, maxScreenDistance = 14) {
+function nearestSubwayAsset(world, maxScreenDistance = 24) {
   const mouseScreen = worldToScreen([world.x, world.y]);
   let best = null;
   (state.annotations.manual_assets || []).forEach((asset, index) => {
-    if (!MANUAL_ASSET_TYPES.includes(asset.type) || !asset.point_source) return;
+    if (!MANUAL_ASSET_TYPES.includes(asset.type)) return;
     let distance;
+    let segmentIndex = null;
     const assetPath = asset.points_source || (asset.start_point_source && asset.end_point_source ? [asset.start_point_source, asset.end_point_source] : null);
     if (assetPath && assetPath.length >= 2) {
-      distance = Math.min(...assetPath.slice(0, -1).map((point, pointIndex) => {
+      const segmentHits = assetPath.slice(0, -1).map((point, pointIndex) => {
         const projected = projectPointToSegment(world, point, assetPath[pointIndex + 1]);
         const projectedScreen = worldToScreen(projected);
-        return Math.hypot(projectedScreen.x - mouseScreen.x, projectedScreen.y - mouseScreen.y);
-      }));
+        return {
+          distance: Math.hypot(projectedScreen.x - mouseScreen.x, projectedScreen.y - mouseScreen.y),
+          segmentIndex: pointIndex + 1,
+        };
+      });
+      const nearestSegment = segmentHits.reduce((current, candidate) => (
+        !current || candidate.distance < current.distance ? candidate : current
+      ), null);
+      distance = nearestSegment?.distance ?? Infinity;
+      segmentIndex = nearestSegment?.segmentIndex ?? null;
     } else {
+      if (!asset.point_source) return;
       const screen = worldToScreen(asset.point_source);
       distance = Math.hypot(screen.x - mouseScreen.x, screen.y - mouseScreen.y);
     }
     if (distance <= maxScreenDistance && (!best || distance < best.distance)) {
-      best = {index, assetId: asset.asset_id || asset.label || `${asset.type}_${index + 1}`, distance};
+      best = {index, assetId: asset.asset_id || asset.label || `${asset.type}_${index + 1}`, distance, segmentIndex};
     }
   });
   return best;
@@ -5729,11 +5949,13 @@ function selectSubwayAsset(world) {
   const hit = nearestSubwayAsset(world);
   if (!hit) {
     state.selectedSubwayId = null;
+    state.selectedSubwaySegmentIndex = null;
     updateSubwayStatus();
     draw();
     return false;
   }
   state.selectedSubwayId = hit.assetId;
+  state.selectedSubwaySegmentIndex = hit.segmentIndex;
   state.selectedPlatformId = null;
   state.selectedPlatformIds = [];
   state.selectedStairId = null;
@@ -5742,7 +5964,7 @@ function selectSubwayAsset(world) {
   state.selectedLayerAlignIndex = null;
   state.selectedId = null;
   updateSelectedInfo();
-  updateSubwayStatus(`Selected ${hit.assetId}.`);
+  updateSubwayStatus(`Selected ${hit.assetId}${hit.segmentIndex ? ` segment ${hit.segmentIndex}` : ""}.`);
   draw();
   return true;
 }
@@ -5758,16 +5980,43 @@ function deleteSelectedSubwayAsset() {
   );
   if (index < 0) {
     state.selectedSubwayId = null;
+    state.selectedSubwaySegmentIndex = null;
     updateSubwayStatus("Selected map asset is missing.");
     draw();
     return;
   }
   const removed = state.annotations.manual_assets.splice(index, 1)[0];
   state.selectedSubwayId = null;
+  state.selectedSubwaySegmentIndex = null;
   saveAnnotations().then((result) => {
     saveResult.textContent = JSON.stringify(result, null, 2);
     updateSubwayStatus(`Deleted ${removed.asset_id || removed.label}.`);
     draw();
+  });
+}
+
+function flipSelectedGatePublicSide() {
+  if (!state.selectedSubwayId) {
+    updateSubwayStatus("Select a ticket gate first.");
+    return;
+  }
+  state.annotations.manual_assets = state.annotations.manual_assets || [];
+  const asset = state.annotations.manual_assets.find(
+    (item) => item.type === "ticket_gate" && (item.asset_id || item.label) === state.selectedSubwayId,
+  );
+  if (!asset) {
+    updateSubwayStatus("Selected asset is not a ticket gate.");
+    return;
+  }
+  const segmentIndex = Number(state.selectedSubwaySegmentIndex || 1);
+  asset.gate_segment_flips = asset.gate_segment_flips || {};
+  const key = String(segmentIndex);
+  const fallback = Boolean(asset.gate_public_side_flipped);
+  asset.gate_segment_flips[key] = !Boolean(asset.gate_segment_flips[key] ?? fallback);
+  saveAnnotations().then((result) => {
+    saveResult.textContent = JSON.stringify(result, null, 2);
+    updateSubwayStatus(`${asset.asset_id || asset.label} segment ${segmentIndex} flipped: ${asset.gate_segment_flips[key] ? "on" : "off"}.`);
+    return showAndRefreshNavigationNodes(`Gate segment ${segmentIndex} flipped. Refreshing navigation nodes...`);
   });
 }
 
@@ -5777,6 +6026,7 @@ function deleteAllSubwayAssets() {
   state.annotations.manual_assets = state.annotations.manual_assets.filter((asset) => !MANUAL_ASSET_TYPES.includes(asset.type));
   const removed = before - state.annotations.manual_assets.length;
   state.selectedSubwayId = null;
+  state.selectedSubwaySegmentIndex = null;
   saveAnnotations().then((result) => {
     saveResult.textContent = JSON.stringify(result, null, 2);
     updateSubwayStatus(`Deleted ${removed} map assets.`);
@@ -5790,6 +6040,7 @@ function undoLastSubwayAsset() {
     if (!MANUAL_ASSET_TYPES.includes(state.annotations.manual_assets[index].type)) continue;
     const removed = state.annotations.manual_assets.splice(index, 1)[0];
     state.selectedSubwayId = null;
+    state.selectedSubwaySegmentIndex = null;
     saveAnnotations().then((result) => {
       saveResult.textContent = JSON.stringify(result, null, 2);
       updateSubwayStatus(`Removed ${removed.asset_id || removed.label}.`);
@@ -8905,7 +9156,9 @@ canvas.addEventListener("mouseup", () => {
 canvas.addEventListener("click", (event) => {
   if (event.shiftKey || event.altKey) return;
   const rect = canvas.getBoundingClientRect();
-  const world = screenToWorld(event.clientX - rect.left, event.clientY - rect.top);
+  const screenX = event.clientX - rect.left;
+  const screenY = event.clientY - rect.top;
+  const world = screenToWorld(screenX, screenY);
   if (state.tool === "crop") return;
   if (state.tool === "regionPick") return;
   if (state.tool === "marker") {
@@ -9002,6 +9255,11 @@ canvas.addEventListener("click", (event) => {
     toggleKeepVertex(world, poly);
     return;
   }
+  const navigationNode = findNavigationNodeAtScreen(screenX, screenY);
+  if (navigationNode) {
+    selectNavigationNode(navigationNode);
+    return;
+  }
   if (selectLayerAlignPair(world)) return;
   if (selectLocalShift(world)) return;
   if (selectSubwayAsset(world)) return;
@@ -9025,6 +9283,7 @@ canvas.addEventListener("click", (event) => {
   state.selectedPlatformIds = [];
   state.selectedElevatorPointId = null;
   state.selectedElevatorPointIds = [];
+  state.selectedNavigationNodeId = null;
   state.selectedLayerAlignIndex = null;
   updateSelectedInfo();
   updateLayerAlignStatus();
@@ -9211,6 +9470,7 @@ document.getElementById("undoZoneBtn").addEventListener("click", undoLastZone);
 document.getElementById("resetZoneRegionBtn").addEventListener("click", resetZoneRegion);
 document.getElementById("startSubwayBtn").addEventListener("click", startSubwayPlacement);
 document.getElementById("applySubwayBtn").addEventListener("click", applySubwayPlacement);
+document.getElementById("flipGateSideBtn").addEventListener("click", flipSelectedGatePublicSide);
 document.getElementById("deleteSubwayBtn").addEventListener("click", deleteSelectedSubwayAsset);
 document.getElementById("deleteAllSubwayBtn").addEventListener("click", deleteAllSubwayAssets);
 document.getElementById("undoSubwayBtn").addEventListener("click", undoLastSubwayAsset);
@@ -9263,8 +9523,10 @@ routeGoalSelect.addEventListener("change", () => {
   routeGoalInput.value = routeGoalSelect.value;
 });
 document.getElementById("findRouteBtn").addEventListener("click", findRouteFromUi);
-document.getElementById("exportRoutePathBtn").addEventListener("click", exportRoutePathFromUi);
-document.getElementById("buildRouteEdgesBtn").addEventListener("click", buildRouteEdgesFromUi);
+document.getElementById("exportRoutePathBtn").addEventListener("click", () => exportRoutePathFromUi(false));
+document.getElementById("exportGateRoutePathBtn").addEventListener("click", () => exportRoutePathFromUi(true));
+document.getElementById("buildRouteEdgesBtn").addEventListener("click", () => buildRouteEdgesFromUi(false));
+document.getElementById("buildGateRouteEdgesBtn").addEventListener("click", () => buildRouteEdgesFromUi(true));
 document.getElementById("uploadRoutePackageBtn").addEventListener("click", uploadRoutePackageToServer);
 document.getElementById("clearRouteBtn").addEventListener("click", clearRouteOverlay);
 document.getElementById("refreshImagesBtn").addEventListener("click", refreshImages);
@@ -9354,6 +9616,7 @@ document.getElementById("exportPlanesBtn").addEventListener("click", () => {
     .then((response) => response.json())
     .then((result) => {
       saveResult.textContent = JSON.stringify(result, null, 2);
+      return showAndRefreshNavigationNodes(`Exported scene planes. Refreshing ${result.navigation_node_count || 0} nodes...`);
     });
 });
 document.getElementById("exportAssetsBtn").addEventListener("click", () => {

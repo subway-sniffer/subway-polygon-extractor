@@ -104,6 +104,71 @@ def format_route_path_text(route):
     return "\n".join(lines) + ("\n" if lines else "")
 
 
+def gate_only_route(route):
+    """Return a compact route containing only gate-related edge endpoints."""
+    if not isinstance(route, dict):
+        return {}
+    nodes = route.get("nodes") or []
+    edges = route.get("edges") or []
+    if not nodes or not edges:
+        return {}
+    node_by_id = {node.get("node_id"): node for node in nodes if node.get("node_id")}
+    gate_node_ids = []
+    gate_edges = []
+    for edge in edges:
+        from_node = node_by_id.get(edge.get("from"))
+        to_node = node_by_id.get(edge.get("to"))
+        is_gate_edge = (
+            edge.get("type") == "gate_crossing"
+            or (from_node or {}).get("type") == "gate"
+            or (to_node or {}).get("type") == "gate"
+        )
+        if not is_gate_edge:
+            continue
+        gate_edges.append(edge)
+        for node in (from_node, to_node):
+            node_id = (node or {}).get("node_id")
+            if node_id and node_id not in gate_node_ids:
+                gate_node_ids.append(node_id)
+    return {
+        **route,
+        "nodes": [node_by_id[node_id] for node_id in gate_node_ids if node_id in node_by_id],
+        "edges": gate_edges,
+        "node_ids": gate_node_ids,
+        "node_count": len(gate_node_ids),
+        "edge_count": len(gate_edges),
+    }
+
+
+def is_gate_route_edge_record(edge):
+    """Return whether a route-video edge touches a ticket gate node."""
+    if not isinstance(edge, dict):
+        return False
+    text_parts = [
+        edge.get("edge_id"),
+        edge.get("route_edge_type"),
+        edge.get("from_type"),
+        edge.get("to_type"),
+        (edge.get("from") or {}).get("node_id"),
+        (edge.get("to") or {}).get("node_id"),
+    ]
+    return any("gate" in str(part or "").lower() or "ticket_gate" in str(part or "").lower() for part in text_parts)
+
+
+def filter_gate_route_edges_payload(payload):
+    """Return route edge export payload containing only gate-related edges."""
+    edges = [edge for edge in payload.get("edges", []) if is_gate_route_edge_record(edge)]
+    result = {**payload, "edges": edges}
+    counts = dict(payload.get("counts", {}))
+    counts["unique_edge_count"] = len(edges)
+    counts["gate_unique_edge_count"] = len(edges)
+    result["counts"] = counts
+    metadata = dict(payload.get("metadata", {}))
+    metadata["filter"] = "gate_only"
+    result["metadata"] = metadata
+    return result
+
+
 def toilet_matches_gender(node, toilet_gender):
     """Return whether one toilet node satisfies a requested gender condition."""
     requested = str(toilet_gender or "any").strip().lower()
@@ -1351,20 +1416,25 @@ def create_app(args):
         """Save the current test route as blender-map-generator path text."""
         data = request.get_json(silent=True) or {}
         route = data.get("route") or {}
+        gate_only = bool(data.get("gate_only"))
+        if gate_only:
+            route = gate_only_route(route)
         text = format_route_path_text(route)
         if not text.strip():
             return jsonify({"error": "저장할 route node position이 없습니다."}), 400
-        output_path = store.named_output_path("route_path", suffix=".txt")
+        output_path = store.named_output_path("test_route_path" if gate_only else "route_path", suffix=".txt")
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(text, encoding="utf-8")
-        example_path = ROOT_DIR / "blender-map-generator" / "example_path_seoul.txt"
+        example_path = ROOT_DIR / "blender-map-generator" / ("example_gate_path_seoul.txt" if gate_only else "example_path_seoul.txt")
         example_path.write_text(text, encoding="utf-8")
         return jsonify(
             {
                 "saved": True,
+                "gate_only": gate_only,
                 "output": str(output_path),
                 "example_output": str(example_path),
                 "line_count": len(text.strip().splitlines()),
+                "edge_count": len(route.get("edges", [])) if isinstance(route, dict) else 0,
             }
         )
 
@@ -1382,6 +1452,7 @@ def create_app(args):
                 station_name=data.get("station_name") or None,
                 include_platform_platform=not bool(data.get("no_platform_platform")),
                 include_same_platform=bool(data.get("include_same_platform")),
+                include_same_line_platform=bool(data.get("include_same_line_platform")),
                 include_unnumbered_exits=bool(data.get("include_unnumbered_exits")),
                 include_toilet_routes=bool(data.get("include_toilet_routes")),
                 toilet_genders=data.get("toilet_genders") or ["male", "female"],
@@ -1392,13 +1463,17 @@ def create_app(args):
                 paid_free_penalty=float(data.get("paid_free_penalty", 1000.0)),
                 route_preference=data.get("route_preference") or "none",
             )
+            gate_only = bool(data.get("gate_only"))
+            if gate_only:
+                payload = filter_gate_route_edges_payload(payload)
         except Exception as exc:
             return jsonify({"error": str(exc)}), 400
-        output_path = store.named_output_path("route_video_edges")
+        output_path = store.named_output_path("route_video_edges_gate" if data.get("gate_only") else "route_video_edges")
         saved_path = save_json_compact_vectors(payload, output_path)
         return jsonify(
             {
                 "saved": True,
+                "gate_only": bool(data.get("gate_only")),
                 "output": str(saved_path),
                 "counts": payload.get("counts", {}),
                 "metadata": payload.get("metadata", {}),

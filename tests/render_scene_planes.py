@@ -61,7 +61,7 @@ def collect_bounds(planes):
 
 
 def collect_scene_bounds(data):
-    """Collect min/max XY bounds for planes and connection endpoints."""
+    """Collect min/max XY bounds for planes, connection endpoints, and gate nodes."""
     points = []
     for plane in data.get("planes", []):
         points.extend(plane_xy_points(plane))
@@ -72,12 +72,57 @@ def collect_scene_bounds(data):
             points.append([float(from_pos[0]), float(from_pos[1])])
         if to_pos:
             points.append([float(to_pos[0]), float(to_pos[1])])
+    for node in (data.get("navigation") or {}).get("nodes", []):
+        if node.get("type") != "gate":
+            continue
+        position = node.get("position")
+        if position and len(position) >= 2:
+            points.append([float(position[0]), float(position[1])])
     if not points:
         return 0.0, 0.0, 1.0, 1.0
     arr = np.array(points, dtype=np.float32)
     x_min, y_min = np.min(arr, axis=0)
     x_max, y_max = np.max(arr, axis=0)
     return float(x_min), float(y_min), float(x_max), float(y_max)
+
+
+def navigation_node_bgr(node):
+    """Return debug BGR color for a navigation node."""
+    if node.get("zone_type") == "paid":
+        return (40, 40, 230)
+    if node.get("zone_type") == "public":
+        return (230, 110, 20)
+    if node.get("type") == "gate":
+        return (220, 80, 170)
+    return (0, 210, 255)
+
+
+def draw_gate_navigation_nodes(canvas, data, bounds, image_size, margin):
+    """Draw gate navigation nodes in the scene preview image."""
+    nodes = [
+        node for node in (data.get("navigation") or {}).get("nodes", [])
+        if node.get("type") == "gate" and node.get("position")
+    ]
+    for node in nodes:
+        position = node.get("position")
+        if not position or len(position) < 2:
+            continue
+        point = project_points([[float(position[0]), float(position[1])]], bounds, image_size, margin)[0]
+        color = navigation_node_bgr(node)
+        stroke = (255, 255, 255) if node.get("zone_type") == "public" else (20, 20, 20)
+        cv2.circle(canvas, tuple(point), 8, stroke, -1, lineType=cv2.LINE_AA)
+        cv2.circle(canvas, tuple(point), 5, color, -1, lineType=cv2.LINE_AA)
+        label = "P" if node.get("zone_type") == "paid" else "U" if node.get("zone_type") == "public" else "G"
+        cv2.putText(
+            canvas,
+            label,
+            (int(point[0]) + 7, int(point[1]) - 7),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.42,
+            color,
+            1,
+            cv2.LINE_AA,
+        )
 
 
 def project_points(points, bounds, image_size, margin):
@@ -166,6 +211,8 @@ def draw_scene_planes(data, image_size=(1600, 1000), margin=40):
         if label:
             mid = np.mean(line, axis=0).astype(int)
             cv2.putText(canvas, str(label), (int(mid[0]) + 4, int(mid[1]) - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (20, 20, 20), 1, cv2.LINE_AA)
+
+    draw_gate_navigation_nodes(canvas, data, bounds, image_size, margin)
 
     return canvas
 

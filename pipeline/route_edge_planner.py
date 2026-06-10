@@ -117,13 +117,20 @@ def toilet_nodes(navigation_graph, toilet_gender):
     return candidates
 
 
-def route_pair_specs(platform_representatives, exits, include_platform_platform=True, include_same_platform=False):
+def route_pair_specs(platform_representatives, exits, include_platform_platform=True, include_same_platform=False, include_same_line_platform=False):
     """Build OD pair specs for platform-platform and platform-exit routes."""
     pairs = []
     if include_platform_platform:
         for index, start in enumerate(platform_representatives):
             for goal in platform_representatives[index + 1:]:
                 if not include_same_platform and start.get("platform_id") == goal.get("platform_id"):
+                    continue
+                if (
+                    not include_same_line_platform
+                    and start.get("line_id")
+                    and goal.get("line_id")
+                    and str(start.get("line_id")) == str(goal.get("line_id"))
+                ):
                     continue
                 pairs.append(
                     {
@@ -180,14 +187,20 @@ def edge_record(edge_key, from_node, to_node, station_name, route_edge):
             "node_id": from_node.get("node_id"),
             "node_key": from_node.get("node_key"),
             "node_key_str": from_node.get("node_key_str"),
+            "type": from_node.get("type"),
+            "gate_side": from_node.get("gate_side"),
             "position": from_node.get("position"),
         },
         "to": {
             "node_id": to_node.get("node_id"),
             "node_key": to_node.get("node_key"),
             "node_key_str": to_node.get("node_key_str"),
+            "type": to_node.get("type"),
+            "gate_side": to_node.get("gate_side"),
             "position": to_node.get("position"),
         },
+        "from_type": from_node.get("type"),
+        "to_type": to_node.get("type"),
         "route_edge_type": route_edge.get("type"),
         "connector_type": route_edge.get("connector_type"),
         "transport_mode": route_edge.get("transport_mode"),
@@ -266,12 +279,14 @@ def append_route_edges(edges, nodes_by_id, route, pair_type, station_name, direc
         to_node = nodes_by_id.get(route_edge.get("to"))
         if not from_node or not to_node:
             continue
-        edge_key = normalize_edge_key(from_node, to_node, directed=directed)
-        if edge_key not in edges:
-            record_from = from_node if edge_key[0] == (from_node.get("node_key_str") or from_node.get("node_id")) else to_node
-            record_to = to_node if record_from is from_node else from_node
-            edges[edge_key] = edge_record(edge_key, record_from, record_to, station_name, route_edge)
-        edge = edges[edge_key]
+        dedupe_key = normalize_edge_key(from_node, to_node, directed=directed)
+        if dedupe_key not in edges:
+            route_direction_key = (
+                str(from_node.get("node_key_str") or from_node.get("node_id")),
+                str(to_node.get("node_key_str") or to_node.get("node_id")),
+            )
+            edges[dedupe_key] = edge_record(route_direction_key, from_node, to_node, station_name, route_edge)
+        edge = edges[dedupe_key]
         edge["used_by_count"] += 1
         if pair_type not in edge["used_by_pair_types"]:
             edge["used_by_pair_types"].append(pair_type)
@@ -332,7 +347,7 @@ def collect_unique_route_edges(
                 directed=directed,
                 toilet_gender=gender,
             )
-    return sorted(edges.values(), key=lambda edge: edge["edge_id"]), failures, routes_ok, toilet_routes_ok, toilet_candidates_by_gender
+    return list(edges.values()), failures, routes_ok, toilet_routes_ok, toilet_candidates_by_gender
 
 
 def build_route_edge_export(
@@ -340,6 +355,7 @@ def build_route_edge_export(
     station_name=None,
     include_platform_platform=True,
     include_same_platform=False,
+    include_same_line_platform=False,
     include_unnumbered_exits=False,
     include_toilet_routes=False,
     toilet_genders=None,
@@ -356,6 +372,7 @@ def build_route_edge_export(
         exits,
         include_platform_platform=include_platform_platform,
         include_same_platform=include_same_platform,
+        include_same_line_platform=include_same_line_platform,
     )
     unique_edges, failures, routes_ok, toilet_routes_ok, toilet_candidates_by_gender = collect_unique_route_edges(
         navigation_graph,
@@ -372,8 +389,10 @@ def build_route_edge_export(
             "station_name": station,
             "platform_granularity": "car",
             "edge_deduplication": "directed" if directed else "undirected",
+            "edge_order": "first_route_occurrence",
             "include_toilet_routes": include_toilet_routes,
             "toilet_genders": toilet_genders or ["male", "female"],
+            "include_same_line_platform": include_same_line_platform,
             "route_options": route_options,
         },
         "counts": {
@@ -404,6 +423,7 @@ def parse_args():
     parser.add_argument("--station-name", help="Station name used in video titles")
     parser.add_argument("--directed", action="store_true", help="Keep A->B and B->A as separate video edges")
     parser.add_argument("--include-same-platform", action="store_true", help="Include car-to-car pairs on the same platform")
+    parser.add_argument("--include-same-line-platform", action="store_true", help="Include platform-platform pairs within the same line")
     parser.add_argument("--no-platform-platform", action="store_true", help="Skip platform-platform OD routes")
     parser.add_argument("--include-unnumbered-exits", action="store_true", help="Include exit nodes without exit_number")
     parser.add_argument("--include-toilet-routes", action="store_true", help="Include start-to-toilet-to-goal route variants")
@@ -425,6 +445,7 @@ def main():
         station_name=args.station_name,
         include_platform_platform=not args.no_platform_platform,
         include_same_platform=args.include_same_platform,
+        include_same_line_platform=args.include_same_line_platform,
         include_unnumbered_exits=args.include_unnumbered_exits,
         include_toilet_routes=args.include_toilet_routes,
         toilet_genders=[gender.strip() for gender in args.toilet_genders.split(",") if gender.strip()],
