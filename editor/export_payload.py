@@ -230,6 +230,12 @@ def build_final_polygons_payload(polygons_path, annotations, transform_metadata=
         "zones": annotations.get("manual_zones", []),
         "connections": connections,
         "platforms": annotations.get("manual_platforms", []),
+        "manual_assets": annotations.get("manual_assets", []),
+        "elevator_points": annotations.get("manual_elevator_points", []),
+        "layer_alignment_pairs": annotations.get("layer_alignment_pairs", []),
+        "local_shift_corrections": annotations.get("local_shift_corrections", []),
+        "polygon_axis_corrections": annotations.get("polygon_axis_corrections", {}),
+        "scale_calibration": annotations.get("scale_calibration"),
     }
 
 
@@ -311,6 +317,12 @@ def build_working_final_payload(polygons_path, working_polygons, annotations, tr
         "zones": annotations.get("manual_zones", []),
         "connections": connections,
         "platforms": annotations.get("manual_platforms", []),
+        "manual_assets": annotations.get("manual_assets", []),
+        "elevator_points": annotations.get("manual_elevator_points", []),
+        "layer_alignment_pairs": annotations.get("layer_alignment_pairs", []),
+        "local_shift_corrections": annotations.get("local_shift_corrections", []),
+        "polygon_axis_corrections": annotations.get("polygon_axis_corrections", {}),
+        "scale_calibration": annotations.get("scale_calibration"),
     }
 
 

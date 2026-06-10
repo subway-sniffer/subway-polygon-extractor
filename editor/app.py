@@ -1197,6 +1197,10 @@ def create_app(args):
             return jsonify({"error": f"final export file does not exist: {store.final_output_candidates()[0]}"}), 404
         payload = load_json(final_path)
         payload["source"] = str(final_path)
+        annotations_path = store.active["annotations_path"]
+        if annotations_path.exists():
+            payload["editor_annotations"] = load_annotations(annotations_path)
+            payload["editor_annotations_source"] = str(annotations_path)
         return jsonify(payload)
 
     @app.route("/api/export/planes", methods=["POST"])

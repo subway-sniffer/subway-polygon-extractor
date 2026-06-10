@@ -8788,6 +8788,7 @@ function togglePreviewFinal() {
 
 function applyExportedFinalPayload(data, sourceLabel = null) {
   const polygons = data.polygons || [];
+  const editorAnnotations = data.editor_annotations || {};
   state.polygons = polygons;
   state.icons = data.icons || state.icons || [];
   state.manualPolygons = [];
@@ -8795,25 +8796,25 @@ function applyExportedFinalPayload(data, sourceLabel = null) {
   state.exportedFinalPolygons = null;
   state.loadedFinalWorkingSet = true;
   state.annotations = {
-    polygon_layers: {},
-    polygon_z_offsets: state.annotations.polygon_z_offsets || {},
-    polygon_z_values: state.annotations.polygon_z_values || {},
+    polygon_layers: editorAnnotations.polygon_layers || {},
+    polygon_z_offsets: data.polygon_z_offsets || editorAnnotations.polygon_z_offsets || {},
+    polygon_z_values: data.polygon_z_values || editorAnnotations.polygon_z_values || {},
     hidden_polygon_ids: [],
     manual_polygons: [],
     manual_edits: [],
     manual_merges: [],
-    manual_connections: data.connections || [],
-    manual_walls: data.walls || [],
-    manual_zones: data.zones || state.annotations.manual_zones || [],
-    manual_assets: state.annotations.manual_assets || [],
-    manual_platforms: state.annotations.manual_platforms || [],
-    manual_elevator_points: state.annotations.manual_elevator_points || [],
-    layer_alignment_pairs: state.annotations.layer_alignment_pairs || [],
-    local_shift_corrections: state.annotations.local_shift_corrections || [],
-    polygon_axis_corrections: state.annotations.polygon_axis_corrections || {},
-    scale_calibration: state.annotations.scale_calibration || null,
-    scene_height: state.annotations.scene_height || defaultSceneHeight(),
-    station_metadata: data.station_metadata || state.annotations.station_metadata || {},
+    manual_connections: data.connections || editorAnnotations.manual_connections || [],
+    manual_walls: data.walls || editorAnnotations.manual_walls || [],
+    manual_zones: data.zones || editorAnnotations.manual_zones || [],
+    manual_assets: data.manual_assets || editorAnnotations.manual_assets || [],
+    manual_platforms: data.platforms || editorAnnotations.manual_platforms || [],
+    manual_elevator_points: data.elevator_points || editorAnnotations.manual_elevator_points || [],
+    layer_alignment_pairs: data.layer_alignment_pairs || editorAnnotations.layer_alignment_pairs || [],
+    local_shift_corrections: data.local_shift_corrections || editorAnnotations.local_shift_corrections || [],
+    polygon_axis_corrections: data.polygon_axis_corrections || editorAnnotations.polygon_axis_corrections || {},
+    scale_calibration: data.scale_calibration || editorAnnotations.scale_calibration || null,
+    scene_height: data.scene_height || editorAnnotations.scene_height || state.annotations.scene_height || defaultSceneHeight(),
+    station_metadata: data.station_metadata || editorAnnotations.station_metadata || state.annotations.station_metadata || {},
   };
   populateStationInputs(state.annotations.station_metadata);
   populateSceneHeightInputs(state.annotations.scene_height);
@@ -8822,6 +8823,8 @@ function applyExportedFinalPayload(data, sourceLabel = null) {
   state.selectedIds = [];
   state.selectedStairId = null;
   state.selectedStairIds = [];
+  state.selectedSubwayId = null;
+  state.selectedSubwaySegmentIndex = null;
   resetMerge();
   resetAutoMerge();
   resetStraighten();
@@ -8848,7 +8851,9 @@ function applyExportedFinalPayload(data, sourceLabel = null) {
     source: sourceLabel || data.source,
     working_set: true,
     polygon_count: state.polygons.length,
-    wall_count: (data.walls || []).length,
+    wall_count: (state.annotations.manual_walls || []).length,
+    manual_asset_count: (state.annotations.manual_assets || []).length,
+    editor_annotations_source: data.editor_annotations_source || null,
   }, null, 2);
   draw();
 }
