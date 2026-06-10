@@ -305,6 +305,9 @@ def list_nodes(navigation_graph):
                 "toilet_gender": node.get("toilet_gender"),
                 "label": node.get("label") or node.get("station_name") or node.get("connector_id") or node.get("asset_id"),
                 "position": node.get("position"),
+                "source_position": node.get("source_position"),
+                "point_source": node.get("point_source"),
+                "center_source": node.get("center_source"),
             }
         )
     return rows

@@ -2296,12 +2296,17 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         to_point = connection.get("to_point_source")
         if not from_point or not to_point:
             continue
+        is_exit_connection = connection.get("type") in {"exit_stair", "exit_escalator"}
         from_layer = connection.get("from_layer")
         to_layer = connection.get("to_layer")
+        from_polygon_id = connection.get("from_polygon_id")
+        to_polygon_id = connection.get("to_polygon_id")
+        to_xy_layer = from_layer if is_exit_connection else to_layer
+        to_xy_polygon_id = from_polygon_id if is_exit_connection else to_polygon_id
         from_xy = scene_xy_for_polygon_point(
             from_point,
             from_layer,
-            polygon_id=connection.get("from_polygon_id"),
+            polygon_id=from_polygon_id,
             alignment_transforms=alignment_transforms,
             local_shift_offsets=local_shift_offsets,
             axis_corrections=axis_corrections,
@@ -2313,8 +2318,8 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         )
         to_xy = scene_xy_for_polygon_point(
             to_point,
-            to_layer,
-            polygon_id=connection.get("to_polygon_id"),
+            to_xy_layer,
+            polygon_id=to_xy_polygon_id,
             alignment_transforms=alignment_transforms,
             local_shift_offsets=local_shift_offsets,
             axis_corrections=axis_corrections,
@@ -2325,16 +2330,16 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
             invert_y=invert_y,
         )
         from_transform = alignment_transforms.get(from_layer)
-        to_transform = alignment_transforms.get(to_layer)
-        from_z = polygon_id_z_value(connection.get("from_polygon_id"), from_layer, annotations=annotations, layer_z=layer_z, default_z=default_z, floor_height=floor_height)
-        to_z = polygon_id_z_value(connection.get("to_polygon_id"), to_layer, annotations=annotations, layer_z=layer_z, default_z=default_z, floor_height=floor_height)
-        if connection.get("type") in {"exit_stair", "exit_escalator"}:
+        to_transform = alignment_transforms.get(to_xy_layer)
+        from_z = polygon_id_z_value(from_polygon_id, from_layer, annotations=annotations, layer_z=layer_z, default_z=default_z, floor_height=floor_height)
+        to_z = polygon_id_z_value(to_polygon_id, to_layer, annotations=annotations, layer_z=layer_z, default_z=default_z, floor_height=floor_height)
+        if is_exit_connection:
             to_z = from_z + float(connection.get("exit_rise", floor_height))
         start_line = scene_line_from_source_points(
             connection.get("from_points_source"),
             from_layer,
             from_z,
-            polygon_id=connection.get("from_polygon_id"),
+            polygon_id=from_polygon_id,
             alignment_transforms=alignment_transforms,
             local_shift_offsets=local_shift_offsets,
             axis_corrections=axis_corrections,
@@ -2346,9 +2351,9 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         )
         end_line = scene_line_from_source_points(
             connection.get("to_points_source"),
-            to_layer,
+            to_xy_layer,
             to_z,
-            polygon_id=connection.get("to_polygon_id"),
+            polygon_id=to_xy_polygon_id,
             alignment_transforms=alignment_transforms,
             local_shift_offsets=local_shift_offsets,
             axis_corrections=axis_corrections,
@@ -2379,7 +2384,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
                 "start_line": start_line,
                 "end_line": end_line,
                 "from": {
-                    "polygon_id": connection.get("from_polygon_id"),
+                    "polygon_id": from_polygon_id,
                     "layer": from_layer,
                     "point_source": from_point,
                     "line_source": connection.get("from_points_source"),
@@ -2389,11 +2394,13 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
                         from_position[2],
                     ],
                     "alignment_transform": xy_transform_to_list(from_transform) if from_transform is not None else None,
-                    "local_shift_offset": [float(value) for value in polygon_offset(local_shift_offsets, connection.get("from_polygon_id"))] if polygon_offset(local_shift_offsets, connection.get("from_polygon_id")) else None,
+                    "local_shift_offset": [float(value) for value in polygon_offset(local_shift_offsets, from_polygon_id)] if polygon_offset(local_shift_offsets, from_polygon_id) else None,
                 },
                 "to": {
-                    "polygon_id": connection.get("to_polygon_id"),
+                    "polygon_id": to_polygon_id,
                     "layer": to_layer,
+                    "xy_reference_polygon_id": to_xy_polygon_id,
+                    "xy_reference_layer": to_xy_layer,
                     "point_source": to_point,
                     "line_source": connection.get("to_points_source"),
                     "position": [
@@ -2402,7 +2409,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
                         to_position[2],
                     ],
                     "alignment_transform": xy_transform_to_list(to_transform) if to_transform is not None else None,
-                    "local_shift_offset": [float(value) for value in polygon_offset(local_shift_offsets, connection.get("to_polygon_id"))] if polygon_offset(local_shift_offsets, connection.get("to_polygon_id")) else None,
+                    "local_shift_offset": [float(value) for value in polygon_offset(local_shift_offsets, to_xy_polygon_id)] if polygon_offset(local_shift_offsets, to_xy_polygon_id) else None,
                 },
             }
         )

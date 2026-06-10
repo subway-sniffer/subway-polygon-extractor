@@ -24,6 +24,13 @@
         <input id="uploadImageInput" type="file" accept="image/*">
         <button id="startCropBtn">Start Crop</button>
         <button id="resetCropBtn">Cancel Crop</button>
+        <label>
+          Marker mode
+          <select id="markerModeInput">
+            <option value="3point">3-point auto</option>
+            <option value="4point">4-point manual</option>
+          </select>
+        </label>
         <button id="startMarkerBtn">Start Manual Marker (M)</button>
         <button id="undoMarkerBtn">Undo Marker Point</button>
         <button id="saveMarkerBtn">Save Marker</button>
@@ -155,6 +162,10 @@
         <label class="row">
           <input id="showPlatformsToggle" type="checkbox">
           platform points
+        </label>
+        <label class="row">
+          <input id="showNavigationNodesToggle" type="checkbox">
+          navigation nodes
         </label>
         <button id="toggleZonesBtn">Hide Zones</button>
         <label class="row">
@@ -405,6 +416,8 @@
           <input id="exitRiseInput" type="number" value="5" step="0.5">
         </label>
         <button id="startStairBtn">Start Connection (U)</button>
+        <button id="pickStairPolygonBtn">Pick Next Point Polygon</button>
+        <button id="useSelectedStairPolygonBtn">Use Selected Polygon</button>
         <button id="setConnectionTypeBtn">Set Selected Type</button>
         <button id="deleteStairBtn">Delete Selected Connection</button>
         <button id="deleteAllConnectionsBtn">Delete All Connections</button>

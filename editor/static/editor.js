@@ -53,6 +53,7 @@ const state = {
   showMarkers: true,
   showZones: true,
   showPlatforms: false,
+  showNavigationNodes: false,
   showHidden: false,
   previewFinal: false,
   exportedFinalPolygons: null,
@@ -60,6 +61,7 @@ const state = {
   tool: "select",
   marker: {
     active: false,
+    mode: "3point",
     points: [],
     autoPoint: null,
   },
@@ -186,6 +188,8 @@ const state = {
     toLayer: null,
     toPolygonId: null,
     hoverVertex: null,
+    nextPolygonId: null,
+    pickingPolygon: false,
   },
   wall: {
     active: false,
@@ -268,6 +272,7 @@ const state = {
     result: null,
     sourcePoints: [],
   },
+  navigationNodes: [],
 };
 
 const canvas = document.getElementById("editorCanvas");
@@ -281,6 +286,7 @@ const layerInput = document.getElementById("layerInput");
 const zOverrideInput = document.getElementById("zOverrideInput");
 const showIconsToggle = document.getElementById("showIconsToggle");
 const showCorrectionsToggle = document.getElementById("showCorrectionsToggle");
+const markerModeInput = document.getElementById("markerModeInput");
 const saveResult = document.getElementById("saveResult");
 const mergeStatus = document.getElementById("mergeStatus");
 const autoMergeStatus = document.getElementById("autoMergeStatus");
@@ -313,6 +319,7 @@ const zoneStatus = document.getElementById("zoneStatus");
 const zoneTypeInput = document.getElementById("zoneTypeInput");
 const showZonesToggle = document.getElementById("showZonesToggle");
 const showPlatformsToggle = document.getElementById("showPlatformsToggle");
+const showNavigationNodesToggle = document.getElementById("showNavigationNodesToggle");
 const toggleZonesBtn = document.getElementById("toggleZonesBtn");
 const layerHeightStatus = document.getElementById("layerHeightStatus");
 const floorHeightInput = document.getElementById("floorHeightInput");
@@ -802,6 +809,11 @@ function drawStairConnections() {
       ctx.stroke();
       drawCanvasLabel(state.stair.hoverVertex.point, "snap", "#ffffff", 10, -10);
     }
+    const fixedPoly = stairNextPointPolygon();
+    if (fixedPoly?.points_source?.length) {
+      drawPath(fixedPoly.points_source, "rgba(255, 132, 0, 0.95)", 4);
+      drawCanvasLabel(averagePoint(fixedPoly.points_source), `next ${fixedPoly.polygon_id}`, "#ff8400", 10, -10);
+    }
   }
   ctx.restore();
 }
@@ -1157,6 +1169,54 @@ function drawRouteOverlay() {
       "#ffd600",
       10,
       -14,
+    );
+  });
+  ctx.restore();
+}
+
+function navigationNodeSourcePoint(node) {
+  const point = node?.source_position || node?.point_source || node?.center_source;
+  if (!Array.isArray(point) || point.length < 2) return null;
+  const x = Number(point[0]);
+  const y = Number(point[1]);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+  return [x, y];
+}
+
+function navigationNodeColor(node) {
+  const type = node?.type || node?.node_type;
+  if (type === "platform") return "#00b7ff";
+  if (type === "exit") return "#ff4d5f";
+  if (type === "gate") return "#b26cff";
+  if (type === "stair" || type === "escalator") return "#ff9f1c";
+  if (type === "elevator") return "#00d084";
+  if (node?.poi_type === "toilet") return "#35d0ba";
+  return "#ffd600";
+}
+
+function drawNavigationNodes() {
+  if (!state.showNavigationNodes) return;
+  const nodes = state.navigationNodes || [];
+  if (!nodes.length) return;
+  ctx.save();
+  nodes.forEach((node) => {
+    const point = navigationNodeSourcePoint(node);
+    if (!point) return;
+    const screen = worldToScreen(point);
+    const color = navigationNodeColor(node);
+    ctx.beginPath();
+    ctx.arc(screen.x, screen.y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.strokeStyle = "#111111";
+    ctx.lineWidth = 1.5;
+    ctx.fill();
+    ctx.stroke();
+    drawCanvasLabel(
+      point,
+      `${node.node_key_str || node.node_key || node.node_id || ""} ${node.type || node.node_type || ""}`.trim(),
+      color,
+      7,
+      -9,
     );
   });
   ctx.restore();
@@ -2033,6 +2093,7 @@ function draw() {
   drawManualAssets();
   drawPlatforms();
   drawElevatorPoints();
+  drawNavigationNodes();
   drawRouteOverlay();
   drawManualMarkerPreview();
   drawCropPreview();
@@ -2597,8 +2658,10 @@ function loadRouteNodesFromUi() {
     .then((response) => response.json().then((data) => ({ok: response.ok, data})))
     .then(({ok, data}) => {
       if (!ok) throw new Error(data.error || "node loading failed");
+      state.navigationNodes = data.nodes || [];
       populateRouteNodeSelects(data.nodes || []);
       updateRouteStatus(`Loaded ${data.node_count || 0} nodes.`);
+      draw();
     })
     .catch((error) => {
       updateRouteStatus(String(error));
@@ -4483,6 +4546,13 @@ function midpoint(a, b) {
   ];
 }
 
+function averagePoint(points) {
+  const valid = (points || []).filter((point) => point && point.length >= 2);
+  if (!valid.length) return [0, 0];
+  const sum = valid.reduce((acc, point) => [acc[0] + Number(point[0]), acc[1] + Number(point[1])], [0, 0]);
+  return [sum[0] / valid.length, sum[1] / valid.length];
+}
+
 function perpendicularFacingFromLine(anchorPoint, lineStart, lineEnd, length = 50) {
   const dx = Number(lineEnd[0]) - Number(lineStart[0]);
   const dy = Number(lineEnd[1]) - Number(lineStart[1]);
@@ -4593,6 +4663,8 @@ function updateStairStatus(message = null) {
     `end line: ${toCount ? "auto" : "-"}`,
     `from: ${state.stair.fromLayer || "-"} (${state.stair.fromPolygonId || "-"})`,
     `to: ${state.stair.toLayer || "-"} (${state.stair.toPolygonId || "-"})`,
+    state.stair.nextPolygonId ? `next point polygon: ${state.stair.nextPolygonId}` : null,
+    state.stair.pickingPolygon ? "pick mode: click polygon for next point" : null,
     isExitConnectionType(currentType) ? `exit: ${state.stair.exitNumber || "auto"}` : null,
     isExitConnectionType(currentType) ? `length px: ${state.stair.exitLength}` : null,
     `label: ${state.stair.label || "auto"}`,
@@ -4623,6 +4695,8 @@ function startStairConnection() {
     toLayer: null,
     toPolygonId: null,
     hoverVertex: null,
+    nextPolygonId: null,
+    pickingPolygon: false,
   };
   updateStairStatus();
   draw();
@@ -4646,20 +4720,69 @@ function resetStairConnection() {
     toLayer: null,
     toPolygonId: null,
     hoverVertex: null,
+    nextPolygonId: null,
+    pickingPolygon: false,
   };
   updateStairStatus();
   draw();
 }
 
+function stairNextPointPolygon() {
+  if (!state.stair.nextPolygonId) return null;
+  return allPolygons().find((poly) => poly.polygon_id === state.stair.nextPolygonId) || null;
+}
+
+function startStairPolygonPick() {
+  if (!state.stair.active) {
+    updateStairStatus("Start a connection first.");
+    return;
+  }
+  state.stair.pickingPolygon = true;
+  updateStairStatus("Click polygon to use for the next connection point.");
+  draw();
+}
+
+function setStairNextPolygon(poly) {
+  if (!state.stair.active) {
+    updateStairStatus("Start a connection first.");
+    return;
+  }
+  if (!poly) {
+    updateStairStatus("Select or click a polygon first.");
+    return;
+  }
+  state.stair.nextPolygonId = poly.polygon_id;
+  state.stair.pickingPolygon = false;
+  updateStairStatus(`Next point polygon fixed: ${poly.polygon_id}`);
+  draw();
+}
+
+function useSelectedStairPolygon() {
+  setStairNextPolygon(selectedPolygon());
+}
+
+function pickStairPolygonAt(world) {
+  const poly = findPolygonAt(world);
+  setStairNextPolygon(poly);
+}
+
 function addStairPoint(world, poly) {
   if (!state.stair.active) return;
   const connectionType = state.stair.connectionType || selectedConnectionType();
-  const snap = nearestConnectionVertex(world, poly, 14);
+  const fixedPoly = stairNextPointPolygon();
+  const targetPoly = fixedPoly || poly;
+  const snap = nearestConnectionVertex(world, targetPoly, 14, Boolean(fixedPoly));
   if (snap) {
     poly = snap.poly;
+  } else if (fixedPoly) {
+    poly = fixedPoly;
   }
   const rawPoint = snap ? snap.point : [world.x, world.y];
   const point = [Number(rawPoint[0].toFixed(2)), Number(rawPoint[1].toFixed(2))];
+  const clearNextPolygon = () => {
+    state.stair.nextPolygonId = null;
+    state.stair.pickingPolygon = false;
+  };
   state.stair.fromPoints = state.stair.fromPoints || [];
   state.stair.toPoints = state.stair.toPoints || [];
   if (state.stair.fromPoints.length < 2) {
@@ -4678,6 +4801,7 @@ function addStairPoint(world, poly) {
       : point;
     state.stair.fromLayer = layer;
     state.stair.fromPolygonId = poly.polygon_id;
+    clearNextPolygon();
     updateStairStatus();
     draw();
     return;
@@ -4750,6 +4874,7 @@ function addStairPoint(world, poly) {
   }
   state.annotations.manual_connections = state.annotations.manual_connections || [];
   state.annotations.manual_connections.push(record);
+  clearNextPolygon();
   saveAnnotations().then((result) => {
     saveResult.textContent = JSON.stringify(result, null, 2);
     resetStairConnection();
@@ -7057,8 +7182,12 @@ function nearestVertexForPolygon(poly, world, maxScreenDistance = 10) {
   return best;
 }
 
-function nearestConnectionVertex(world, preferredPoly = null, maxScreenDistance = 12) {
-  const candidates = preferredPoly ? [preferredPoly, ...allPolygons().filter((poly) => poly.polygon_id !== preferredPoly.polygon_id)] : allPolygons();
+function nearestConnectionVertex(world, preferredPoly = null, maxScreenDistance = 12, strictPreferred = false) {
+  const candidates = preferredPoly
+    ? strictPreferred
+      ? [preferredPoly]
+      : [preferredPoly, ...allPolygons().filter((poly) => poly.polygon_id !== preferredPoly.polygon_id)]
+    : allPolygons();
   const mouseScreen = worldToScreen([world.x, world.y]);
   let best = null;
   for (const poly of candidates) {
@@ -7880,8 +8009,10 @@ function resetProjectWorkingState(message) {
     scene_height: defaultSceneHeight(),
     station_metadata: {},
   };
+  state.marker.mode = markerModeInput?.value === "4point" ? "4point" : "3point";
   state.marker.points = [];
   state.marker.autoPoint = null;
+  state.navigationNodes = [];
   state.regionPick = {active: false, drawing: false, strokes: [], currentStroke: [], brushSize: selectedRegionBrushSize(), sourcePolygonId: null};
   state.wall = {active: false, label: "", height: selectedWallHeight(), points: [], layer: null, polygonId: null, hoverSnap: null};
   state.zone = {active: false, zoneType: selectedZoneType(), points: [], polygonId: null, layer: null};
@@ -8058,13 +8189,18 @@ function addClickListener(id, handler) {
 }
 
 function startManualMarker() {
+  const mode = markerModeInput?.value === "4point" ? "4point" : "3point";
   state.tool = "marker";
   state.marker = {
     active: true,
+    mode,
     points: [],
     autoPoint: null,
   };
-  pipelineStatus.textContent = "manual marker: click 3 adjacent transform points";
+  pipelineStatus.textContent =
+    mode === "4point"
+      ? "manual marker: click 4 transform corner points"
+      : "manual marker: click 3 adjacent transform points";
   draw();
 }
 
@@ -8078,18 +8214,26 @@ function computeParallelogramMarkerPoint(points) {
 }
 
 function manualMarkerPointsForSave() {
+  if (state.marker.mode === "4point") return [...state.marker.points];
   return state.marker.autoPoint ? [...state.marker.points, state.marker.autoPoint] : [...state.marker.points];
+}
+
+function manualMarkerRequiredPointCount() {
+  return state.marker.mode === "4point" ? 4 : 3;
 }
 
 function addManualMarkerPoint(world) {
   if (!state.marker.active) return;
-  if (state.marker.points.length >= 3) return;
+  const requiredCount = manualMarkerRequiredPointCount();
+  if (state.marker.points.length >= requiredCount) return;
   state.marker.points.push([Number(world.x.toFixed(2)), Number(world.y.toFixed(2))]);
   state.marker.autoPoint = null;
-  pipelineStatus.textContent = `manual marker: ${state.marker.points.length}/3`;
-  if (state.marker.points.length === 3) {
+  pipelineStatus.textContent = `manual marker: ${state.marker.points.length}/${requiredCount}`;
+  if (state.marker.mode !== "4point" && state.marker.points.length === 3) {
     state.marker.autoPoint = computeParallelogramMarkerPoint(state.marker.points);
     pipelineStatus.textContent = "manual marker ready: auto point added, Save Marker";
+  } else if (state.marker.mode === "4point" && state.marker.points.length === 4) {
+    pipelineStatus.textContent = "manual marker ready: 4 points selected, Save Marker";
   }
   draw();
 }
@@ -8098,13 +8242,17 @@ function undoManualMarkerPoint() {
   if (state.marker.points.length > 0) {
     state.marker.autoPoint = null;
     state.marker.points.pop();
-    pipelineStatus.textContent = `manual marker: ${state.marker.points.length}/3`;
+    pipelineStatus.textContent = `manual marker: ${state.marker.points.length}/${manualMarkerRequiredPointCount()}`;
     draw();
   }
 }
 
 function saveManualMarker() {
   const points = manualMarkerPointsForSave();
+  if (points.length !== 4) {
+    pipelineStatus.textContent = `manual marker needs 4 points before save: current ${points.length}/4`;
+    return;
+  }
   fetch("/api/marker/manual", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
@@ -8648,7 +8796,8 @@ canvas.addEventListener("mousemove", (event) => {
     return;
   }
   if (state.tool === "stair" && state.stair.active) {
-    const hover = nearestConnectionVertex(world, findPolygonAt(world), 14);
+    const fixedPoly = stairNextPointPolygon();
+    const hover = nearestConnectionVertex(world, fixedPoly || findPolygonAt(world), 14, Boolean(fixedPoly));
     const nextHover = hover ? {
       polygonId: hover.polygonId,
       holeIndex: hover.holeIndex,
@@ -8838,6 +8987,10 @@ canvas.addEventListener("click", (event) => {
     return;
   }
   if (state.tool === "stair") {
+    if (state.stair.pickingPolygon) {
+      pickStairPolygonAt(world);
+      return;
+    }
     addStairPoint(world, poly);
     return;
   }
@@ -8916,6 +9069,16 @@ showZonesToggle.addEventListener("change", (event) => {
 if (showPlatformsToggle) {
   showPlatformsToggle.addEventListener("change", (event) => {
     state.showPlatforms = event.target.checked;
+    draw();
+  });
+}
+if (showNavigationNodesToggle) {
+  showNavigationNodesToggle.addEventListener("change", (event) => {
+    state.showNavigationNodes = event.target.checked;
+    if (state.showNavigationNodes && !(state.navigationNodes || []).length) {
+      loadRouteNodesFromUi();
+      return;
+    }
     draw();
   });
 }
@@ -9024,6 +9187,8 @@ document.getElementById("deleteAllLocalAxisBtn").addEventListener("click", delet
 document.getElementById("undoLocalAxisBtn").addEventListener("click", undoLastLocalAxisCorrection);
 document.getElementById("resetLocalAxisBtn").addEventListener("click", resetLocalAxisCorrection);
 document.getElementById("startStairBtn").addEventListener("click", startStairConnection);
+document.getElementById("pickStairPolygonBtn").addEventListener("click", startStairPolygonPick);
+document.getElementById("useSelectedStairPolygonBtn").addEventListener("click", useSelectedStairPolygon);
 document.getElementById("setConnectionTypeBtn").addEventListener("click", setSelectedStairConnectionType);
 document.getElementById("deleteStairBtn").addEventListener("click", deleteSelectedStairConnection);
 document.getElementById("deleteAllConnectionsBtn").addEventListener("click", deleteAllStairConnections);
@@ -9111,6 +9276,18 @@ document.getElementById("resetCropBtn").addEventListener("click", resetCrop);
 document.getElementById("startMarkerBtn").addEventListener("click", startManualMarker);
 document.getElementById("undoMarkerBtn").addEventListener("click", undoManualMarkerPoint);
 document.getElementById("saveMarkerBtn").addEventListener("click", saveManualMarker);
+markerModeInput?.addEventListener("change", () => {
+  state.marker.mode = markerModeInput.value === "4point" ? "4point" : "3point";
+  state.marker.points = [];
+  state.marker.autoPoint = null;
+  if (state.tool === "marker") {
+    pipelineStatus.textContent =
+      state.marker.mode === "4point"
+        ? "manual marker: click 4 transform corner points"
+        : "manual marker: click 3 adjacent transform points";
+  }
+  draw();
+});
 document.getElementById("startRegionPickBtn").addEventListener("click", startRegionPick);
 document.getElementById("applyRegionPickBtn").addEventListener("click", applyRegionPick);
 document.getElementById("undoRegionStrokeBtn").addEventListener("click", undoRegionStroke);
