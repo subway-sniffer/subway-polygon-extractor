@@ -669,6 +669,7 @@ def create_app(args):
                 "image": str(project_data["image_path"]),
                 "output_dir": str(project_data["output_dir"]),
                 "polygons_file": str(project_data["polygons_path"]),
+                "annotations_file": str(project_data["annotations_path"]),
                 "marker_config_file": str(project_data["marker_config_path"]),
             }
         )
@@ -703,6 +704,7 @@ def create_app(args):
                 "image": str(project_data["image_path"]),
                 "output_dir": str(project_data["output_dir"]),
                 "polygons_file": str(project_data["polygons_path"]),
+                "annotations_file": str(project_data["annotations_path"]),
                 "marker_config_file": str(project_data["marker_config_path"]),
             }
         )
@@ -778,6 +780,7 @@ def create_app(args):
                 "image": str(project_data["image_path"]),
                 "output_dir": str(project_data["output_dir"]),
                 "polygons_file": str(project_data["polygons_path"]),
+                "annotations_file": str(project_data["annotations_path"]),
                 "marker_config_file": str(project_data["marker_config_path"]),
             }
         )
@@ -810,6 +813,7 @@ def create_app(args):
                 "image": str(project_data["image_path"]),
                 "output_dir": str(project_data["output_dir"]),
                 "polygons_file": str(project_data["polygons_path"]),
+                "annotations_file": str(project_data["annotations_path"]),
                 "marker_config_file": str(project_data["marker_config_path"]),
             }
         )
@@ -963,6 +967,29 @@ def create_app(args):
     def post_annotations():
         """Save manual annotations."""
         data = request.get_json(force=True)
+        project_image = data.pop("__project_image_path", None)
+        annotations_path = data.pop("__annotations_path", None)
+        if project_image and Path(project_image).resolve() != store.active["image_path"].resolve():
+            return jsonify(
+                {
+                    "error": "stale annotations save ignored: active image changed",
+                    "request_image": str(Path(project_image).resolve()),
+                    "active_image": str(store.active["image_path"]),
+                }
+            ), 409
+        if annotations_path and Path(annotations_path).resolve() != store.active["annotations_path"].resolve():
+            return jsonify(
+                {
+                    "error": "stale annotations save ignored: active annotations path changed",
+                    "request_annotations": str(Path(annotations_path).resolve()),
+                    "active_annotations": str(store.active["annotations_path"]),
+                }
+            ), 409
+        data["editor_project"] = {
+            "image_path": str(store.active["image_path"]),
+            "annotations_path": str(store.active["annotations_path"]),
+            "output_dir": str(store.active["output_dir"]),
+        }
         save_json(data, store.active["annotations_path"])
         return jsonify({"saved": True, "output": str(store.active["annotations_path"])})
 

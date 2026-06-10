@@ -5,6 +5,8 @@ const state = {
   connections: [],
   icons: [],
   stationOptions: [],
+  projectImagePath: null,
+  annotationsPath: null,
   annotations: {
     polygon_layers: {},
     polygon_z_offsets: {},
@@ -2747,10 +2749,15 @@ function saveAnnotations() {
   syncLayerAnnotationsFromPolygons();
   state.annotations.station_metadata = stationMetadataFromInputs();
   state.annotations.scene_height = sceneHeightFromInputs();
+  const payload = {
+    ...state.annotations,
+    __project_image_path: state.projectImagePath,
+    __annotations_path: state.annotationsPath,
+  };
   return fetch("/api/annotations", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
-    body: JSON.stringify(state.annotations),
+    body: JSON.stringify(payload),
   }).then((response) => response.json());
 }
 
@@ -8180,6 +8187,8 @@ function loadProject() {
     .then((response) => response.json())
     .then((project) => {
       state.loadedFinalWorkingSet = false;
+      state.projectImagePath = project.image?.path || null;
+      state.annotationsPath = project.output_file || null;
       state.polygons = project.polygon_data.polygons || [];
       state.connections = project.connections?.connections || [];
       state.icons = project.icons?.icons || [];
@@ -8239,6 +8248,8 @@ function refreshImages() {
 function resetProjectWorkingState(message) {
   state.polygons = [];
   state.manualPolygons = [];
+  state.projectImagePath = null;
+  state.annotationsPath = null;
   state.annotations = {
     polygon_layers: {},
     polygon_z_offsets: {},
@@ -8297,6 +8308,8 @@ function selectImagePath(imagePath, messagePrefix = "selected") {
     .then(({ok, data}) => {
       if (!ok) throw new Error(data.error || "failed to select image");
       resetProjectWorkingState(`${messagePrefix}: ${data.image}\noutput: ${data.output_dir}`);
+      state.projectImagePath = data.image || null;
+      state.annotationsPath = data.annotations_file || null;
       loadProject();
       refreshImages();
       return data;
@@ -8330,6 +8343,8 @@ function uploadImageFile() {
       if (!ok) throw new Error(data.error || "failed to upload image");
       uploadImageInput.value = "";
       resetProjectWorkingState(`uploaded: ${data.image}\noutput: ${data.output_dir}`);
+      state.projectImagePath = data.image || null;
+      state.annotationsPath = data.annotations_file || null;
       loadProject();
       refreshImages();
     })
