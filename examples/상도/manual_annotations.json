@@ -1,0 +1,2247 @@
+{
+  "polygon_layers": {
+    "added_002": "B3",
+    "added_003": "B1",
+    "added_004": "B1",
+    "added_008": "B1",
+    "added_009": "B1",
+    "added_011": "B1",
+    "added_015": "B2",
+    "edited_002": "B1",
+    "edited_003": "B3",
+    "edited_004": "B1",
+    "edited_005": "B1",
+    "edited_028": "B2",
+    "edited_029": "B3",
+    "edited_073": "B2",
+    "edited_075": "B2",
+    "edited_080": "B2",
+    "edited_084": "B2",
+    "edited_087": "B2",
+    "edited_089": "B1",
+    "edited_101": "B1",
+    "edited_105": "B1",
+    "edited_129": "B1",
+    "edited_145": "B1"
+  },
+  "polygon_z_offsets": {
+    "added_001": 2,
+    "added_002": -2,
+    "added_004": 3,
+    "added_007": 1,
+    "added_008": 6,
+    "added_009": 2,
+    "added_011": 6,
+    "added_015": -2,
+    "edited_002": 3,
+    "edited_003": 0,
+    "edited_004": 3,
+    "edited_005": 3,
+    "edited_068": -3,
+    "edited_075": -2,
+    "edited_080": -2,
+    "edited_084": -2,
+    "edited_089": 7,
+    "edited_101": 9,
+    "edited_105": 9,
+    "edited_117": 2,
+    "edited_127": 2,
+    "edited_145": -3
+  },
+  "polygon_z_values": {},
+  "hidden_polygon_ids": [],
+  "manual_polygons": [],
+  "manual_edits": [],
+  "manual_merges": [],
+  "manual_connections": [
+    {
+      "asset_type": "stair",
+      "bidirectional": true,
+      "connection_id": "stair_001",
+      "connection_schema": "start_line_end_center_v3",
+      "from_layer": "B1",
+      "from_point_source": [
+        2605.96,
+        569.665
+      ],
+      "from_point_transformed": [
+        1394.1510009765625,
+        364.9448547363281
+      ],
+      "from_points_source": [
+        [
+          2654.03,
+          564.09
+        ],
+        [
+          2557.89,
+          575.24
+        ]
+      ],
+      "from_points_transformed": [
+        [
+          1424.1297607421875,
+          365.2579040527344
+        ],
+        [
+          1364.3017578125,
+          364.6331787109375
+        ]
+      ],
+      "from_polygon_id": "added_004",
+      "label": "stair_001",
+      "to_layer": "B1",
+      "to_point_mode": "center_generated_parallel_line",
+      "to_point_source": [
+        2524.48,
+        626.94
+      ],
+      "to_point_transformed": [
+        1314.71435546875,
+        400.956787109375
+      ],
+      "to_points_source": [
+        [
+          2572.55,
+          621.37
+        ],
+        [
+          2476.41,
+          632.52
+        ]
+      ],
+      "to_points_transformed": [
+        [
+          1343.851806640625,
+          401.3429260253906
+        ],
+        [
+          1285.694091796875,
+          400.57977294921875
+        ]
+      ],
+      "to_polygon_id": "added_003",
+      "type": "stair"
+    },
+    {
+      "asset_type": "stair",
+      "bidirectional": true,
+      "connection_id": "stair_002",
+      "connection_schema": "start_line_end_center_v3",
+      "from_layer": "B1",
+      "from_point_source": [
+        2380.465,
+        384.325
+      ],
+      "from_point_transformed": [
+        1388.4727783203125,
+        184.84103393554688
+      ],
+      "from_points_source": [
+        [
+          2429.07,
+          377.51
+        ],
+        [
+          2331.86,
+          391.14
+        ]
+      ],
+      "from_points_transformed": [
+        [
+          1422.0465087890625,
+          183.66708374023438
+        ],
+        [
+          1355.0914306640625,
+          186.00823974609375
+        ]
+      ],
+      "from_polygon_id": "edited_002",
+      "label": "stair_002",
+      "to_layer": "B1",
+      "to_point_mode": "center_generated_parallel_line",
+      "to_point_source": [
+        2420.67,
+        526.04
+      ],
+      "to_point_transformed": [
+        1319.1014404296875,
+        311.93231201171875
+      ],
+      "to_points_source": [
+        [
+          2469.28,
+          519.22
+        ],
+        [
+          2372.07,
+          532.86
+        ]
+      ],
+      "to_points_transformed": [
+        [
+          1350.5474853515625,
+          311.16778564453125
+        ],
+        [
+          1287.8310546875,
+          312.6936950683594
+        ]
+      ],
+      "to_polygon_id": "added_003",
+      "type": "stair"
+    },
+    {
+      "asset_type": "escalator",
+      "bidirectional": true,
+      "connection_id": "escalator_001",
+      "connection_schema": "start_line_end_center_v3",
+      "from_layer": "B1",
+      "from_point_source": [
+        2372.44,
+        629.55
+      ],
+      "from_point_transformed": [
+        1231.7227783203125,
+        388.4968566894531
+      ],
+      "from_points_source": [
+        [
+          2396.21,
+          656.75
+        ],
+        [
+          2348.67,
+          602.35
+        ]
+      ],
+      "from_points_transformed": [
+        [
+          1229.241943359375,
+          411.0191345214844
+        ],
+        [
+          1234.257080078125,
+          365.4889831542969
+        ]
+      ],
+      "from_polygon_id": "added_003",
+      "label": "escalator_001",
+      "to_layer": "B2",
+      "to_point_mode": "center_generated_parallel_line",
+      "to_point_source": [
+        2128.99,
+        1169.76
+      ],
+      "to_point_transformed": [
+        873.977294921875,
+        705.8161010742188
+      ],
+      "to_points_source": [
+        [
+          2152.76,
+          1196.96
+        ],
+        [
+          2105.22,
+          1142.56
+        ]
+      ],
+      "to_points_transformed": [
+        [
+          875.0482788085938,
+          721.68017578125
+        ],
+        [
+          872.8873291015625,
+          689.6701049804688
+        ]
+      ],
+      "to_polygon_id": "edited_028",
+      "type": "escalator"
+    },
+    {
+      "asset_type": "stair",
+      "bidirectional": true,
+      "connection_id": "exit_stair_001",
+      "connection_schema": "start_line_direction_length_v1",
+      "direction_point_source": [
+        2199.6,
+        376.72
+      ],
+      "exit_length_source": 100,
+      "exit_number": "1",
+      "exit_rise": 5,
+      "from_layer": "B1",
+      "from_point_source": [
+        2288.725,
+        369.075
+      ],
+      "from_point_transformed": [
+        1344.3187255859375,
+        160.9703369140625
+      ],
+      "from_points_source": [
+        [
+          2281,
+          356
+        ],
+        [
+          2296.45,
+          382.15
+        ]
+      ],
+      "from_points_transformed": [
+        [
+          1348.5350341796875,
+          147.8045654296875
+        ],
+        [
+          1340.1500244140625,
+          173.98675537109375
+        ]
+      ],
+      "from_polygon_id": "edited_002",
+      "label": "exit_1",
+      "to_layer": "OUTSIDE",
+      "to_point_mode": "direction_length_generated_parallel_line",
+      "to_point_source": [
+        2189.09,
+        377.62
+      ],
+      "to_point_transformed": [
+        1279.37353515625,
+        158.44473266601562
+      ],
+      "to_points_source": [
+        [
+          2181.37,
+          364.55
+        ],
+        [
+          2196.82,
+          390.69
+        ]
+      ],
+      "to_points_transformed": [
+        [
+          1283.2034912109375,
+          145.31686401367188
+        ],
+        [
+          1275.5927734375,
+          171.42532348632812
+        ]
+      ],
+      "to_polygon_id": null,
+      "type": "exit_stair"
+    },
+    {
+      "asset_type": "escalator",
+      "bidirectional": true,
+      "connection_id": "exit_escalator_001",
+      "connection_schema": "start_line_direction_length_v1",
+      "direction_point_source": [
+        2604.46,
+        322.64
+      ],
+      "exit_length_source": 100,
+      "exit_number": "2",
+      "exit_rise": 5,
+      "from_layer": "B1",
+      "from_point_source": [
+        2528.5,
+        337
+      ],
+      "from_point_transformed": [
+        1511.185546875,
+        156.20062255859375
+      ],
+      "from_points_source": [
+        [
+          2522,
+          323
+        ],
+        [
+          2535,
+          351
+        ]
+      ],
+      "from_points_transformed": [
+        [
+          1517.881591796875,
+          142.0638427734375
+        ],
+        [
+          1504.5718994140625,
+          170.16348266601562
+        ]
+      ],
+      "from_polygon_id": "edited_002",
+      "label": "exit_2",
+      "to_layer": "OUTSIDE",
+      "to_point_mode": "direction_length_generated_parallel_line",
+      "to_point_source": [
+        2626.76,
+        318.42
+      ],
+      "to_point_transformed": [
+        1585.2152099609375,
+        148.97720336914062
+      ],
+      "to_points_source": [
+        [
+          2620.26,
+          304.42
+        ],
+        [
+          2633.26,
+          332.42
+        ]
+      ],
+      "to_points_transformed": [
+        [
+          1592.4306640625,
+          134.67965698242188
+        ],
+        [
+          1578.0892333984375,
+          163.09744262695312
+        ]
+      ],
+      "to_polygon_id": null,
+      "type": "exit_escalator"
+    },
+    {
+      "asset_type": "stair",
+      "bidirectional": true,
+      "connection_id": "exit_stair_002",
+      "connection_schema": "start_line_direction_length_v1",
+      "direction_point_source": [
+        2916.19,
+        553.35
+      ],
+      "exit_length_source": 100,
+      "exit_number": "3",
+      "exit_rise": 5,
+      "from_layer": "B1",
+      "from_point_source": [
+        2900.1949999999997,
+        586.615
+      ],
+      "from_point_transformed": [
+        1543.5592041015625,
+        406.4591064453125
+      ],
+      "from_points_source": [
+        [
+          2864.43,
+          578.95
+        ],
+        [
+          2935.96,
+          594.28
+        ]
+      ],
+      "from_points_transformed": [
+        [
+          1529.3704833984375,
+          397.1654052734375
+        ],
+        [
+          1557.66015625,
+          415.6955261230469
+        ]
+      ],
+      "from_polygon_id": "added_004",
+      "label": "exit_3",
+      "to_layer": "OUTSIDE",
+      "to_point_mode": "direction_length_generated_parallel_line",
+      "to_point_source": [
+        2943.53,
+        496.49
+      ],
+      "to_point_transformed": [
+        1632.8260498046875,
+        339.8335876464844
+      ],
+      "to_points_source": [
+        [
+          2907.77,
+          488.83
+        ],
+        [
+          2979.3,
+          504.15
+        ]
+      ],
+      "to_points_transformed": [
+        [
+          1618.396240234375,
+          329.9842834472656
+        ],
+        [
+          1647.169189453125,
+          349.62091064453125
+        ]
+      ],
+      "to_polygon_id": null,
+      "type": "exit_stair"
+    },
+    {
+      "asset_type": "escalator",
+      "bidirectional": true,
+      "connection_id": "exit_escalator_002",
+      "connection_schema": "start_line_direction_length_v1",
+      "direction_point_source": [
+        2966.25,
+        669.02
+      ],
+      "exit_length_source": 100,
+      "exit_number": "4",
+      "exit_rise": 5,
+      "from_layer": "B1",
+      "from_point_source": [
+        2947.105,
+        634.225
+      ],
+      "from_point_transformed": [
+        1536.2076416015625,
+        446.3651123046875
+      ],
+      "from_points_source": [
+        [
+          2972.65,
+          631.44
+        ],
+        [
+          2921.56,
+          637.01
+        ]
+      ],
+      "from_points_transformed": [
+        [
+          1551.751708984375,
+          446.7480773925781
+        ],
+        [
+          1520.6961669921875,
+          445.9830322265625
+        ]
+      ],
+      "from_polygon_id": "added_004",
+      "label": "exit_4",
+      "to_layer": "OUTSIDE",
+      "to_point_mode": "direction_length_generated_parallel_line",
+      "to_point_source": [
+        2995.31,
+        721.84
+      ],
+      "to_point_transformed": [
+        1503.6876220703125,
+        512.5664672851562
+      ],
+      "to_points_source": [
+        [
+          3020.86,
+          719.06
+        ],
+        [
+          2969.76,
+          724.63
+        ]
+      ],
+      "to_points_transformed": [
+        [
+          1518.68310546875,
+          513.0079345703125
+        ],
+        [
+          1488.7161865234375,
+          512.1326904296875
+        ]
+      ],
+      "to_polygon_id": null,
+      "type": "exit_escalator"
+    },
+    {
+      "asset_type": "escalator",
+      "bidirectional": true,
+      "connection_id": "exit_escalator_003",
+      "connection_schema": "start_line_direction_length_v1",
+      "direction_point_source": [
+        2288.04,
+        653.52
+      ],
+      "exit_length_source": 100,
+      "exit_number": "5",
+      "exit_rise": 5,
+      "from_layer": "B1",
+      "from_point_source": [
+        2369.3199999999997,
+        667.665
+      ],
+      "from_point_transformed": [
+        1209.0294189453125,
+        416.521728515625
+      ],
+      "from_points_source": [
+        [
+          2368.39,
+          681.13
+        ],
+        [
+          2370.25,
+          654.2
+        ]
+      ],
+      "from_points_transformed": [
+        [
+          1201.2611083984375,
+          426.2425231933594
+        ],
+        [
+          1216.87841796875,
+          406.6996154785156
+        ]
+      ],
+      "from_polygon_id": "added_004",
+      "label": "exit_5",
+      "to_layer": "OUTSIDE",
+      "to_point_mode": "direction_length_generated_parallel_line",
+      "to_point_source": [
+        2270.8,
+        650.52
+      ],
+      "to_point_transformed": [
+        1166.0428466796875,
+        394.62030029296875
+      ],
+      "to_points_source": [
+        [
+          2269.87,
+          663.98
+        ],
+        [
+          2271.73,
+          637.06
+        ]
+      ],
+      "to_points_transformed": [
+        [
+          1158.4482421875,
+          404.5166931152344
+        ],
+        [
+          1173.7171630859375,
+          384.6200256347656
+        ]
+      ],
+      "to_polygon_id": null,
+      "type": "exit_escalator"
+    },
+    {
+      "asset_type": "stair",
+      "bidirectional": true,
+      "connection_id": "stair_003",
+      "connection_schema": "start_line_end_center_v3",
+      "from_layer": "B2",
+      "from_point_source": [
+        1270.5,
+        1177.5
+      ],
+      "from_point_transformed": [
+        491.6549377441406,
+        643.0122680664062
+      ],
+      "from_points_source": [
+        [
+          1278,
+          1193
+        ],
+        [
+          1263,
+          1162
+        ]
+      ],
+      "from_points_transformed": [
+        [
+          491.5104675292969,
+          651.9173583984375
+        ],
+        [
+          491.80084228515625,
+          634.0176391601562
+        ]
+      ],
+      "from_polygon_id": "edited_028",
+      "label": "stair_003",
+      "to_layer": "B3",
+      "to_point_mode": "center_generated_parallel_line",
+      "to_point_source": [
+        1086.27,
+        1684.16
+      ],
+      "to_point_transformed": [
+        324.16278076171875,
+        865.7667236328125
+      ],
+      "to_points_source": [
+        [
+          1093.77,
+          1699.66
+        ],
+        [
+          1078.77,
+          1668.66
+        ]
+      ],
+      "to_points_transformed": [
+        [
+          324.7561340332031,
+          872.473876953125
+        ],
+        [
+          323.5643310546875,
+          859.0015869140625
+        ]
+      ],
+      "to_polygon_id": "edited_029",
+      "type": "stair"
+    },
+    {
+      "asset_type": "stair",
+      "bidirectional": true,
+      "connection_id": "stair_004",
+      "connection_schema": "start_line_end_center_v3",
+      "from_layer": "B2",
+      "from_point_source": [
+        1350.06,
+        1323.5900000000001
+      ],
+      "from_point_transformed": [
+        494.0980529785156,
+        724.223388671875
+      ],
+      "from_points_source": [
+        [
+          1362,
+          1341
+        ],
+        [
+          1338.12,
+          1306.18
+        ]
+      ],
+      "from_points_transformed": [
+        [
+          495.40826416015625,
+          733.5978393554688
+        ],
+        [
+          492.77362060546875,
+          714.7476806640625
+        ]
+      ],
+      "from_polygon_id": "edited_028",
+      "label": "stair_004",
+      "to_layer": "B3",
+      "to_point_mode": "center_generated_parallel_line",
+      "to_point_source": [
+        1149.51,
+        1846.26
+      ],
+      "to_point_transformed": [
+        324.5899963378906,
+        932.2088012695312
+      ],
+      "to_points_source": [
+        [
+          1161.45,
+          1863.67
+        ],
+        [
+          1137.57,
+          1828.85
+        ]
+      ],
+      "to_points_transformed": [
+        [
+          326.5006103515625,
+          939.333251953125
+        ],
+        [
+          322.6615905761719,
+          925.01806640625
+        ]
+      ],
+      "to_polygon_id": "edited_003",
+      "type": "stair"
+    },
+    {
+      "asset_type": "stair",
+      "bidirectional": true,
+      "connection_id": "stair_005",
+      "connection_schema": "start_line_end_center_v3",
+      "from_layer": "B2",
+      "from_point_source": [
+        1633.895,
+        1281.165
+      ],
+      "from_point_transformed": [
+        624.8310546875,
+        724.5151977539062
+      ],
+      "from_points_source": [
+        [
+          1621.79,
+          1260.33
+        ],
+        [
+          1646,
+          1302
+        ]
+      ],
+      "from_points_transformed": [
+        [
+          625.0216674804688,
+          713.1830444335938
+        ],
+        [
+          624.6430053710938,
+          735.7007446289062
+        ]
+      ],
+      "from_polygon_id": "edited_028",
+      "label": "stair_005",
+      "to_layer": "B3",
+      "to_point_mode": "center_generated_parallel_line",
+      "to_point_source": [
+        1827.31,
+        1726.02
+      ],
+      "to_point_transformed": [
+        596.8384399414062,
+        931.27734375
+      ],
+      "to_points_source": [
+        [
+          1815.2,
+          1705.18
+        ],
+        [
+          1839.41,
+          1746.86
+        ]
+      ],
+      "to_points_transformed": [
+        [
+          596.8438720703125,
+          922.521728515625
+        ],
+        [
+          596.829345703125,
+          939.9328002929688
+        ]
+      ],
+      "to_polygon_id": "edited_003",
+      "type": "stair"
+    },
+    {
+      "asset_type": "stair",
+      "bidirectional": true,
+      "connection_id": "stair_006",
+      "connection_schema": "start_line_end_center_v3",
+      "from_layer": "B2",
+      "from_point_source": [
+        1541.5,
+        1141
+      ],
+      "from_point_transformed": [
+        621.2568969726562,
+        644.443359375
+      ],
+      "from_points_source": [
+        [
+          1553,
+          1158
+        ],
+        [
+          1530,
+          1124
+        ]
+      ],
+      "from_points_transformed": [
+        [
+          621.8385620117188,
+          654.5667114257812
+        ],
+        [
+          620.6687622070312,
+          634.2068481445312
+        ]
+      ],
+      "from_polygon_id": "edited_028",
+      "label": "stair_006",
+      "to_layer": "B3",
+      "to_point_mode": "center_generated_parallel_line",
+      "to_point_source": [
+        1730.23,
+        1578.17
+      ],
+      "to_point_transformed": [
+        592.5047607421875,
+        866.1367797851562
+      ],
+      "to_points_source": [
+        [
+          1741.73,
+          1595.17
+        ],
+        [
+          1718.73,
+          1561.17
+        ]
+      ],
+      "to_points_transformed": [
+        [
+          593.1531982421875,
+          873.9287719726562
+        ],
+        [
+          591.8499755859375,
+          858.2686767578125
+        ]
+      ],
+      "to_polygon_id": "edited_029",
+      "type": "stair"
+    }
+  ],
+  "manual_walls": [
+    {
+      "height": 1,
+      "label": "wall_001",
+      "point_layers": [
+        "B2",
+        "B2"
+      ],
+      "point_polygon_ids": [
+        "edited_028",
+        "edited_028"
+      ],
+      "points_source": [
+        [
+          1643.05,
+          1226.27
+        ],
+        [
+          1657.46,
+          1255.24
+        ]
+      ],
+      "points_transformed": [
+        [
+          643.2138671875,
+          697.4795532226562
+        ],
+        [
+          641.7360229492188,
+          713.3237915039062
+        ]
+      ],
+      "semantic": {
+        "confidence": 1,
+        "label": "wall_001",
+        "layer": "B2",
+        "line": null,
+        "zone_type": "wall"
+      },
+      "source_polygon_ids": [
+        "edited_028"
+      ],
+      "type": "manual_wall_path",
+      "wall_id": "wall_001"
+    },
+    {
+      "height": 1,
+      "label": "wall_002",
+      "point_layers": [
+        "B2",
+        "B2"
+      ],
+      "point_polygon_ids": [
+        "edited_028",
+        "edited_028"
+      ],
+      "points_source": [
+        [
+          1610.94,
+          1175.76
+        ],
+        [
+          1598.4,
+          1151.16
+        ]
+      ],
+      "points_transformed": [
+        [
+          642.76513671875,
+          668.6014404296875
+        ],
+        [
+          643.9235229492188,
+          654.4361572265625
+        ]
+      ],
+      "semantic": {
+        "confidence": 1,
+        "label": "wall_002",
+        "layer": "B2",
+        "line": null,
+        "zone_type": "wall"
+      },
+      "source_polygon_ids": [
+        "edited_028"
+      ],
+      "type": "manual_wall_path",
+      "wall_id": "wall_002"
+    },
+    {
+      "height": 1,
+      "label": "wall_003",
+      "point_layers": [
+        "B1",
+        "B1",
+        "B1",
+        "B1",
+        "B1",
+        "B1",
+        "B1",
+        "B1",
+        "B1",
+        "B1",
+        "B1"
+      ],
+      "point_polygon_ids": [
+        "added_003",
+        "added_003",
+        "added_003",
+        "added_003",
+        "added_003",
+        "added_003",
+        "added_003",
+        "added_003",
+        "added_003",
+        "added_003",
+        "added_003"
+      ],
+      "points_source": [
+        [
+          1343.34,
+          673.74
+        ],
+        [
+          1255.92,
+          693.6
+        ],
+        [
+          1255.92,
+          730.85
+        ],
+        [
+          1358.24,
+          746.25
+        ],
+        [
+          1532.57,
+          726.88
+        ],
+        [
+          1631.41,
+          709.99
+        ],
+        [
+          1668.17,
+          672.74
+        ],
+        [
+          1619.99,
+          647.91
+        ],
+        [
+          1552.94,
+          650.89
+        ],
+        [
+          1432.74,
+          666.78
+        ],
+        [
+          1345.82,
+          674.23
+        ]
+      ],
+      "points_transformed": [
+        [
+          664.5798950195312,
+          325.2320251464844
+        ],
+        [
+          612.1795043945312,
+          332.2352294921875
+        ],
+        [
+          600.7607421875,
+          360.08013916015625
+        ],
+        [
+          648.7173461914062,
+          380.65899658203125
+        ],
+        [
+          745.1419067382812,
+          382.461669921875
+        ],
+        [
+          802.6666259765625,
+          379.1611022949219
+        ],
+        [
+          836.4727172851562,
+          354.8132629394531
+        ],
+        [
+          820.8071899414062,
+          331.3382568359375
+        ],
+        [
+          783.920166015625,
+          327.3173522949219
+        ],
+        [
+          714.24658203125,
+          328.25738525390625
+        ],
+        [
+          665.7261962890625,
+          325.8392333984375
+        ]
+      ],
+      "semantic": {
+        "confidence": 1,
+        "label": "wall_003",
+        "layer": "B1",
+        "line": null,
+        "zone_type": "wall"
+      },
+      "source_polygon_ids": [
+        "added_003"
+      ],
+      "type": "manual_wall_path",
+      "wall_id": "wall_003"
+    }
+  ],
+  "manual_assets": [
+    {
+      "asset_id": "subway_001",
+      "blend": "Subway.blend",
+      "end_point_source": [
+        488.63,
+        1895.79
+      ],
+      "gate_type": null,
+      "label": "subway_001",
+      "layer": "B3",
+      "navigation": null,
+      "point_source": [
+        1513.39,
+        1720.84
+      ],
+      "polygon_id": "added_002",
+      "rotation_z": 170.311478452183,
+      "scale": [
+        2079.1849915291327,
+        1,
+        1
+      ],
+      "start_point_source": [
+        2538.16,
+        1545.88
+      ],
+      "type": "subway"
+    },
+    {
+      "asset_id": "subway_002",
+      "blend": "Subway.blend",
+      "end_point_source": [
+        2507.6,
+        1509.95
+      ],
+      "gate_type": null,
+      "label": "subway_002",
+      "layer": "B3",
+      "navigation": null,
+      "point_source": [
+        1494.23,
+        1678.2
+      ],
+      "polygon_id": "added_002",
+      "rotation_z": -9.42683597885857,
+      "scale": [
+        2054.4846744621873,
+        1,
+        1
+      ],
+      "start_point_source": [
+        480.86,
+        1846.45
+      ],
+      "type": "subway"
+    },
+    {
+      "asset_id": "ticket_gate_001",
+      "blend": "TicketGate.blend",
+      "end_point_source": [
+        1642.8,
+        1226.46
+      ],
+      "gate_count": 2,
+      "gate_public_side_flipped": false,
+      "gate_type": "ticket_gate",
+      "gate_width": 1,
+      "label": "ticket_gate_001",
+      "layer": "B2",
+      "navigation": {
+        "access_transition": "public_paid",
+        "cost": 10,
+        "node_type": "gate"
+      },
+      "paid_side_point_source": [
+        1589.13,
+        1211.49
+      ],
+      "passage_width": 1.5,
+      "point_source": [
+        1626.99,
+        1201.32
+      ],
+      "points_source": [
+        [
+          1611.17,
+          1176.18
+        ],
+        [
+          1642.8,
+          1226.46
+        ]
+      ],
+      "polygon_id": "edited_028",
+      "rotation_z": 57.826939263507526,
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "start_point_source": [
+        1611.17,
+        1176.18
+      ],
+      "type": "ticket_gate"
+    },
+    {
+      "asset_id": "toilet_001",
+      "blend": "Toilet.blend",
+      "direction_points_source": [
+        [
+          2141.53,
+          979.27
+        ],
+        [
+          1921.13,
+          1011.38
+        ]
+      ],
+      "direction_vertex_refs": [
+        {
+          "hole_index": null,
+          "polygon_id": "edited_028",
+          "vertex_index": 20
+        },
+        {
+          "hole_index": null,
+          "polygon_id": "edited_028",
+          "vertex_index": 21
+        }
+      ],
+      "facing_angle_deg": 81.710916,
+      "facing_mode": "perpendicular_to_existing_vertex_line",
+      "facing_point_source": [
+        2043.36,
+        1074.71
+      ],
+      "label": "toilet_001",
+      "layer": "B2",
+      "navigation": {
+        "cost": 0,
+        "node_type": "poi",
+        "poi_type": "toilet"
+      },
+      "point_source": [
+        2036.15,
+        1025.23
+      ],
+      "polygon_id": "edited_028",
+      "rotation_z": 81.710916,
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "toilet_gender": "both",
+      "type": "toilet"
+    }
+  ],
+  "manual_platforms": [
+    {
+      "anchors": [
+        {
+          "car": 3,
+          "car_door": "3-4",
+          "door": 4,
+          "near_connection_id": null,
+          "point_source": [
+            1822.92,
+            1697.9
+          ],
+          "quick_exit": {
+            "car": 3,
+            "car_door": "3-4",
+            "car_no": "3",
+            "door": 4,
+            "door_no": "3-4",
+            "facility": "계단",
+            "facility_position": "",
+            "line": "7호선",
+            "ordinal": 12,
+            "raw": {
+              "crtrYmd": "20241231",
+              "drtnInfo": "장승배기",
+              "elvtrNo": null,
+              "facNo": null,
+              "facPstnNm": null,
+              "fwkPstnNm": null,
+              "lineNm": "7호선",
+              "plfmCmgFac": "계단",
+              "qckgffMngNo": "2085",
+              "qckgffVhclDoorNo": "3-4",
+              "stnCd": "2741",
+              "stnNm": "상도",
+              "stnNo": "739",
+              "upbdnbSe": "하행"
+            },
+            "station": "상도",
+            "toward": "장승배기",
+            "up_down": "하행"
+          }
+        },
+        {
+          "car": 5,
+          "car_door": "5-4",
+          "door": 4,
+          "near_connection_id": null,
+          "point_source": [
+            1129.27,
+            1818.5
+          ],
+          "quick_exit": {
+            "car": 5,
+            "car_door": "5-4",
+            "car_no": "5",
+            "door": 4,
+            "door_no": "5-4",
+            "facility": "계단",
+            "facility_position": "",
+            "line": "7호선",
+            "ordinal": 20,
+            "raw": {
+              "crtrYmd": "20241231",
+              "drtnInfo": "장승배기",
+              "elvtrNo": null,
+              "facNo": null,
+              "facPstnNm": null,
+              "fwkPstnNm": null,
+              "lineNm": "7호선",
+              "plfmCmgFac": "계단",
+              "qckgffMngNo": "2086",
+              "qckgffVhclDoorNo": "5-4",
+              "stnCd": "2741",
+              "stnNm": "상도",
+              "stnNo": "739",
+              "upbdnbSe": "하행"
+            },
+            "station": "상도",
+            "toward": "장승배기",
+            "up_down": "하행"
+          }
+        }
+      ],
+      "bidirectional": false,
+      "car_count": 10,
+      "car_order": "train_direction_front_is_car_1",
+      "direction": "장승배기",
+      "doors_per_car": 4,
+      "end_point_source": [
+        505.98,
+        1926.86
+      ],
+      "label": "platform_002",
+      "layer": "B3",
+      "line_id": "7호선",
+      "platform_id": "platform_002",
+      "polygon_id": "edited_003",
+      "quick_exit_rows": [
+        {
+          "car_no": "3",
+          "door_no": "3-4",
+          "facility": "계단",
+          "facility_position": "",
+          "line": "7호선",
+          "raw": {
+            "crtrYmd": "20241231",
+            "drtnInfo": "숭실대입구",
+            "elvtrNo": null,
+            "facNo": null,
+            "facPstnNm": null,
+            "fwkPstnNm": null,
+            "lineNm": "7호선",
+            "plfmCmgFac": "계단",
+            "qckgffMngNo": "2083",
+            "qckgffVhclDoorNo": "3-4",
+            "stnCd": "2741",
+            "stnNm": "상도",
+            "stnNo": "739",
+            "upbdnbSe": "상행"
+          },
+          "station": "상도",
+          "toward": "숭실대입구",
+          "up_down": "상행"
+        },
+        {
+          "car_no": "5",
+          "door_no": "5-4",
+          "facility": "계단",
+          "facility_position": "",
+          "line": "7호선",
+          "raw": {
+            "crtrYmd": "20241231",
+            "drtnInfo": "숭실대입구",
+            "elvtrNo": null,
+            "facNo": null,
+            "facPstnNm": null,
+            "fwkPstnNm": null,
+            "lineNm": "7호선",
+            "plfmCmgFac": "계단",
+            "qckgffMngNo": "2084",
+            "qckgffVhclDoorNo": "5-4",
+            "stnCd": "2741",
+            "stnNm": "상도",
+            "stnNo": "739",
+            "upbdnbSe": "상행"
+          },
+          "station": "상도",
+          "toward": "숭실대입구",
+          "up_down": "상행"
+        },
+        {
+          "car_no": "3",
+          "door_no": "3-4",
+          "facility": "계단",
+          "facility_position": "",
+          "line": "7호선",
+          "raw": {
+            "crtrYmd": "20241231",
+            "drtnInfo": "장승배기",
+            "elvtrNo": null,
+            "facNo": null,
+            "facPstnNm": null,
+            "fwkPstnNm": null,
+            "lineNm": "7호선",
+            "plfmCmgFac": "계단",
+            "qckgffMngNo": "2085",
+            "qckgffVhclDoorNo": "3-4",
+            "stnCd": "2741",
+            "stnNm": "상도",
+            "stnNo": "739",
+            "upbdnbSe": "하행"
+          },
+          "station": "상도",
+          "toward": "장승배기",
+          "up_down": "하행"
+        },
+        {
+          "car_no": "5",
+          "door_no": "5-4",
+          "facility": "계단",
+          "facility_position": "",
+          "line": "7호선",
+          "raw": {
+            "crtrYmd": "20241231",
+            "drtnInfo": "장승배기",
+            "elvtrNo": null,
+            "facNo": null,
+            "facPstnNm": null,
+            "fwkPstnNm": null,
+            "lineNm": "7호선",
+            "plfmCmgFac": "계단",
+            "qckgffMngNo": "2086",
+            "qckgffVhclDoorNo": "5-4",
+            "stnCd": "2741",
+            "stnNm": "상도",
+            "stnNo": "739",
+            "upbdnbSe": "하행"
+          },
+          "station": "상도",
+          "toward": "장승배기",
+          "up_down": "하행"
+        }
+      ],
+      "start_point_source": [
+        2529.69,
+        1575.02
+      ],
+      "station_name": "상도역",
+      "type": "platform_direction"
+    },
+    {
+      "anchors": [
+        {
+          "car": 3,
+          "car_door": "3-4",
+          "door": 4,
+          "near_connection_id": null,
+          "point_source": [
+            1087.41,
+            1709.36
+          ],
+          "quick_exit": {
+            "car": 3,
+            "car_door": "3-4",
+            "car_no": "3",
+            "door": 4,
+            "door_no": "3-4",
+            "facility": "계단",
+            "facility_position": "",
+            "line": "7호선",
+            "ordinal": 12,
+            "raw": {
+              "crtrYmd": "20241231",
+              "drtnInfo": "숭실대입구",
+              "elvtrNo": null,
+              "facNo": null,
+              "facPstnNm": null,
+              "fwkPstnNm": null,
+              "lineNm": "7호선",
+              "plfmCmgFac": "계단",
+              "qckgffMngNo": "2083",
+              "qckgffVhclDoorNo": "3-4",
+              "stnCd": "2741",
+              "stnNm": "상도",
+              "stnNo": "739",
+              "upbdnbSe": "상행"
+            },
+            "station": "상도",
+            "toward": "숭실대입구",
+            "up_down": "상행"
+          }
+        },
+        {
+          "car": 5,
+          "car_door": "5-4",
+          "door": 4,
+          "near_connection_id": null,
+          "point_source": [
+            1762.89,
+            1597.26
+          ],
+          "quick_exit": {
+            "car": 5,
+            "car_door": "5-4",
+            "car_no": "5",
+            "door": 4,
+            "door_no": "5-4",
+            "facility": "계단",
+            "facility_position": "",
+            "line": "7호선",
+            "ordinal": 20,
+            "raw": {
+              "crtrYmd": "20241231",
+              "drtnInfo": "숭실대입구",
+              "elvtrNo": null,
+              "facNo": null,
+              "facPstnNm": null,
+              "fwkPstnNm": null,
+              "lineNm": "7호선",
+              "plfmCmgFac": "계단",
+              "qckgffMngNo": "2084",
+              "qckgffVhclDoorNo": "5-4",
+              "stnCd": "2741",
+              "stnNm": "상도",
+              "stnNo": "739",
+              "upbdnbSe": "상행"
+            },
+            "station": "상도",
+            "toward": "숭실대입구",
+            "up_down": "상행"
+          }
+        }
+      ],
+      "bidirectional": false,
+      "car_count": 10,
+      "car_order": "train_direction_front_is_car_1",
+      "direction": "숭실대입구",
+      "doors_per_car": 4,
+      "end_point_source": [
+        2478.31,
+        1478.54
+      ],
+      "label": "platform_003",
+      "layer": "B3",
+      "line_id": "7호선",
+      "platform_id": "platform_003",
+      "polygon_id": "edited_029",
+      "quick_exit_rows": [
+        {
+          "car_no": "3",
+          "door_no": "3-4",
+          "facility": "계단",
+          "facility_position": "",
+          "line": "7호선",
+          "raw": {
+            "crtrYmd": "20241231",
+            "drtnInfo": "숭실대입구",
+            "elvtrNo": null,
+            "facNo": null,
+            "facPstnNm": null,
+            "fwkPstnNm": null,
+            "lineNm": "7호선",
+            "plfmCmgFac": "계단",
+            "qckgffMngNo": "2083",
+            "qckgffVhclDoorNo": "3-4",
+            "stnCd": "2741",
+            "stnNm": "상도",
+            "stnNo": "739",
+            "upbdnbSe": "상행"
+          },
+          "station": "상도",
+          "toward": "숭실대입구",
+          "up_down": "상행"
+        },
+        {
+          "car_no": "5",
+          "door_no": "5-4",
+          "facility": "계단",
+          "facility_position": "",
+          "line": "7호선",
+          "raw": {
+            "crtrYmd": "20241231",
+            "drtnInfo": "숭실대입구",
+            "elvtrNo": null,
+            "facNo": null,
+            "facPstnNm": null,
+            "fwkPstnNm": null,
+            "lineNm": "7호선",
+            "plfmCmgFac": "계단",
+            "qckgffMngNo": "2084",
+            "qckgffVhclDoorNo": "5-4",
+            "stnCd": "2741",
+            "stnNm": "상도",
+            "stnNo": "739",
+            "upbdnbSe": "상행"
+          },
+          "station": "상도",
+          "toward": "숭실대입구",
+          "up_down": "상행"
+        },
+        {
+          "car_no": "3",
+          "door_no": "3-4",
+          "facility": "계단",
+          "facility_position": "",
+          "line": "7호선",
+          "raw": {
+            "crtrYmd": "20241231",
+            "drtnInfo": "장승배기",
+            "elvtrNo": null,
+            "facNo": null,
+            "facPstnNm": null,
+            "fwkPstnNm": null,
+            "lineNm": "7호선",
+            "plfmCmgFac": "계단",
+            "qckgffMngNo": "2085",
+            "qckgffVhclDoorNo": "3-4",
+            "stnCd": "2741",
+            "stnNm": "상도",
+            "stnNo": "739",
+            "upbdnbSe": "하행"
+          },
+          "station": "상도",
+          "toward": "장승배기",
+          "up_down": "하행"
+        },
+        {
+          "car_no": "5",
+          "door_no": "5-4",
+          "facility": "계단",
+          "facility_position": "",
+          "line": "7호선",
+          "raw": {
+            "crtrYmd": "20241231",
+            "drtnInfo": "장승배기",
+            "elvtrNo": null,
+            "facNo": null,
+            "facPstnNm": null,
+            "fwkPstnNm": null,
+            "lineNm": "7호선",
+            "plfmCmgFac": "계단",
+            "qckgffMngNo": "2086",
+            "qckgffVhclDoorNo": "5-4",
+            "stnCd": "2741",
+            "stnNm": "상도",
+            "stnNo": "739",
+            "upbdnbSe": "하행"
+          },
+          "station": "상도",
+          "toward": "장승배기",
+          "up_down": "하행"
+        }
+      ],
+      "start_point_source": [
+        482.13,
+        1809.8
+      ],
+      "station_name": "상도역",
+      "type": "platform_direction"
+    }
+  ],
+  "manual_elevator_points": [
+    {
+      "access_transition": null,
+      "direction_points_source": [
+        [
+          894,
+          1695
+        ],
+        [
+          1909,
+          1528
+        ]
+      ],
+      "direction_vertex_refs": [
+        {
+          "hole_index": null,
+          "polygon_id": "edited_029",
+          "vertex_index": 5
+        },
+        {
+          "hole_index": null,
+          "polygon_id": "edited_029",
+          "vertex_index": 6
+        }
+      ],
+      "elevator_id": "EV_001",
+      "elevator_point_id": "elevator_point_002",
+      "exit": false,
+      "exit_number": null,
+      "facing_angle_deg": 80.65672,
+      "facing_mode": "perpendicular_to_existing_vertex_line",
+      "facing_point_source": [
+        1456.18,
+        1671.58
+      ],
+      "label": "elevator_point_002",
+      "layer": "B3",
+      "point_source": [
+        1448.06,
+        1622.24
+      ],
+      "polygon_id": "edited_029"
+    },
+    {
+      "access_transition": null,
+      "direction_points_source": [
+        [
+          1530,
+          1124
+        ],
+        [
+          1263,
+          1162
+        ]
+      ],
+      "direction_vertex_refs": [
+        {
+          "hole_index": null,
+          "polygon_id": "edited_028",
+          "vertex_index": 32
+        },
+        {
+          "hole_index": null,
+          "polygon_id": "edited_028",
+          "vertex_index": 33
+        }
+      ],
+      "elevator_id": "EV_001",
+      "elevator_point_id": "elevator_point_003",
+      "exit": false,
+      "exit_number": null,
+      "facing_angle_deg": 81.899943,
+      "facing_mode": "perpendicular_to_existing_vertex_line",
+      "facing_point_source": [
+        1453.65,
+        1202.97
+      ],
+      "label": "elevator_point_003",
+      "layer": "B2",
+      "point_source": [
+        1446.6,
+        1153.47
+      ],
+      "polygon_id": "edited_028"
+    },
+    {
+      "access_transition": null,
+      "direction_points_source": [
+        [
+          1646,
+          1302
+        ],
+        [
+          1362,
+          1341
+        ]
+      ],
+      "direction_vertex_refs": [
+        {
+          "hole_index": null,
+          "polygon_id": "edited_028",
+          "vertex_index": 4
+        },
+        {
+          "hole_index": null,
+          "polygon_id": "edited_028",
+          "vertex_index": 3
+        }
+      ],
+      "elevator_id": "EV_002",
+      "elevator_point_id": "elevator_point_004",
+      "exit": false,
+      "exit_number": null,
+      "facing_angle_deg": -97.819176,
+      "facing_mode": "perpendicular_to_existing_vertex_line",
+      "facing_point_source": [
+        1501.96,
+        1244.52
+      ],
+      "label": "elevator_point_004",
+      "layer": "B2",
+      "point_source": [
+        1508.76,
+        1294.06
+      ],
+      "polygon_id": "edited_028"
+    },
+    {
+      "access_transition": "outside",
+      "direction_points_source": [
+        [
+          1838.78,
+          1323.43
+        ],
+        [
+          1815.47,
+          1296.62
+        ]
+      ],
+      "direction_vertex_refs": [
+        {
+          "hole_index": null,
+          "polygon_id": "edited_028",
+          "vertex_index": 8
+        },
+        {
+          "hole_index": null,
+          "polygon_id": "edited_028",
+          "vertex_index": 9
+        }
+      ],
+      "elevator_id": "EV_002",
+      "elevator_point_id": "elevator_point_005",
+      "exit": true,
+      "exit_number": "5",
+      "facing_angle_deg": 138.994617,
+      "facing_mode": "perpendicular_to_existing_vertex_line",
+      "facing_point_source": [
+        1754.13,
+        1347.26
+      ],
+      "label": "elevator_point_005",
+      "layer": "B2",
+      "point_source": [
+        1791.86,
+        1314.45
+      ],
+      "polygon_id": "edited_028"
+    },
+    {
+      "elevator_point_id": "elevator_point_006",
+      "elevator_id": "EV_002",
+      "label": "elevator_point_006",
+      "polygon_id": "edited_003",
+      "layer": "B3",
+      "point_source": [
+        1505.63,
+        1785.4
+      ],
+      "facing_point_source": [
+        1497.06,
+        1736.14
+      ],
+      "direction_points_source": [
+        [
+          2030.98,
+          1717.76
+        ],
+        [
+          967.6,
+          1902.78
+        ]
+      ],
+      "direction_vertex_refs": [
+        {
+          "polygon_id": "edited_003",
+          "hole_index": null,
+          "vertex_index": 6
+        },
+        {
+          "polygon_id": "edited_003",
+          "hole_index": null,
+          "vertex_index": 5
+        }
+      ],
+      "facing_mode": "perpendicular_to_existing_vertex_line",
+      "facing_angle_deg": -99.870218,
+      "exit": false,
+      "exit_number": null,
+      "access_transition": null
+    }
+  ],
+  "layer_alignment_pairs": [
+    {
+      "from_layer": "B2",
+      "from_point_source": [
+        1432.32,
+        1154.19
+      ],
+      "from_polygon_id": "edited_028",
+      "label": "align_A",
+      "mode": "vertical_y",
+      "to_layer": "B3",
+      "to_point_source": [
+        1432.32,
+        1622.83
+      ],
+      "to_polygon_id": "edited_029"
+    },
+    {
+      "from_layer": "B1",
+      "from_point_source": [
+        2121.09,
+        677.18
+      ],
+      "from_polygon_id": "added_003",
+      "label": "align_A",
+      "mode": "vertical_y",
+      "to_layer": "B2",
+      "to_point_source": [
+        2121.09,
+        1192.01
+      ],
+      "to_polygon_id": "edited_028"
+    },
+    {
+      "from_layer": "B2",
+      "from_point_source": [
+        1537.38,
+        1305.85
+      ],
+      "from_polygon_id": "edited_028",
+      "label": "align_A",
+      "mode": "vertical_y",
+      "to_layer": "B3",
+      "to_point_source": [
+        1537.38,
+        1798.51
+      ],
+      "to_polygon_id": "edited_003"
+    }
+  ],
+  "polygon_axis_corrections": {},
+  "scale_calibration": {
+    "mode": "line_length",
+    "points_source": [
+      [
+        504.63,
+        1942.05
+      ],
+      [
+        2536.99,
+        1589.03
+      ]
+    ],
+    "real_length": 165,
+    "unit": "m"
+  },
+  "station_metadata": {
+    "station_id": "상도",
+    "station_name": "상도",
+    "lines": [],
+    "line_ids": [],
+    "floors": [],
+    "map_id": null
+  },
+  "manual_zones": [
+    {
+      "default_outside_zone_type": "public",
+      "label": "zone_001",
+      "layer": "B3",
+      "points_source": [
+        [
+          461.77,
+          1923.22
+        ],
+        [
+          472.53,
+          1952.82
+        ],
+        [
+          498.98,
+          1950.13
+        ],
+        [
+          499.88,
+          1962.23
+        ],
+        [
+          956.63,
+          1885.42
+        ],
+        [
+          967.6,
+          1902.78
+        ],
+        [
+          2030.98,
+          1717.76
+        ],
+        [
+          2020.52,
+          1694.38
+        ],
+        [
+          2551.7,
+          1605.87
+        ],
+        [
+          2540.74,
+          1591.25
+        ],
+        [
+          2578.2,
+          1583.95
+        ],
+        [
+          2558.1,
+          1560.19
+        ]
+      ],
+      "polygon_id": "edited_003",
+      "source": "full_polygon",
+      "type": "zone_region",
+      "zone_id": "zone_001",
+      "zone_type": "paid"
+    },
+    {
+      "default_outside_zone_type": "public",
+      "label": "zone_002",
+      "layer": "B3",
+      "points_source": [
+        [
+          447.25,
+          1830.73
+        ],
+        [
+          445,
+          1812
+        ],
+        [
+          465,
+          1809
+        ],
+        [
+          465,
+          1791
+        ],
+        [
+          896,
+          1719
+        ],
+        [
+          894,
+          1695
+        ],
+        [
+          1909,
+          1528
+        ],
+        [
+          1920.49,
+          1546.81
+        ],
+        [
+          2436,
+          1460
+        ],
+        [
+          2449,
+          1476
+        ],
+        [
+          2485,
+          1471
+        ],
+        [
+          2506.87,
+          1489.94
+        ]
+      ],
+      "polygon_id": "edited_029",
+      "source": "full_polygon",
+      "type": "zone_region",
+      "zone_id": "zone_002",
+      "zone_type": "paid"
+    },
+    {
+      "default_outside_zone_type": "public",
+      "label": "zone_003",
+      "layer": null,
+      "points_source": [
+        [
+          1102.5,
+          1211.09
+        ],
+        [
+          1166.09,
+          1353.64
+        ],
+        [
+          1333.09,
+          1330.58
+        ],
+        [
+          1370.83,
+          1379.5
+        ],
+        [
+          1686.68,
+          1333.38
+        ],
+        [
+          1626.58,
+          1068.54
+        ],
+        [
+          1200.33,
+          1138.42
+        ],
+        [
+          1105.99,
+          1208.29
+        ]
+      ],
+      "polygon_id": null,
+      "source": "manual_region",
+      "type": "zone_region",
+      "zone_id": "zone_003",
+      "zone_type": "paid"
+    }
+  ],
+  "local_shift_corrections": [
+    {
+      "apply_to_polygon_ids": [
+        "edited_002"
+      ],
+      "correction_id": "shift_001",
+      "label": "shift_001",
+      "move_attached_annotations": true,
+      "moving": {
+        "hole_index": null,
+        "layer": "B1",
+        "point_source": [
+          2331.86,
+          391.14
+        ],
+        "polygon_id": "edited_002",
+        "vertex_index": 3
+      },
+      "reference": {
+        "layer": "B1",
+        "point_source": [
+          2325.57,
+          465.97
+        ],
+        "polygon_id": "added_003"
+      },
+      "type": "local_shift"
+    },
+    {
+      "apply_to_polygon_ids": [
+        "added_004"
+      ],
+      "correction_id": "shift_002",
+      "label": "shift_002",
+      "move_attached_annotations": true,
+      "moving": {
+        "hole_index": null,
+        "layer": "B1",
+        "point_source": [
+          2557.89,
+          575.24
+        ],
+        "polygon_id": "added_004",
+        "vertex_index": 0
+      },
+      "reference": {
+        "layer": "B1",
+        "point_source": [
+          2537.75,
+          671.56
+        ],
+        "polygon_id": "added_003"
+      },
+      "type": "local_shift"
+    }
+  ],
+  "scene_height": {
+    "floor_height": 7,
+    "default_z": 0,
+    "layer_z": {
+      "B2": -7
+    }
+  },
+  "editor_project": {
+    "image_path": "/d/capstone2/test_image_output/web_projects/_cropped_images/서울교통공사_역이용안내도_20250310/7호선/31_상도_crop.png",
+    "annotations_path": "/d/capstone2/test_image_output/web_projects/31_상도_crop/manual_annotations.json",
+    "output_dir": "/d/capstone2/test_image_output/web_projects/31_상도_crop"
+  }
+}
