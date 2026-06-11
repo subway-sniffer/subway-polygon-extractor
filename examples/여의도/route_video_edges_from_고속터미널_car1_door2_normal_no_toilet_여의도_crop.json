@@ -3,77 +3,76 @@
     "format": "route_video_edges",
     "station_name": "여의도",
     "source_graph": "/d/capstone2/test_image_output/web_projects/여의도_crop/navigation_graph_여의도_crop.json",
-    "purpose": "platform_exit_edges_from_고속터미널_to_여의도_fixed_car1_normal_and_elevator_no_toilet",
-    "platform_granularity": "car",
+    "purpose": "platform_exit_edges_from_고속터미널_to_여의도_car1_door2_normal_no_toilet",
+    "platform_granularity": "door",
     "edge_deduplication": "undirected",
     "edge_order": "first_route_occurrence",
     "include_toilet_routes": false,
     "toilet_genders": [],
     "include_same_line_platform": false,
     "route_preferences": [
-      "none",
-      "elevator"
+      "none"
     ],
     "route_options": {
       "synthetic_mode": "same-polygon",
       "zone_change_penalty": 100.0,
       "paid_free_penalty": 1000.0,
       "route_preference": [
-        "none",
-        "elevator"
+        "none"
       ]
     },
     "selection": {
       "line_id": "9호선",
       "direction": "국회의사당",
-      "fixed_car": 1,
-      "start_context": "고속터미널에서 여의도 도착 후 출구 이동"
+      "car": 1,
+      "door": 2,
+      "start_context": "고속터미널에서 여의도 도착 후 1-2 하차, 출구 이동"
     }
   },
   "counts": {
-    "platform_car_node_count": 1,
+    "platform_node_count": 1,
     "exit_node_count": 6,
     "od_pair_count": 6,
-    "route_success_count": 12,
+    "route_success_count": 6,
     "toilet_route_success_count": 0,
     "route_failure_count": 0,
-    "unique_edge_count": 16,
+    "unique_edge_count": 14,
     "toilet_candidate_counts": {},
     "per_preference": {
       "none": {
         "route_success_count": 6,
         "route_failure_count": 0,
         "unique_edge_count": 14
-      },
-      "elevator": {
-        "route_success_count": 6,
-        "route_failure_count": 0,
-        "unique_edge_count": 10
       }
     }
   },
-  "platform_car_nodes": [
+  "platform_nodes": [
     {
+      "node_id": "platform_004_car_1_door_2",
+      "type": "platform_position",
+      "layer": "B2",
+      "polygon_id": "edited_060",
+      "position": [
+        -59.117748,
+        5.422108,
+        -7
+      ],
+      "source_position": [
+        2569.705128,
+        791.268205
+      ],
       "platform_id": "platform_004",
       "station_name": "여의도역",
       "line_id": "9호선",
       "direction": "국회의사당",
       "car": 1,
-      "node_id": "platform_004_car_1_door_2",
+      "door": 2,
+      "car_door": "1-2",
+      "zone_type": "paid",
+      "zone_id": "zone_005",
+      "zone_label": "zone_005",
       "node_key": 146,
-      "node_key_str": "N0146",
-      "position": [
-        -67.21053,
-        50.829222,
-        -7
-      ],
-      "source_door_count": 4,
-      "source_doors": [
-        "1-1",
-        "1-2",
-        "1-3",
-        "1-4"
-      ]
+      "node_key_str": "N0146"
     }
   ],
   "exit_nodes": [
@@ -85,8 +84,8 @@
       "exit_number": "1",
       "layer": "B1",
       "position": [
-        -44.416172,
-        69.850144,
+        -36.122511,
+        23.464384,
         0
       ]
     },
@@ -98,8 +97,8 @@
       "exit_number": "2",
       "layer": "B1",
       "position": [
-        -46.804196,
-        62.209416,
+        -38.510535,
+        15.823655,
         0
       ]
     },
@@ -111,8 +110,8 @@
       "exit_number": "3",
       "layer": "B1",
       "position": [
-        -88.458045,
-        59.183015,
+        -80.16439,
+        12.797254,
         0
       ]
     },
@@ -124,8 +123,8 @@
       "exit_number": "4",
       "layer": "B1",
       "position": [
-        -105.39449,
-        75.668908,
+        -97.100836,
+        29.283148,
         0
       ]
     },
@@ -137,8 +136,8 @@
       "exit_number": "5",
       "layer": "B1",
       "position": [
-        -93.08983,
-        133.077968,
+        -84.796176,
+        86.692211,
         0
       ]
     },
@@ -150,8 +149,8 @@
       "exit_number": "6",
       "layer": "B1",
       "position": [
-        -50.377181,
-        123.41089,
+        -42.08352,
+        77.025133,
         0
       ]
     }
@@ -167,8 +166,8 @@
         "type": "platform_position",
         "gate_side": null,
         "position": [
-          -67.21053,
-          50.829222,
+          -59.117748,
+          5.422108,
           -7
         ]
       },
@@ -179,8 +178,8 @@
         "type": "elevator",
         "gate_side": null,
         "position": [
-          -68.906987,
-          47.787037,
+          -60.822259,
+          2.430125,
           -7
         ]
       },
@@ -189,18 +188,13 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 109,
+      "used_by_count": 4,
       "used_by_pair_types": [
         "platform_exit"
       ],
       "source_route_edge_ids": [
         "walk_elevator_point_006_node_to_platform_004_car_1_door_2_reverse"
-      ],
-      "used_by_route_preferences": [
-        "none",
-        "elevator"
-      ],
-      "used_by_toilet_genders": []
+      ]
     },
     {
       "edge_id": "N0006_N0004",
@@ -212,8 +206,8 @@
         "type": "elevator",
         "gate_side": null,
         "position": [
-          -68.906987,
-          47.787037,
+          -60.822259,
+          2.430125,
           -7
         ]
       },
@@ -224,8 +218,8 @@
         "type": "elevator",
         "gate_side": null,
         "position": [
-          -72.583094,
-          52.057166,
+          -64.28943,
+          5.671405,
           0
         ]
       },
@@ -234,19 +228,13 @@
       "route_edge_type": "elevator",
       "connector_type": null,
       "transport_mode": "elevator",
-      "used_by_count": 109,
+      "used_by_count": 4,
       "used_by_pair_types": [
         "platform_exit"
       ],
       "source_route_edge_ids": [
         "EV_002_1_to_2_reverse"
-      ],
-      "used_by_route_preferences": [
-        "none",
-        "elevator"
-      ],
-      "video_required": false,
-      "used_by_toilet_genders": []
+      ]
     },
     {
       "edge_id": "N0004_N0213",
@@ -258,8 +246,8 @@
         "type": "elevator",
         "gate_side": null,
         "position": [
-          -72.583094,
-          52.057166,
+          -64.28943,
+          5.671405,
           0
         ]
       },
@@ -270,8 +258,8 @@
         "type": "gate",
         "gate_side": "back",
         "position": [
-          -69.378549,
-          63.962086,
+          -61.084887,
+          17.576325,
           0
         ]
       },
@@ -280,18 +268,13 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 109,
+      "used_by_count": 4,
       "used_by_pair_types": [
         "platform_exit"
       ],
       "source_route_edge_ids": [
         "walk_elevator_point_004_node_to_ticket_gate_001_back_node"
-      ],
-      "used_by_route_preferences": [
-        "none",
-        "elevator"
-      ],
-      "used_by_toilet_genders": []
+      ]
     },
     {
       "edge_id": "N0213_N0214",
@@ -303,8 +286,8 @@
         "type": "gate",
         "gate_side": "back",
         "position": [
-          -69.378549,
-          63.962086,
+          -61.084887,
+          17.576325,
           0
         ]
       },
@@ -315,8 +298,8 @@
         "type": "gate",
         "gate_side": "front",
         "position": [
-          -69.46481,
-          65.960225,
+          -61.171148,
+          19.574464,
           0
         ]
       },
@@ -325,18 +308,13 @@
       "route_edge_type": "gate_crossing",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 109,
+      "used_by_count": 4,
       "used_by_pair_types": [
         "platform_exit"
       ],
       "source_route_edge_ids": [
         "ticket_gate_001_gate_crossing_reverse"
-      ],
-      "used_by_route_preferences": [
-        "none",
-        "elevator"
-      ],
-      "used_by_toilet_genders": []
+      ]
     },
     {
       "edge_id": "N0214_N0020",
@@ -348,8 +326,8 @@
         "type": "gate",
         "gate_side": "front",
         "position": [
-          -69.46481,
-          65.960225,
+          -61.171148,
+          19.574464,
           0
         ]
       },
@@ -360,8 +338,8 @@
         "type": "exit",
         "gate_side": null,
         "position": [
-          -44.416172,
-          69.850144,
+          -36.122511,
+          23.464384,
           0
         ]
       },
@@ -370,18 +348,13 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 38,
+      "used_by_count": 1,
       "used_by_pair_types": [
         "platform_exit"
       ],
       "source_route_edge_ids": [
         "walk_exit_stair_001_from_to_ticket_gate_001_front_node_reverse"
-      ],
-      "used_by_route_preferences": [
-        "none",
-        "elevator"
-      ],
-      "used_by_toilet_genders": []
+      ]
     },
     {
       "edge_id": "N0214_N0015",
@@ -393,8 +366,8 @@
         "type": "gate",
         "gate_side": "front",
         "position": [
-          -69.46481,
-          65.960225,
+          -61.171148,
+          19.574464,
           0
         ]
       },
@@ -405,8 +378,8 @@
         "type": "exit",
         "gate_side": null,
         "position": [
-          -46.804196,
-          62.209416,
+          -38.510535,
+          15.823655,
           0
         ]
       },
@@ -415,18 +388,13 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 21,
+      "used_by_count": 1,
       "used_by_pair_types": [
         "platform_exit"
       ],
       "source_route_edge_ids": [
         "walk_exit_escalator_001_from_to_ticket_gate_001_front_node_reverse"
-      ],
-      "used_by_route_preferences": [
-        "none",
-        "elevator"
-      ],
-      "used_by_toilet_genders": []
+      ]
     },
     {
       "edge_id": "N0214_N0016",
@@ -438,8 +406,8 @@
         "type": "gate",
         "gate_side": "front",
         "position": [
-          -69.46481,
-          65.960225,
+          -61.171148,
+          19.574464,
           0
         ]
       },
@@ -450,8 +418,8 @@
         "type": "exit",
         "gate_side": null,
         "position": [
-          -88.458045,
-          59.183015,
+          -80.16439,
+          12.797254,
           0
         ]
       },
@@ -460,18 +428,13 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 12,
+      "used_by_count": 1,
       "used_by_pair_types": [
         "platform_exit"
       ],
       "source_route_edge_ids": [
         "walk_exit_escalator_002_from_to_ticket_gate_001_front_node_reverse"
-      ],
-      "used_by_route_preferences": [
-        "none",
-        "elevator"
-      ],
-      "used_by_toilet_genders": []
+      ]
     },
     {
       "edge_id": "N0214_N0017",
@@ -483,8 +446,8 @@
         "type": "gate",
         "gate_side": "front",
         "position": [
-          -69.46481,
-          65.960225,
+          -61.171148,
+          19.574464,
           0
         ]
       },
@@ -495,8 +458,8 @@
         "type": "exit",
         "gate_side": null,
         "position": [
-          -105.39449,
-          75.668908,
+          -97.100836,
+          29.283148,
           0
         ]
       },
@@ -505,22 +468,17 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 7,
+      "used_by_count": 1,
       "used_by_pair_types": [
         "platform_exit"
       ],
       "source_route_edge_ids": [
         "walk_exit_escalator_003_from_to_ticket_gate_001_front_node_reverse"
-      ],
-      "used_by_route_preferences": [
-        "none",
-        "elevator"
-      ],
-      "used_by_toilet_genders": []
+      ]
     },
     {
-      "edge_id": "N0146_N0204",
-      "video_title": "여의도_N0146_N0204",
+      "edge_id": "N0146_N0192",
+      "video_title": "여의도_N0146_N0192",
       "from": {
         "node_id": "platform_004_car_1_door_2",
         "node_key": 146,
@@ -528,20 +486,20 @@
         "type": "platform_position",
         "gate_side": null,
         "position": [
-          -67.21053,
-          50.829222,
+          -59.117748,
+          5.422108,
           -7
         ]
       },
       "to": {
         "node_id": "stair_018_to",
-        "node_key": 204,
-        "node_key_str": "N0204",
+        "node_key": 192,
+        "node_key_str": "N0192",
         "type": "connector",
         "gate_side": null,
         "position": [
-          -78.012559,
-          120.683131,
+          -69.975318,
+          74.25772,
           -7
         ]
       },
@@ -550,42 +508,38 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 4,
+      "used_by_count": 2,
       "used_by_pair_types": [
         "platform_exit"
       ],
       "source_route_edge_ids": [
         "walk_platform_004_car_1_door_2_to_stair_018_to"
-      ],
-      "used_by_route_preferences": [
-        "none"
-      ],
-      "used_by_toilet_genders": []
+      ]
     },
     {
-      "edge_id": "N0204_N0203",
-      "video_title": "여의도_N0204_N0203",
+      "edge_id": "N0192_N0191",
+      "video_title": "여의도_N0192_N0191",
       "from": {
         "node_id": "stair_018_to",
-        "node_key": 204,
-        "node_key_str": "N0204",
+        "node_key": 192,
+        "node_key_str": "N0192",
         "type": "connector",
         "gate_side": null,
         "position": [
-          -78.012559,
-          120.683131,
+          -69.975318,
+          74.25772,
           -7
         ]
       },
       "to": {
         "node_id": "stair_018_from",
-        "node_key": 203,
-        "node_key_str": "N0203",
+        "node_key": 191,
+        "node_key_str": "N0191",
         "type": "connector",
         "gate_side": null,
         "position": [
-          -79.308825,
-          138.956207,
+          -71.015161,
+          92.570442,
           0
         ]
       },
@@ -594,30 +548,26 @@
       "route_edge_type": "vertical",
       "connector_type": "stair",
       "transport_mode": "stair",
-      "used_by_count": 4,
+      "used_by_count": 2,
       "used_by_pair_types": [
         "platform_exit"
       ],
       "source_route_edge_ids": [
         "stair_018_edge_reverse"
-      ],
-      "used_by_route_preferences": [
-        "none"
-      ],
-      "used_by_toilet_genders": []
+      ]
     },
     {
-      "edge_id": "N0203_N0217",
-      "video_title": "여의도_N0203_N0217",
+      "edge_id": "N0191_N0217",
+      "video_title": "여의도_N0191_N0217",
       "from": {
         "node_id": "stair_018_from",
-        "node_key": 203,
-        "node_key_str": "N0203",
+        "node_key": 191,
+        "node_key_str": "N0191",
         "type": "connector",
         "gate_side": null,
         "position": [
-          -79.308825,
-          138.956207,
+          -71.015161,
+          92.570442,
           0
         ]
       },
@@ -628,8 +578,8 @@
         "type": "gate",
         "gate_side": "back",
         "position": [
-          -65.953766,
-          128.109564,
+          -57.660104,
+          81.723798,
           0
         ]
       },
@@ -638,17 +588,13 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 4,
+      "used_by_count": 2,
       "used_by_pair_types": [
         "platform_exit"
       ],
       "source_route_edge_ids": [
         "walk_stair_018_from_to_ticket_gate_007_back_node"
-      ],
-      "used_by_route_preferences": [
-        "none"
-      ],
-      "used_by_toilet_genders": []
+      ]
     },
     {
       "edge_id": "N0217_N0218",
@@ -660,8 +606,8 @@
         "type": "gate",
         "gate_side": "back",
         "position": [
-          -65.953766,
-          128.109564,
+          -57.660104,
+          81.723798,
           0
         ]
       },
@@ -672,8 +618,8 @@
         "type": "gate",
         "gate_side": "front",
         "position": [
-          -66.110319,
-          126.115701,
+          -57.816657,
+          79.729935,
           0
         ]
       },
@@ -682,17 +628,13 @@
       "route_edge_type": "gate_crossing",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 4,
+      "used_by_count": 2,
       "used_by_pair_types": [
         "platform_exit"
       ],
       "source_route_edge_ids": [
         "ticket_gate_007_gate_crossing_reverse"
-      ],
-      "used_by_route_preferences": [
-        "none"
-      ],
-      "used_by_toilet_genders": []
+      ]
     },
     {
       "edge_id": "N0218_N0019",
@@ -704,8 +646,8 @@
         "type": "gate",
         "gate_side": "front",
         "position": [
-          -66.110319,
-          126.115701,
+          -57.816657,
+          79.729935,
           0
         ]
       },
@@ -716,8 +658,8 @@
         "type": "exit",
         "gate_side": null,
         "position": [
-          -93.08983,
-          133.077968,
+          -84.796176,
+          86.692211,
           0
         ]
       },
@@ -726,17 +668,13 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 2,
+      "used_by_count": 1,
       "used_by_pair_types": [
         "platform_exit"
       ],
       "source_route_edge_ids": [
         "walk_exit_escalator_006_from_to_ticket_gate_007_front_node_reverse"
-      ],
-      "used_by_route_preferences": [
-        "none"
-      ],
-      "used_by_toilet_genders": []
+      ]
     },
     {
       "edge_id": "N0218_N0018",
@@ -748,8 +686,8 @@
         "type": "gate",
         "gate_side": "front",
         "position": [
-          -66.110319,
-          126.115701,
+          -57.816657,
+          79.729935,
           0
         ]
       },
@@ -760,8 +698,8 @@
         "type": "exit",
         "gate_side": null,
         "position": [
-          -50.377181,
-          123.41089,
+          -42.08352,
+          77.025133,
           0
         ]
       },
@@ -776,96 +714,6 @@
       ],
       "source_route_edge_ids": [
         "walk_exit_escalator_005_from_to_ticket_gate_007_front_node_reverse"
-      ],
-      "used_by_route_preferences": [
-        "none"
-      ]
-    },
-    {
-      "edge_id": "N0214_N0019",
-      "video_title": "여의도_N0214_N0019",
-      "from": {
-        "node_id": "ticket_gate_001_front_node",
-        "node_key": 214,
-        "node_key_str": "N0214",
-        "type": "gate",
-        "gate_side": "front",
-        "position": [
-          -69.46481,
-          65.960225,
-          0
-        ]
-      },
-      "to": {
-        "node_id": "exit_escalator_006_from",
-        "node_key": 19,
-        "node_key_str": "N0019",
-        "type": "exit",
-        "gate_side": null,
-        "position": [
-          -93.08983,
-          133.077968,
-          0
-        ]
-      },
-      "from_type": "gate",
-      "to_type": "exit",
-      "route_edge_type": "synthetic_walk",
-      "connector_type": null,
-      "transport_mode": null,
-      "used_by_count": 2,
-      "used_by_pair_types": [
-        "platform_exit"
-      ],
-      "source_route_edge_ids": [
-        "walk_exit_escalator_006_from_to_ticket_gate_001_front_node_reverse"
-      ],
-      "used_by_route_preferences": [
-        "elevator"
-      ],
-      "used_by_toilet_genders": []
-    },
-    {
-      "edge_id": "N0214_N0018",
-      "video_title": "여의도_N0214_N0018",
-      "from": {
-        "node_id": "ticket_gate_001_front_node",
-        "node_key": 214,
-        "node_key_str": "N0214",
-        "type": "gate",
-        "gate_side": "front",
-        "position": [
-          -69.46481,
-          65.960225,
-          0
-        ]
-      },
-      "to": {
-        "node_id": "exit_escalator_005_from",
-        "node_key": 18,
-        "node_key_str": "N0018",
-        "type": "exit",
-        "gate_side": null,
-        "position": [
-          -50.377181,
-          123.41089,
-          0
-        ]
-      },
-      "from_type": "gate",
-      "to_type": "exit",
-      "route_edge_type": "synthetic_walk",
-      "connector_type": null,
-      "transport_mode": null,
-      "used_by_count": 1,
-      "used_by_pair_types": [
-        "platform_exit"
-      ],
-      "source_route_edge_ids": [
-        "walk_exit_escalator_005_from_to_ticket_gate_001_front_node_reverse"
-      ],
-      "used_by_route_preferences": [
-        "elevator"
       ]
     }
   ],
@@ -933,78 +781,6 @@
     {
       "type": "platform_exit",
       "route_preference": "none",
-      "start_node_id": "platform_004_car_1_door_2",
-      "start_node_key_str": "N0146",
-      "goal_node_id": "exit_escalator_005_from",
-      "goal_node_key_str": "N0018",
-      "exit_number": "6",
-      "cost": null,
-      "edge_ids": [],
-      "new_edge_count": 1
-    },
-    {
-      "type": "platform_exit",
-      "route_preference": "elevator",
-      "start_node_id": "platform_004_car_1_door_2",
-      "start_node_key_str": "N0146",
-      "goal_node_id": "exit_stair_001_from",
-      "goal_node_key_str": "N0020",
-      "exit_number": "1",
-      "cost": null,
-      "edge_ids": [],
-      "new_edge_count": 5
-    },
-    {
-      "type": "platform_exit",
-      "route_preference": "elevator",
-      "start_node_id": "platform_004_car_1_door_2",
-      "start_node_key_str": "N0146",
-      "goal_node_id": "exit_escalator_001_from",
-      "goal_node_key_str": "N0015",
-      "exit_number": "2",
-      "cost": null,
-      "edge_ids": [],
-      "new_edge_count": 1
-    },
-    {
-      "type": "platform_exit",
-      "route_preference": "elevator",
-      "start_node_id": "platform_004_car_1_door_2",
-      "start_node_key_str": "N0146",
-      "goal_node_id": "exit_escalator_002_from",
-      "goal_node_key_str": "N0016",
-      "exit_number": "3",
-      "cost": null,
-      "edge_ids": [],
-      "new_edge_count": 1
-    },
-    {
-      "type": "platform_exit",
-      "route_preference": "elevator",
-      "start_node_id": "platform_004_car_1_door_2",
-      "start_node_key_str": "N0146",
-      "goal_node_id": "exit_escalator_003_from",
-      "goal_node_key_str": "N0017",
-      "exit_number": "4",
-      "cost": null,
-      "edge_ids": [],
-      "new_edge_count": 1
-    },
-    {
-      "type": "platform_exit",
-      "route_preference": "elevator",
-      "start_node_id": "platform_004_car_1_door_2",
-      "start_node_key_str": "N0146",
-      "goal_node_id": "exit_escalator_006_from",
-      "goal_node_key_str": "N0019",
-      "exit_number": "5",
-      "cost": null,
-      "edge_ids": [],
-      "new_edge_count": 1
-    },
-    {
-      "type": "platform_exit",
-      "route_preference": "elevator",
       "start_node_id": "platform_004_car_1_door_2",
       "start_node_key_str": "N0146",
       "goal_node_id": "exit_escalator_005_from",
