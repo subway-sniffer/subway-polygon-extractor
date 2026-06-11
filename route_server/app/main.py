@@ -136,6 +136,7 @@ def route_segments(route, video_matches):
                 "from_type": app_node_type(from_node),
                 "to_type": app_node_type(to_node),
                 "video_url": match.get("video_url"),
+                "video_required": bool(match.get("video_required", True)),
             }
         )
     return segments

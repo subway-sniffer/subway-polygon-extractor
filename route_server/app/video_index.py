@@ -1,4 +1,4 @@
-from pipeline.navigation_routing import build_node_maps
+from pipeline.navigation_routing import build_node_maps, edge_transport_mode
 from pipeline.route_edge_planner import normalize_edge_key, safe_title_part
 from route_server.app.config import settings
 from route_server.app.db import connect, row_to_dict
@@ -54,6 +54,11 @@ def db_video_edge(station_id, version, edge_id):
     return row_to_dict(row)
 
 
+def route_edge_requires_video(route_edge):
+    """Return whether one route edge should have a recorded route video."""
+    return edge_transport_mode(route_edge) != "elevator"
+
+
 def match_route_videos(station_id, metadata, navigation_graph, route, route_video_edges):
     """Attach pre-rendered video metadata to each route edge."""
     nodes_by_id, _ = build_node_maps(navigation_graph.get("nodes", []))
@@ -72,13 +77,26 @@ def match_route_videos(station_id, metadata, navigation_graph, route, route_vide
                 if edge:
                     edge_id = legacy_edge_id
         if not edge:
-            missing.append(edge_id)
+            video_required = route_edge_requires_video(route_edge)
+            if video_required:
+                missing.append(edge_id)
+            videos.append(
+                {
+                    "edge_id": edge_id,
+                    "route_edge": route_edge,
+                    "video_url": None,
+                    "video_required": video_required,
+                }
+            )
             continue
         videos.append(
             {
                 "edge_id": edge_id,
+                "route_edge": route_edge,
                 "video_title": edge.get("video_title"),
                 "url": video_url(station_id, metadata.get("station_name"), edge),
+                "video_url": video_url(station_id, metadata.get("station_name"), edge),
+                "video_required": True,
                 "from": edge.get("from"),
                 "to": edge.get("to"),
             }
@@ -103,8 +121,17 @@ def match_route_videos_db(station_id, version, metadata, navigation_graph, route
                 if edge:
                     edge_id = legacy_edge_id
         if not edge:
-            missing.append(edge_id)
-            matches.append({"edge_id": edge_id, "route_edge": route_edge, "video_url": None})
+            video_required = route_edge_requires_video(route_edge)
+            if video_required:
+                missing.append(edge_id)
+            matches.append(
+                {
+                    "edge_id": edge_id,
+                    "route_edge": route_edge,
+                    "video_url": None,
+                    "video_required": video_required,
+                }
+            )
             continue
         matches.append(
             {
@@ -112,6 +139,7 @@ def match_route_videos_db(station_id, version, metadata, navigation_graph, route
                 "route_edge": route_edge,
                 "video_title": edge.get("video_title"),
                 "video_url": video_url(station_id, metadata.get("station_name"), edge),
+                "video_required": True,
                 "from": {"node_key_str": edge.get("from_node_key")},
                 "to": {"node_key_str": edge.get("to_node_key")},
             }

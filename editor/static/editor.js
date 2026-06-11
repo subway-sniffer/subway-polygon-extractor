@@ -2966,7 +2966,7 @@ function routeEdgeRequestPayload(extra = {}) {
     synthetic_mode: "same-polygon",
     paid_free_penalty: Number(routePaidFreePenaltyInput.value || 1000),
     zone_change_penalty: Number(routeZonePenaltyInput.value || 100),
-    route_preference: routePreferenceInput.value || "none",
+    route_preference: ["none", "elevator"],
     ...extra,
   };
 }

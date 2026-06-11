@@ -132,12 +132,16 @@ def preference_multiplier(mode, route_preference):
     preference = str(route_preference or "none").lower()
     if preference not in ROUTE_PREFERENCES or preference == "none" or mode is None:
         return 8.0 if mode == "elevator" else 1.0
-    if preference == "elevator" and mode in {"elevator", "escalator"}:
-        return 0.6
+    if preference == "elevator" and mode == "elevator":
+        return 0.25
+    if preference == "elevator" and mode == "escalator":
+        return 1.2
     if mode == "elevator":
         return 8.0
+    if preference == "elevator" and mode == "stair":
+        return 6.0
     if mode in {"stair", "escalator", "elevator"}:
-        return 1.6
+        return 1.0
     return 1.0
 
 

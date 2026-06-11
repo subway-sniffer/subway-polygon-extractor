@@ -6,6 +6,7 @@ from pathlib import Path
 from pipeline.navigation_routing import (
     build_adjacency,
     build_node_maps,
+    edge_transport_mode,
     load_json,
     normalize_zone,
     resolve_node_id,
@@ -139,6 +140,15 @@ def route_pair_specs(platform_representatives, exits, include_platform_platform=
                         "goal_node_id": goal["node_id"],
                         "start_node_key_str": start.get("node_key_str"),
                         "goal_node_key_str": goal.get("node_key_str"),
+                    }
+                )
+                pairs.append(
+                    {
+                        "type": "platform_platform",
+                        "start_node_id": goal["node_id"],
+                        "goal_node_id": start["node_id"],
+                        "start_node_key_str": goal.get("node_key_str"),
+                        "goal_node_key_str": start.get("node_key_str"),
                     }
                 )
     for start in platform_representatives:
@@ -350,6 +360,42 @@ def collect_unique_route_edges(
     return list(edges.values()), failures, routes_ok, toilet_routes_ok, toilet_candidates_by_gender
 
 
+def merge_edge_records(target, source):
+    """Merge one reusable route-video edge record into an edge dictionary."""
+    edge_id = source.get("edge_id")
+    if not edge_id:
+        return
+    if edge_id not in target:
+        target[edge_id] = source
+        return
+    edge = target[edge_id]
+    edge["used_by_count"] = int(edge.get("used_by_count") or 0) + int(source.get("used_by_count") or 0)
+    for field in ("used_by_pair_types", "used_by_toilet_genders", "source_route_edge_ids", "used_by_route_preferences"):
+        edge.setdefault(field, [])
+        for value in source.get(field, []):
+            if value not in edge[field]:
+                edge[field].append(value)
+
+
+def route_edge_preferences(route_preference):
+    """Return route preferences to include in one route edge export."""
+    if isinstance(route_preference, (list, tuple, set)):
+        values = [str(value or "none").strip().lower() for value in route_preference]
+    else:
+        value = str(route_preference or "none").strip().lower()
+        if value in {"all", "both", "none,elevator", "elevator,none"}:
+            values = ["none", "elevator"]
+        else:
+            values = [value]
+    ordered = []
+    for value in values:
+        if value not in {"none", "elevator"}:
+            continue
+        if value not in ordered:
+            ordered.append(value)
+    return ordered or ["none"]
+
+
 def build_route_edge_export(
     navigation_graph,
     station_name=None,
@@ -374,15 +420,44 @@ def build_route_edge_export(
         include_same_platform=include_same_platform,
         include_same_line_platform=include_same_line_platform,
     )
-    unique_edges, failures, routes_ok, toilet_routes_ok, toilet_candidates_by_gender = collect_unique_route_edges(
-        navigation_graph,
-        pairs,
-        station,
-        directed=directed,
-        include_toilet_routes=include_toilet_routes,
-        toilet_genders=toilet_genders,
-        **route_options,
-    )
+    route_preferences = route_edge_preferences(route_options.pop("route_preference", "none"))
+    merged_edges = {}
+    failures = []
+    routes_ok = 0
+    toilet_routes_ok = 0
+    toilet_candidate_counts = {}
+    per_preference_counts = {}
+    for route_preference in route_preferences:
+        unique_edges, preference_failures, preference_routes_ok, preference_toilet_routes_ok, toilet_candidates_by_gender = collect_unique_route_edges(
+            navigation_graph,
+            pairs,
+            station,
+            directed=directed,
+            include_toilet_routes=include_toilet_routes,
+            toilet_genders=toilet_genders,
+            route_preference=route_preference,
+            **route_options,
+        )
+        for edge in unique_edges:
+            edge.setdefault("used_by_route_preferences", [])
+            if route_preference not in edge["used_by_route_preferences"]:
+                edge["used_by_route_preferences"].append(route_preference)
+            if edge.get("transport_mode") == "elevator" or edge_transport_mode(edge) == "elevator":
+                edge["video_required"] = False
+            merge_edge_records(merged_edges, edge)
+        for failure in preference_failures:
+            failures.append({**failure, "route_preference": route_preference})
+        routes_ok += preference_routes_ok
+        toilet_routes_ok += preference_toilet_routes_ok
+        per_preference_counts[route_preference] = {
+            "route_success_count": preference_routes_ok,
+            "toilet_route_success_count": preference_toilet_routes_ok,
+            "route_failure_count": len(preference_failures),
+            "unique_edge_count": len(unique_edges),
+        }
+        for gender, candidates in toilet_candidates_by_gender.items():
+            toilet_candidate_counts[gender] = max(toilet_candidate_counts.get(gender, 0), len(candidates))
+    unique_edges = list(merged_edges.values())
     return {
         "metadata": {
             "format": "route_video_edges",
@@ -393,7 +468,8 @@ def build_route_edge_export(
             "include_toilet_routes": include_toilet_routes,
             "toilet_genders": toilet_genders or ["male", "female"],
             "include_same_line_platform": include_same_line_platform,
-            "route_options": route_options,
+            "route_preferences": route_preferences,
+            "route_options": {**route_options, "route_preference": route_preferences},
         },
         "counts": {
             "platform_car_node_count": len(platform_reps),
@@ -403,10 +479,8 @@ def build_route_edge_export(
             "toilet_route_success_count": toilet_routes_ok,
             "route_failure_count": len(failures),
             "unique_edge_count": len(unique_edges),
-            "toilet_candidate_counts": {
-                gender: len(candidates)
-                for gender, candidates in toilet_candidates_by_gender.items()
-            },
+            "toilet_candidate_counts": toilet_candidate_counts,
+            "per_preference": per_preference_counts,
         },
         "platform_car_nodes": platform_reps,
         "exit_nodes": exits,
