@@ -1,8 +1,10 @@
 import json
+from io import BytesIO
 from urllib.parse import quote
 
 from fastapi import FastAPI, File, Header, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
+from PIL import Image, ImageDraw
 
 from pipeline.navigation_routing import build_route_result, list_nodes
 from route_server.app.config import settings
@@ -172,6 +174,107 @@ def route_overlay(route, request: Request, station_id, version):
     }
 
 
+def compute_route_payload(request_data: RouteRequest):
+    """Compute a route using the same resolver path for JSON and image endpoints."""
+    station_id = resolve_station_id(request_data.station_id)
+    version = active_version_for_station(station_id, request_data.version)
+    metadata, graph, _ = load_station_package(station_id, version)
+    start_endpoint = request_data.start.model_dump() if hasattr(request_data.start, "model_dump") else request_data.start
+    goal_endpoint = request_data.goal.model_dump() if hasattr(request_data.goal, "model_dump") else request_data.goal
+    start = resolve_route_endpoint_db(
+        station_id,
+        version,
+        start_endpoint,
+        route_preference=request_data.route_preference,
+    )
+    goal = resolve_route_endpoint_db(
+        station_id,
+        version,
+        goal_endpoint,
+        route_preference=request_data.route_preference,
+    )
+    route_options = dict(
+        synthetic_mode=request_data.synthetic_mode,
+        same_layer_radius=request_data.same_layer_radius,
+        zone_change_penalty=request_data.zone_change_penalty,
+        paid_free_penalty=request_data.paid_free_penalty,
+        route_preference=request_data.route_preference,
+    )
+    if request_data.include_toilet:
+        toilet_nodes = db_facility_nodes(
+            station_id,
+            version,
+            facility_type="toilet",
+            facility_subtypes=toilet_subtypes_for_request(request_data.toilet_gender),
+        )
+        result = best_toilet_route(graph, start, goal, toilet_nodes, route_options)
+    else:
+        result = build_route_result(graph, start, goal, **route_options)
+    video_matches, missing_videos = match_route_videos_db(station_id, version, metadata, graph, result)
+    return station_id, version, metadata, graph, start, goal, result, video_matches, missing_videos
+
+
+def route_source_points(route):
+    """Return route node points in original image coordinates."""
+    points = []
+    for node in route.get("nodes", []):
+        source = node.get("source_position") or node.get("point_source") or node.get("center_source")
+        if isinstance(source, list) and len(source) >= 2:
+            points.append((float(source[0]), float(source[1])))
+    return points
+
+
+def crop_bounds_for_points(points, image_size, padding):
+    """Return clamped image crop bounds around route points."""
+    width, height = image_size
+    padding = max(0, int(padding))
+    xs = [point[0] for point in points]
+    ys = [point[1] for point in points]
+    min_x = min(xs) - padding
+    max_x = max(xs) + padding
+    min_y = min(ys) - padding
+    max_y = max(ys) + padding
+    if max_x - min_x < 240:
+        center_x = (min_x + max_x) / 2
+        min_x = center_x - 120
+        max_x = center_x + 120
+    if max_y - min_y < 240:
+        center_y = (min_y + max_y) / 2
+        min_y = center_y - 120
+        max_y = center_y + 120
+    left = max(0, int(min_x))
+    top = max(0, int(min_y))
+    right = min(width, int(max_x))
+    bottom = min(height, int(max_y))
+    if right <= left or bottom <= top:
+        raise ValueError("route preview crop bounds are empty")
+    return left, top, right, bottom
+
+
+def draw_route_preview(image_path, points, padding):
+    """Draw one cropped route preview image and return PNG bytes."""
+    with Image.open(image_path) as image:
+        canvas = image.convert("RGB")
+    bounds = crop_bounds_for_points(points, canvas.size, padding)
+    left, top, _right, _bottom = bounds
+    crop = canvas.crop(bounds)
+    draw = ImageDraw.Draw(crop)
+    translated = [(x - left, y - top) for x, y in points]
+    if len(translated) >= 2:
+        draw.line(translated, fill=(255, 122, 0), width=6)
+        draw.line(translated, fill=(255, 255, 255), width=2)
+    for index, point in enumerate(translated):
+        x, y = point
+        color = (0, 160, 80)
+        if index == len(translated) - 1:
+            color = (220, 35, 35)
+        radius = 8 if index in {0, len(translated) - 1} else 5
+        draw.ellipse((x - radius, y - radius, x + radius, y + radius), fill=color, outline=(255, 255, 255), width=2)
+    output = BytesIO()
+    crop.save(output, format="PNG")
+    return output.getvalue()
+
+
 @app.get("/health")
 def health():
     """Return server health."""
@@ -245,41 +348,7 @@ def station_route_options(station_id: str, version: str | None = None):
 def route(request_data: RouteRequest, request: Request):
     """Find a route and return matching pre-rendered video edges."""
     try:
-        station_id = resolve_station_id(request_data.station_id)
-        version = active_version_for_station(station_id, request_data.version)
-        metadata, graph, _ = load_station_package(station_id, version)
-        start_endpoint = request_data.start.model_dump() if hasattr(request_data.start, "model_dump") else request_data.start
-        goal_endpoint = request_data.goal.model_dump() if hasattr(request_data.goal, "model_dump") else request_data.goal
-        start = resolve_route_endpoint_db(
-            station_id,
-            version,
-            start_endpoint,
-            route_preference=request_data.route_preference,
-        )
-        goal = resolve_route_endpoint_db(
-            station_id,
-            version,
-            goal_endpoint,
-            route_preference=request_data.route_preference,
-        )
-        route_options = dict(
-            synthetic_mode=request_data.synthetic_mode,
-            same_layer_radius=request_data.same_layer_radius,
-            zone_change_penalty=request_data.zone_change_penalty,
-            paid_free_penalty=request_data.paid_free_penalty,
-            route_preference=request_data.route_preference,
-        )
-        if request_data.include_toilet:
-            toilet_nodes = db_facility_nodes(
-                station_id,
-                version,
-                facility_type="toilet",
-                facility_subtypes=toilet_subtypes_for_request(request_data.toilet_gender),
-            )
-            result = best_toilet_route(graph, start, goal, toilet_nodes, route_options)
-        else:
-            result = build_route_result(graph, start, goal, **route_options)
-        video_matches, missing_videos = match_route_videos_db(station_id, version, metadata, graph, result)
+        station_id, version, _metadata, _graph, start, goal, result, video_matches, missing_videos = compute_route_payload(request_data)
     except (FileNotFoundError, KeyError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     segments = route_segments(result, video_matches)
@@ -299,6 +368,23 @@ def route(request_data: RouteRequest, request: Request):
             "missing_video_edges": missing_videos,
         },
     }
+
+
+@app.post("/route/preview")
+def route_preview(request_data: RouteRequest):
+    """Return a cropped source-image preview with the requested route drawn on it."""
+    try:
+        station_id, version, _metadata, _graph, _start, _goal, result, _video_matches, _missing_videos = compute_route_payload(request_data)
+        image_path = station_image_path(station_id, version)
+        if not image_path:
+            raise FileNotFoundError(f"station image not found for {station_id}/{version}")
+        points = route_source_points(result)
+        if not points:
+            raise ValueError("route source positions are missing")
+        png_bytes = draw_route_preview(image_path, points, request_data.padding)
+    except (FileNotFoundError, KeyError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return Response(content=png_bytes, media_type="image/png")
 
 
 @app.post("/admin/stations/import")

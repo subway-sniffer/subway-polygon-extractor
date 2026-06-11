@@ -256,7 +256,40 @@ overlay.missing_node_ids   source 좌표가 없어 overlay에서 빠진 노드
 
 `debug`는 개발/검증용입니다.
 
-## 5. 경로 옵션
+## 5. 경로 미리보기 이미지
+
+`/route/preview`는 `/route`와 같은 요청 형식을 사용합니다.
+
+차이점:
+
+- 응답이 JSON이 아니라 `image/png`입니다.
+- 서버에 파일을 저장하지 않고 요청 시점에 이미지를 메모리에서 생성합니다.
+- route node들이 보이는 범위만 `padding`만큼 여유를 두고 crop합니다.
+- `padding`은 선택값이며 기본값은 `120` 픽셀입니다.
+
+```bash
+curl -X POST https://api.busantax.com/route/preview \
+  -H 'Content-Type: application/json' \
+  -o route_preview.png \
+  -d '{
+    "station_id": "서울역",
+    "start": {
+      "type": "platform",
+      "line_id": "1호선",
+      "direction": "남영",
+      "car": 1
+    },
+    "goal": {
+      "type": "exit",
+      "exit_number": "3"
+    },
+    "padding": 160
+  }'
+```
+
+앱에서는 기존 `/route` 요청 body를 그대로 재사용하고, preview가 필요할 때만 `/route/preview`를 추가 호출하면 됩니다.
+
+## 6. 경로 옵션
 
 ### route_preference
 

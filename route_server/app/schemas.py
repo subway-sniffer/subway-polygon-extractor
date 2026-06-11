@@ -70,3 +70,4 @@ class RouteRequest(BaseModel):
     same_layer_radius: float | None = None
     zone_change_penalty: float = 100.0
     paid_free_penalty: float = 1000.0
+    padding: int = 120
