@@ -89,6 +89,7 @@ def match_route_videos(station_id, metadata, navigation_graph, route, route_vide
                 }
             )
             continue
+        video_required = route_edge_requires_video(route_edge)
         videos.append(
             {
                 "edge_id": edge_id,
@@ -96,7 +97,7 @@ def match_route_videos(station_id, metadata, navigation_graph, route, route_vide
                 "video_title": edge.get("video_title"),
                 "url": video_url(station_id, metadata.get("station_name"), edge),
                 "video_url": video_url(station_id, metadata.get("station_name"), edge),
-                "video_required": True,
+                "video_required": video_required,
                 "from": edge.get("from"),
                 "to": edge.get("to"),
             }
@@ -133,13 +134,14 @@ def match_route_videos_db(station_id, version, metadata, navigation_graph, route
                 }
             )
             continue
+        video_required = route_edge_requires_video(route_edge)
         matches.append(
             {
                 "edge_id": edge_id,
                 "route_edge": route_edge,
                 "video_title": edge.get("video_title"),
                 "video_url": video_url(station_id, metadata.get("station_name"), edge),
-                "video_required": True,
+                "video_required": video_required,
                 "from": {"node_key_str": edge.get("from_node_key")},
                 "to": {"node_key_str": edge.get("to_node_key")},
             }

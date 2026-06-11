@@ -130,13 +130,14 @@ def route_segments(route, video_matches):
         route_edge = match.get("route_edge") or {}
         from_node = nodes_by_id.get(route_edge.get("from"))
         to_node = nodes_by_id.get(route_edge.get("to"))
+        video_required = bool(match.get("video_required", True))
         segments.append(
             {
                 "index": index,
                 "from_type": app_node_type(from_node),
                 "to_type": app_node_type(to_node),
-                "video_url": match.get("video_url"),
-                "video_required": bool(match.get("video_required", True)),
+                "video_url": match.get("video_url") if video_required else None,
+                "video_required": video_required,
             }
         )
     return segments
