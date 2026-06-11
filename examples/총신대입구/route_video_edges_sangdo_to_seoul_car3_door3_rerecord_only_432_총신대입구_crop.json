@@ -1,0 +1,433 @@
+{
+  "metadata": {
+    "format": "route_video_edges",
+    "station_name": "총신대입구",
+    "scenario": "상도에서 총신대입구 환승 후 서울역 방향",
+    "source_graph": "/d/capstone2/test_image_output/web_projects/432_총신대입구_crop/navigation_graph_432_총신대입구_crop.json",
+    "platform_granularity": "car",
+    "edge_deduplication": "undirected",
+    "edge_order": "first_route_occurrence",
+    "include_toilet_routes": true,
+    "toilet_genders": [
+      "male",
+      "female"
+    ],
+    "include_same_line_platform": false,
+    "route_preferences": [
+      "none",
+      "elevator"
+    ],
+    "route_options": {
+      "synthetic_mode": "same-polygon",
+      "same_layer_radius": null,
+      "zone_change_penalty": 100.0,
+      "paid_free_penalty": 1000.0,
+      "route_preference": [
+        "none",
+        "elevator"
+      ]
+    },
+    "fixed_goal": {
+      "line_id": "4호선",
+      "direction": "동작",
+      "platform_id": "platform_001",
+      "car": 3,
+      "door": 2,
+      "node_id": "platform_001_car_3_door_2",
+      "node_key_str": "N0058",
+      "requested_door": 3,
+      "requested_node_id": "platform_001_car_3_door_3",
+      "requested_node_key_str": "N0059",
+      "note": "route_video_edges/server lookup uses car-level representative node; requested 3호차 3번문 maps to car representative for video edge planning."
+    },
+    "start_filter": {
+      "line_id": "7호선",
+      "direction": "내방",
+      "platform_id": "platform_004",
+      "cars": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    "subset": "rerecord_only",
+    "compared_against": "/d/capstone2/test_image/examples/총신대입구/route_video_edges_sangdo_to_seoul_car3_door3_432_총신대입구.json",
+    "source_fixed_file": "/d/capstone2/test_image_output/web_projects/432_총신대입구_crop/route_video_edges_sangdo_to_seoul_car3_door3_432_총신대입구_crop.json",
+    "reason": "Edges present in corrected car-level representative export but missing from the previously generated car3_door3 example."
+  },
+  "counts": {
+    "platform_car_node_count": 11,
+    "exit_node_count": 0,
+    "od_pair_count": 10,
+    "route_success_count": 20,
+    "toilet_route_success_count": 40,
+    "route_failure_count": 0,
+    "unique_edge_count": 2,
+    "toilet_candidate_counts": {
+      "male": 2,
+      "female": 2
+    },
+    "per_preference": {
+      "none": {
+        "route_success_count": 10,
+        "toilet_route_success_count": 20,
+        "route_failure_count": 0,
+        "unique_edge_count": 26
+      },
+      "elevator": {
+        "route_success_count": 10,
+        "toilet_route_success_count": 20,
+        "route_failure_count": 0,
+        "unique_edge_count": 45
+      }
+    },
+    "bad_file_edge_count": 45,
+    "source_unique_edge_count": 45
+  },
+  "platform_car_nodes": [
+    {
+      "platform_id": "platform_004",
+      "station_name": "총신대입구역",
+      "line_id": "7호선",
+      "direction": "내방",
+      "car": 1,
+      "node_id": "platform_004_car_1_door_2",
+      "node_key": 170,
+      "node_key_str": "N0170",
+      "position": [
+        -393.757017,
+        32.890765,
+        -21
+      ],
+      "source_door_count": 4,
+      "source_doors": [
+        "1-1",
+        "1-2",
+        "1-3",
+        "1-4"
+      ]
+    },
+    {
+      "platform_id": "platform_004",
+      "station_name": "총신대입구역",
+      "line_id": "7호선",
+      "direction": "내방",
+      "car": 2,
+      "node_id": "platform_004_car_2_door_2",
+      "node_key": 174,
+      "node_key_str": "N0174",
+      "position": [
+        -393.653172,
+        45.803321,
+        -21
+      ],
+      "source_door_count": 4,
+      "source_doors": [
+        "2-1",
+        "2-2",
+        "2-3",
+        "2-4"
+      ]
+    },
+    {
+      "platform_id": "platform_004",
+      "station_name": "총신대입구역",
+      "line_id": "7호선",
+      "direction": "내방",
+      "car": 3,
+      "node_id": "platform_004_car_3_door_2",
+      "node_key": 178,
+      "node_key_str": "N0178",
+      "position": [
+        -393.589922,
+        53.632316,
+        -21
+      ],
+      "source_door_count": 4,
+      "source_doors": [
+        "3-1",
+        "3-2",
+        "3-3",
+        "3-4"
+      ]
+    },
+    {
+      "platform_id": "platform_004",
+      "station_name": "총신대입구역",
+      "line_id": "7호선",
+      "direction": "내방",
+      "car": 4,
+      "node_id": "platform_004_car_4_door_3",
+      "node_key": 183,
+      "node_key_str": "N0183",
+      "position": [
+        -393.434424,
+        72.755817,
+        -21
+      ],
+      "source_door_count": 4,
+      "source_doors": [
+        "4-1",
+        "4-2",
+        "4-3",
+        "4-4"
+      ]
+    },
+    {
+      "platform_id": "platform_004",
+      "station_name": "총신대입구역",
+      "line_id": "7호선",
+      "direction": "내방",
+      "car": 5,
+      "node_id": "platform_004_car_5_door_2",
+      "node_key": 186,
+      "node_key_str": "N0186",
+      "position": [
+        -393.310551,
+        87.964822,
+        -21
+      ],
+      "source_door_count": 4,
+      "source_doors": [
+        "5-1",
+        "5-2",
+        "5-3",
+        "5-4"
+      ]
+    },
+    {
+      "platform_id": "platform_004",
+      "station_name": "총신대입구역",
+      "line_id": "7호선",
+      "direction": "내방",
+      "car": 6,
+      "node_id": "platform_004_car_6_door_3",
+      "node_key": 191,
+      "node_key_str": "N0191",
+      "position": [
+        -393.176677,
+        104.612028,
+        -21
+      ],
+      "source_door_count": 4,
+      "source_doors": [
+        "6-1",
+        "6-2",
+        "6-3",
+        "6-4"
+      ]
+    },
+    {
+      "platform_id": "platform_004",
+      "station_name": "총신대입구역",
+      "line_id": "7호선",
+      "direction": "내방",
+      "car": 7,
+      "node_id": "platform_004_car_7_door_2",
+      "node_key": 194,
+      "node_key_str": "N0194",
+      "position": [
+        -393.096352,
+        114.600353,
+        -21
+      ],
+      "source_door_count": 4,
+      "source_doors": [
+        "7-1",
+        "7-2",
+        "7-3",
+        "7-4"
+      ]
+    },
+    {
+      "platform_id": "platform_004",
+      "station_name": "총신대입구역",
+      "line_id": "7호선",
+      "direction": "내방",
+      "car": 8,
+      "node_id": "platform_004_car_8_door_2",
+      "node_key": 198,
+      "node_key_str": "N0198",
+      "position": [
+        -393.008057,
+        125.513204,
+        -21
+      ],
+      "source_door_count": 4,
+      "source_doors": [
+        "8-1",
+        "8-2",
+        "8-3",
+        "8-4"
+      ]
+    },
+    {
+      "platform_id": "platform_004",
+      "station_name": "총신대입구역",
+      "line_id": "7호선",
+      "direction": "내방",
+      "car": 9,
+      "node_id": "platform_004_car_9_door_2",
+      "node_key": 202,
+      "node_key_str": "N0202",
+      "position": [
+        -392.92603,
+        135.624417,
+        -21
+      ],
+      "source_door_count": 4,
+      "source_doors": [
+        "9-1",
+        "9-2",
+        "9-3",
+        "9-4"
+      ]
+    },
+    {
+      "platform_id": "platform_004",
+      "station_name": "총신대입구역",
+      "line_id": "7호선",
+      "direction": "내방",
+      "car": 10,
+      "node_id": "platform_004_car_10_door_2",
+      "node_key": 166,
+      "node_key_str": "N0166",
+      "position": [
+        -392.844004,
+        145.73563,
+        -21
+      ],
+      "source_door_count": 4,
+      "source_doors": [
+        "10-1",
+        "10-2",
+        "10-3",
+        "10-4"
+      ]
+    },
+    {
+      "platform_id": "platform_001",
+      "station_name": "총신대입구역",
+      "line_id": "4호선",
+      "direction": "동작",
+      "car": 3,
+      "door": 2,
+      "node_id": "platform_001_car_3_door_2",
+      "node_key": 58,
+      "node_key_str": "N0058",
+      "position": [
+        -105.933125,
+        33.776075,
+        -7
+      ],
+      "source_door_count": 1,
+      "source_doors": [
+        2
+      ]
+    }
+  ],
+  "exit_nodes": [],
+  "edges": [
+    {
+      "edge_id": "N0025_N0058",
+      "video_title": "총신대입구_N0025_N0058",
+      "from": {
+        "node_id": "escalator_008_from",
+        "node_key": 25,
+        "node_key_str": "N0025",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -263.57046,
+          20.869111,
+          -7
+        ]
+      },
+      "to": {
+        "node_id": "platform_001_car_3_door_2",
+        "node_key": 58,
+        "node_key_str": "N0058",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [
+          -105.933125,
+          33.776075,
+          -7
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 20,
+      "used_by_pair_types": [
+        "platform_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_escalator_008_from_to_platform_001_car_3_door_2"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
+      ],
+      "used_by_toilet_genders": []
+    },
+    {
+      "edge_id": "N0232_N0058",
+      "video_title": "총신대입구_N0232_N0058",
+      "from": {
+        "node_id": "stair_028_to",
+        "node_key": 232,
+        "node_key_str": "N0232",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -81.794395,
+          29.667268,
+          -7
+        ]
+      },
+      "to": {
+        "node_id": "platform_001_car_3_door_2",
+        "node_key": 58,
+        "node_key_str": "N0058",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [
+          -105.933125,
+          33.776075,
+          -7
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 40,
+      "used_by_pair_types": [
+        "platform_platform_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_platform_001_car_3_door_2_to_stair_028_to_reverse"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
+      ]
+    }
+  ],
+  "route_failures": []
+}
