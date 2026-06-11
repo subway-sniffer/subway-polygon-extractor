@@ -264,7 +264,7 @@ overlay.missing_node_ids   source 좌표가 없어 overlay에서 빠진 노드
 
 ```text
 none       기본. 계단과 에스컬레이터를 같은 이동 수단 비용으로 처리
-elevator   엘리베이터와 에스컬레이터 우선
+elevator   엘리베이터 최우선. 에스컬레이터는 계단보다 약간 나은 차선으로 처리
 ```
 
 엘리베이터 우선 요청:
@@ -291,7 +291,7 @@ curl -X POST https://api.busantax.com/route \
 동작:
 
 ```text
-route_preference=elevator  같은 출구 번호에서 exit_elevator 우선, 이동 중 엘리베이터/에스컬레이터 비용 우대
+route_preference=elevator  같은 출구 번호에서 exit_elevator 우선, 이동 중 엘리베이터를 에스컬레이터보다 강하게 우대
 route_preference=none      같은 출구 번호에서 계단/일반 출구 우선, 계단/에스컬레이터 동일 비용
 ```
 

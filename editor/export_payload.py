@@ -521,6 +521,51 @@ def zone_polygon_context(zone, polygons, annotations=None):
     return None, None, "default"
 
 
+def polygon_source_area(poly):
+    """Return source-space polygon area for deterministic fallback selection."""
+    if poly.get("area_source") is not None:
+        return float(poly.get("area_source") or 0.0)
+    if poly.get("points_source"):
+        return float(polygon_metrics(poly.get("points_source")).get("area_source") or 0.0)
+    return 0.0
+
+
+def resolve_export_polygon_context(polygon_id, layer, point_source, polygons, annotations=None):
+    """Return a valid polygon/layer context, repairing only missing polygon ids."""
+    valid_polygons = {
+        poly.get("polygon_id"): poly
+        for poly in polygons or []
+        if poly.get("polygon_id")
+    }
+    if polygon_id in valid_polygons:
+        return polygon_id, layer or polygon_layer(valid_polygons[polygon_id], annotations=annotations), "explicit"
+    if not point_source:
+        return polygon_id, layer, "unresolved"
+
+    candidates = [
+        poly
+        for poly in polygons or []
+        if polygon_contains_source_point(poly, point_source)
+    ]
+    if layer:
+        same_layer = [
+            poly for poly in candidates
+            if str(polygon_layer(poly, annotations=annotations) or "") == str(layer)
+        ]
+        if same_layer:
+            candidates = same_layer
+    if candidates:
+        candidates.sort(key=lambda poly: (polygon_source_area(poly), str(poly.get("polygon_id") or "")))
+        selected = candidates[0]
+        return selected.get("polygon_id"), polygon_layer(selected, annotations=annotations), "fallback_contains"
+
+    nearest = nearest_polygon_to_source_point(polygons, point_source)
+    if nearest:
+        _, selected = nearest
+        return selected.get("polygon_id"), polygon_layer(selected, annotations=annotations), "fallback_nearest"
+    return polygon_id, layer, "unresolved"
+
+
 def source_bbox_to_scene_size(bbox, transform_metadata=None, transform_info=None, scale=0.01, invert_x=False, invert_y=False):
     """Convert a source bbox to approximate scene XY size."""
     if not bbox or len(bbox) < 4:
@@ -665,7 +710,7 @@ def effective_gate_passage_width(asset):
     return max(1.5, float(asset.get("passage_width") or 1.5))
 
 
-def build_manual_asset_records(annotations=None, transform_metadata=None, transform_info=None, scale=0.01, layer_z=None, floor_height=5.0, default_z=0.0, invert_x=False, invert_y=False, alignment_transforms=None, local_shift_offsets=None, axis_corrections=None):
+def build_manual_asset_records(annotations=None, polygons=None, transform_metadata=None, transform_info=None, scale=0.01, layer_z=None, floor_height=5.0, default_z=0.0, invert_x=False, invert_y=False, alignment_transforms=None, local_shift_offsets=None, axis_corrections=None):
     """Build Blender assets from manually placed editor asset markers."""
     assets = []
 
@@ -697,6 +742,13 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
             continue
         layer = asset.get("layer")
         polygon_id = asset.get("polygon_id")
+        polygon_id, layer, polygon_context_source = resolve_export_polygon_context(
+            polygon_id,
+            layer,
+            asset.get("point_source"),
+            polygons,
+            annotations=annotations,
+        )
         z_value = polygon_id_z_value(
             polygon_id,
             layer,
@@ -816,6 +868,7 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
                         "blend": asset.get("blend") or blend_name_for_manual_asset(asset_type),
                         "label": asset.get("label"),
                         "polygon_id": polygon_id,
+                        "polygon_context_source": polygon_context_source,
                         "layer": layer,
                         "location": gate_passage["location"],
                         "rotation_z": segment_rotation,
@@ -887,6 +940,13 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
             direction_refs = asset.get("direction_vertex_refs") or []
             for index, direction_point in enumerate(asset.get("direction_points_source") or []):
                 direction_polygon_id = (direction_refs[index] or {}).get("polygon_id") if index < len(direction_refs) else polygon_id
+                direction_polygon_id, _, _ = resolve_export_polygon_context(
+                    direction_polygon_id,
+                    layer,
+                    direction_point,
+                    polygons,
+                    annotations=annotations,
+                )
                 direction_xy = scene_xy_for_polygon_point(
                     direction_point,
                     layer,
@@ -929,6 +989,7 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
             "blend": asset.get("blend") or blend_name_for_manual_asset(asset_type),
             "label": asset.get("label"),
             "polygon_id": polygon_id,
+            "polygon_context_source": polygon_context_source,
             "layer": layer,
             "location": [float(xy[0]), float(xy[1]), float(z_value)],
             "rotation_z": rotation_z,
@@ -969,7 +1030,7 @@ def build_manual_asset_records(annotations=None, transform_metadata=None, transf
     return assets
 
 
-def build_elevator_point_records(annotations=None, transform_metadata=None, transform_info=None, scale=0.01, layer_z=None, floor_height=5.0, default_z=0.0, invert_x=False, invert_y=False, alignment_transforms=None, local_shift_offsets=None, axis_corrections=None):
+def build_elevator_point_records(annotations=None, polygons=None, transform_metadata=None, transform_info=None, scale=0.01, layer_z=None, floor_height=5.0, default_z=0.0, invert_x=False, invert_y=False, alignment_transforms=None, local_shift_offsets=None, axis_corrections=None):
     """Build scene elevator access points grouped by manual elevator_id."""
     records = []
 
@@ -1001,6 +1062,13 @@ def build_elevator_point_records(annotations=None, transform_metadata=None, tran
             continue
         layer = item.get("layer")
         polygon_id = item.get("polygon_id")
+        polygon_id, layer, polygon_context_source = resolve_export_polygon_context(
+            polygon_id,
+            layer,
+            point_source,
+            polygons,
+            annotations=annotations,
+        )
         z_value = polygon_id_z_value(
             polygon_id,
             layer,
@@ -1030,6 +1098,13 @@ def build_elevator_point_records(annotations=None, transform_metadata=None, tran
             direction_refs = item.get("direction_vertex_refs") or []
             for index, direction_point in enumerate(item.get("direction_points_source") or []):
                 direction_polygon_id = (direction_refs[index] or {}).get("polygon_id") if index < len(direction_refs) else polygon_id
+                direction_polygon_id, _, _ = resolve_export_polygon_context(
+                    direction_polygon_id,
+                    layer,
+                    direction_point,
+                    polygons,
+                    annotations=annotations,
+                )
                 direction_xy = scene_xy_for_polygon_point(
                     direction_point,
                     layer,
@@ -1070,6 +1145,7 @@ def build_elevator_point_records(annotations=None, transform_metadata=None, tran
                 "type": "elevator_point",
                 "label": item.get("label"),
                 "polygon_id": polygon_id,
+                "polygon_context_source": polygon_context_source,
                 "layer": layer,
                 "point_source": point_source,
                 "facing_point_source": item.get("facing_point_source"),
@@ -1225,7 +1301,7 @@ def distance_3d(a, b):
     return float(np.linalg.norm(np.asarray(a, dtype=np.float64) - np.asarray(b, dtype=np.float64)))
 
 
-def build_platform_records(annotations=None, transform_metadata=None, transform_info=None, scale=0.01, layer_z=None, floor_height=5.0, default_z=0.0, invert_x=False, invert_y=False, alignment_transforms=None, local_shift_offsets=None, axis_corrections=None):
+def build_platform_records(annotations=None, polygons=None, transform_metadata=None, transform_info=None, scale=0.01, layer_z=None, floor_height=5.0, default_z=0.0, invert_x=False, invert_y=False, alignment_transforms=None, local_shift_offsets=None, axis_corrections=None):
     """Build platform direction records and generated car-door navigation points."""
     records = []
     for platform in (annotations or {}).get("manual_platforms", []):
@@ -1234,6 +1310,18 @@ def build_platform_records(annotations=None, transform_metadata=None, transform_
             continue
         layer = platform.get("layer")
         polygon_id = platform.get("polygon_id")
+        context_point = (
+            platform.get("point_source")
+            or platform.get("start_point_source")
+            or ((platform.get("anchors") or [{}])[0]).get("point_source")
+        )
+        polygon_id, layer, polygon_context_source = resolve_export_polygon_context(
+            polygon_id,
+            layer,
+            context_point,
+            polygons,
+            annotations=annotations,
+        )
         z_value = polygon_id_z_value(
             polygon_id,
             layer,
@@ -1302,6 +1390,7 @@ def build_platform_records(annotations=None, transform_metadata=None, transform_
                     "car_range": platform.get("car_range"),
                     "layer": layer,
                     "polygon_id": polygon_id,
+                    "polygon_context_source": polygon_context_source,
                     "point_source": point_source,
                     "facing_point_source": platform.get("facing_point_source"),
                     "position": position,
@@ -1477,6 +1566,7 @@ def build_platform_records(annotations=None, transform_metadata=None, transform_
                 "car_order": platform.get("car_order"),
                 "layer": layer,
                 "polygon_id": polygon_id,
+                "polygon_context_source": polygon_context_source,
                 "car_count": car_count,
                 "doors_per_car": doors_per_car,
                 "anchors": anchors,
@@ -2638,6 +2728,20 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
         to_layer = connection.get("to_layer")
         from_polygon_id = connection.get("from_polygon_id")
         to_polygon_id = connection.get("to_polygon_id")
+        from_polygon_id, from_layer, from_polygon_context_source = resolve_export_polygon_context(
+            from_polygon_id,
+            from_layer,
+            from_point,
+            polygons,
+            annotations=annotations,
+        )
+        to_polygon_id, to_layer, to_polygon_context_source = resolve_export_polygon_context(
+            to_polygon_id,
+            to_layer,
+            to_point,
+            polygons,
+            annotations=annotations,
+        )
         to_xy_layer = from_layer if is_exit_connection else to_layer
         to_xy_polygon_id = from_polygon_id if is_exit_connection else to_polygon_id
         from_xy = scene_xy_for_polygon_point(
@@ -2722,6 +2826,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
                 "end_line": end_line,
                 "from": {
                     "polygon_id": from_polygon_id,
+                    "polygon_context_source": from_polygon_context_source,
                     "layer": from_layer,
                     "point_source": from_point,
                     "line_source": connection.get("from_points_source"),
@@ -2735,6 +2840,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
                 },
                 "to": {
                     "polygon_id": to_polygon_id,
+                    "polygon_context_source": to_polygon_context_source,
                     "layer": to_layer,
                     "xy_reference_polygon_id": to_xy_polygon_id,
                     "xy_reference_layer": to_xy_layer,
@@ -2767,6 +2873,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
     connection_assets = build_assets_from_connections(connection_records)
     manual_assets = build_manual_asset_records(
         annotations=annotations,
+        polygons=polygons,
         transform_metadata=transform_metadata,
         transform_info=transform_info,
         scale=effective_scale,
@@ -2781,6 +2888,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
     )
     elevator_point_records = build_elevator_point_records(
         annotations=annotations,
+        polygons=polygons,
         transform_metadata=transform_metadata,
         transform_info=transform_info,
         scale=effective_scale,
@@ -2795,6 +2903,7 @@ def build_plane_payload_from_records(polygons, walls, annotations=None, transfor
     )
     platform_records = build_platform_records(
         annotations=annotations,
+        polygons=polygons,
         transform_metadata=transform_metadata,
         transform_info=transform_info,
         scale=effective_scale,

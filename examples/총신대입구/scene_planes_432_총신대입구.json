@@ -2280,6 +2280,7 @@
       ],
       "from": {
         "polygon_id": "edited_002",
+        "polygon_context_source": "explicit",
         "layer": "B3",
         "point_source": [2065.91, 633.12],
         "line_source": [
@@ -2296,6 +2297,7 @@
       },
       "to": {
         "polygon_id": "added_001",
+        "polygon_context_source": "explicit",
         "layer": "B4",
         "xy_reference_polygon_id": "added_001",
         "xy_reference_layer": "B4",
@@ -2340,6 +2342,7 @@
       ],
       "from": {
         "polygon_id": "edited_002",
+        "polygon_context_source": "explicit",
         "layer": "B3",
         "point_source": [2269.935, 802.045],
         "line_source": [
@@ -2356,6 +2359,7 @@
       },
       "to": {
         "polygon_id": "added_001",
+        "polygon_context_source": "explicit",
         "layer": "B4",
         "xy_reference_polygon_id": "added_001",
         "xy_reference_layer": "B4",
@@ -2400,6 +2404,7 @@
       ],
       "from": {
         "polygon_id": "edited_002",
+        "polygon_context_source": "explicit",
         "layer": "B3",
         "point_source": [2409.945, 756.32],
         "line_source": [
@@ -2416,6 +2421,7 @@
       },
       "to": {
         "polygon_id": "edited_001",
+        "polygon_context_source": "explicit",
         "layer": "B4",
         "xy_reference_polygon_id": "edited_001",
         "xy_reference_layer": "B4",
@@ -2460,6 +2466,7 @@
       ],
       "from": {
         "polygon_id": "edited_002",
+        "polygon_context_source": "explicit",
         "layer": "B3",
         "point_source": [2203.77, 587.525],
         "line_source": [
@@ -2476,6 +2483,7 @@
       },
       "to": {
         "polygon_id": "edited_001",
+        "polygon_context_source": "explicit",
         "layer": "B4",
         "xy_reference_polygon_id": "edited_001",
         "xy_reference_layer": "B4",
@@ -2520,6 +2528,7 @@
       ],
       "from": {
         "polygon_id": "edited_002",
+        "polygon_context_source": "explicit",
         "layer": "B3",
         "point_source": [2267.42, 640.12],
         "line_source": [
@@ -2536,6 +2545,7 @@
       },
       "to": {
         "polygon_id": "edited_001",
+        "polygon_context_source": "explicit",
         "layer": "B4",
         "xy_reference_polygon_id": "edited_001",
         "xy_reference_layer": "B4",
@@ -2580,6 +2590,7 @@
       ],
       "from": {
         "polygon_id": "edited_002",
+        "polygon_context_source": "explicit",
         "layer": "B3",
         "point_source": [2030.86, 625.02],
         "line_source": [
@@ -2596,6 +2607,7 @@
       },
       "to": {
         "polygon_id": "added_001",
+        "polygon_context_source": "explicit",
         "layer": "B4",
         "xy_reference_polygon_id": "added_001",
         "xy_reference_layer": "B4",
@@ -2640,6 +2652,7 @@
       ],
       "from": {
         "polygon_id": "edited_006",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [2670.14, 699.93],
         "line_source": [
@@ -2656,6 +2669,7 @@
       },
       "to": {
         "polygon_id": "edited_002",
+        "polygon_context_source": "explicit",
         "layer": "B3",
         "xy_reference_polygon_id": "edited_002",
         "xy_reference_layer": "B3",
@@ -2700,6 +2714,7 @@
       ],
       "from": {
         "polygon_id": "edited_006",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [2747.65, 664.98],
         "line_source": [
@@ -2716,6 +2731,7 @@
       },
       "to": {
         "polygon_id": "edited_002",
+        "polygon_context_source": "explicit",
         "layer": "B3",
         "xy_reference_polygon_id": "edited_002",
         "xy_reference_layer": "B3",
@@ -2760,6 +2776,7 @@
       ],
       "from": {
         "polygon_id": "edited_002",
+        "polygon_context_source": "explicit",
         "layer": "B3",
         "point_source": [2128.47, 686.025],
         "line_source": [
@@ -2776,6 +2793,7 @@
       },
       "to": {
         "polygon_id": "added_001",
+        "polygon_context_source": "explicit",
         "layer": "B4",
         "xy_reference_polygon_id": "added_001",
         "xy_reference_layer": "B4",
@@ -2820,6 +2838,7 @@
       ],
       "from": {
         "polygon_id": "edited_004",
+        "polygon_context_source": "explicit",
         "layer": "B2",
         "point_source": [1610.965, 805.94],
         "line_source": [
@@ -2836,6 +2855,7 @@
       },
       "to": {
         "polygon_id": "added_001",
+        "polygon_context_source": "explicit",
         "layer": "B4",
         "xy_reference_polygon_id": "added_001",
         "xy_reference_layer": "B4",
@@ -2880,6 +2900,7 @@
       ],
       "from": {
         "polygon_id": "edited_003",
+        "polygon_context_source": "explicit",
         "layer": "B2",
         "point_source": [1418.635, 637.19],
         "line_source": [
@@ -2896,6 +2917,7 @@
       },
       "to": {
         "polygon_id": "added_001",
+        "polygon_context_source": "explicit",
         "layer": "B4",
         "xy_reference_polygon_id": "added_001",
         "xy_reference_layer": "B4",
@@ -2931,31 +2953,33 @@
       "direction_point_source": null,
       "bidirectional": true,
       "start_line": [
+        [-131.119693, -1.323252, -7],
+        [-130.680126, -5.720601, -7]
+      ],
+      "end_line": [
         [-89.022309, 30.643911, -7],
         [-88.582757, 26.246541, -7]
       ],
-      "end_line": [
-        [-92.770338, 33.248223, 0],
-        [-92.301096, 27.785108, 0]
-      ],
       "from": {
-        "polygon_id": "edited_007",
-        "layer": "B1",
+        "polygon_id": "edited_004",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B2",
         "point_source": [522.3, 779.99],
         "line_source": [
           [536.3, 789.97],
           [508.3, 770.01]
         ],
-        "position": [-92.535717, 30.516666, 0],
+        "position": [-130.89991, -3.521926, -7],
         "alignment_transform": [
-          [1, 0, 0],
-          [0, 1, 0],
+          [0.936761, 0, -44.216068],
+          [0, 0.804916, -28.085277],
           [0, 0, 1]
         ],
         "local_shift_offset": null
       },
       "to": {
         "polygon_id": "edited_003",
+        "polygon_context_source": "explicit",
         "layer": "B2",
         "xy_reference_polygon_id": "edited_003",
         "xy_reference_layer": "B2",
@@ -2976,128 +3000,8 @@
       "location": null,
       "rotation_z": null,
       "scale": null,
-      "target_height": 7.0,
-      "same_layer": false
-    },
-    {
-      "connection_id": "stair_015",
-      "type": "stair",
-      "asset_type": "stair",
-      "connection_schema": "start_line_end_center_v3",
-      "label": "stair_015",
-      "exit_number": null,
-      "exit_length_source": null,
-      "exit_rise": null,
-      "direction_point_source": null,
-      "bidirectional": true,
-      "start_line": [
-        [-126.485798, 30.332737, -7],
-        [-126.428729, 25.966586, -7]
-      ],
-      "end_line": [
-        [-106.438024, 33.090128, 0],
-        [-106.37711, 27.665773, 0]
-      ],
-      "from": {
-        "polygon_id": "edited_007",
-        "layer": "B1",
-        "point_source": [599.455, 753.715],
-        "line_source": [
-          [612.22, 764],
-          [586.69, 743.43]
-        ],
-        "position": [-106.407563, 30.377958, 0],
-        "alignment_transform": [
-          [1, 0, 0],
-          [0, 1, 0],
-          [0, 0, 1]
-        ],
-        "local_shift_offset": null
-      },
-      "to": {
-        "polygon_id": "edited_003",
-        "layer": "B2",
-        "xy_reference_polygon_id": "edited_003",
-        "xy_reference_layer": "B2",
-        "point_source": [678.42, 938.82],
-        "line_source": [
-          [691.18, 949.11],
-          [665.65, 928.54]
-        ],
-        "position": [-126.45858, 28.14916, -7],
-        "alignment_transform": [
-          [0.936761, 0, -44.216068],
-          [0, 0.804916, -28.085277],
-          [0, 0, 1]
-        ],
-        "local_shift_offset": null
-      },
-      "blend": "Stair.blend",
-      "location": null,
-      "rotation_z": null,
-      "scale": null,
-      "target_height": 7.0,
-      "same_layer": false
-    },
-    {
-      "connection_id": "stair_016",
-      "type": "stair",
-      "asset_type": "stair",
-      "connection_schema": "start_line_end_center_v3",
-      "label": "stair_016",
-      "exit_number": null,
-      "exit_length_source": null,
-      "exit_rise": null,
-      "direction_point_source": null,
-      "bidirectional": true,
-      "start_line": [
-        [-124.27047, 56.656778, -7],
-        [-124.584349, 52.042586, -7]
-      ],
-      "end_line": [
-        [-105.889836, 56.715227, 0],
-        [-106.223371, 50.984582, 0]
-      ],
-      "from": {
-        "polygon_id": "edited_007",
-        "layer": "B1",
-        "point_source": [706.48, 843.865],
-        "line_source": [
-          [718.85, 855.1],
-          [694.11, 832.63]
-        ],
-        "position": [-106.0566, 53.849906, 0],
-        "alignment_transform": [
-          [1, 0, 0],
-          [0, 1, 0],
-          [0, 0, 1]
-        ],
-        "local_shift_offset": null
-      },
-      "to": {
-        "polygon_id": "edited_004",
-        "layer": "B2",
-        "xy_reference_polygon_id": "edited_004",
-        "xy_reference_layer": "B2",
-        "point_source": [817.41, 1066.96],
-        "line_source": [
-          [829.78, 1078.2],
-          [805.04, 1055.72]
-        ],
-        "position": [-124.427409, 54.349685, -7],
-        "alignment_transform": [
-          [0.936761, 0, -44.216068],
-          [0, 0.804916, -28.085277],
-          [0, 0, 1]
-        ],
-        "local_shift_offset": null
-      },
-      "blend": "Stair.blend",
-      "location": null,
-      "rotation_z": null,
-      "scale": null,
-      "target_height": 7.0,
-      "same_layer": false
+      "target_height": 0.0,
+      "same_layer": true
     },
     {
       "connection_id": "stair_017",
@@ -3119,7 +3023,8 @@
         [-190.388353, 26.143196, 0]
       ],
       "from": {
-        "polygon_id": "edited_007",
+        "polygon_id": "edited_005",
+        "polygon_context_source": "fallback_contains",
         "layer": "B1",
         "point_source": [1064.63, 591.295],
         "line_source": [
@@ -3136,6 +3041,7 @@
       },
       "to": {
         "polygon_id": "edited_003",
+        "polygon_context_source": "explicit",
         "layer": "B2",
         "xy_reference_polygon_id": "edited_003",
         "xy_reference_layer": "B2",
@@ -3145,186 +3051,6 @@
           [981.21, 829.56]
         ],
         "position": [-178.603346, 28.918375, -7],
-        "alignment_transform": [
-          [0.936761, 0, -44.216068],
-          [0, 0.804916, -28.085277],
-          [0, 0, 1]
-        ],
-        "local_shift_offset": null
-      },
-      "blend": "Stair.blend",
-      "location": null,
-      "rotation_z": null,
-      "scale": null,
-      "target_height": 7.0,
-      "same_layer": false
-    },
-    {
-      "connection_id": "stair_018",
-      "type": "stair",
-      "asset_type": "stair",
-      "connection_schema": "start_line_end_center_v3",
-      "label": "stair_018",
-      "exit_number": null,
-      "exit_length_source": null,
-      "exit_rise": null,
-      "direction_point_source": null,
-      "bidirectional": true,
-      "start_line": [
-        [-174.935363, 55.703006, -7],
-        [-174.709323, 51.352739, -7]
-      ],
-      "end_line": [
-        [-190.210122, 57.700794, 0],
-        [-189.967281, 52.298049, 0]
-      ],
-      "from": {
-        "polygon_id": "edited_007",
-        "layer": "B1",
-        "point_source": [1183.105, 692.285],
-        "line_source": [
-          [1196.33, 702.36],
-          [1169.88, 682.21]
-        ],
-        "position": [-190.088717, 54.999416, 0],
-        "alignment_transform": [
-          [1, 0, 0],
-          [0, 1, 0],
-          [0, 0, 1]
-        ],
-        "local_shift_offset": null
-      },
-      "to": {
-        "polygon_id": "edited_004",
-        "layer": "B2",
-        "xy_reference_polygon_id": "edited_004",
-        "xy_reference_layer": "B2",
-        "point_source": [1114.38, 963.22],
-        "line_source": [
-          [1127.61, 973.3],
-          [1101.16, 953.14]
-        ],
-        "position": [-174.821749, 53.52762, -7],
-        "alignment_transform": [
-          [0.936761, 0, -44.216068],
-          [0, 0.804916, -28.085277],
-          [0, 0, 1]
-        ],
-        "local_shift_offset": null
-      },
-      "blend": "Stair.blend",
-      "location": null,
-      "rotation_z": null,
-      "scale": null,
-      "target_height": 7.0,
-      "same_layer": false
-    },
-    {
-      "connection_id": "stair_019",
-      "type": "stair",
-      "asset_type": "stair",
-      "connection_schema": "start_line_end_center_v3",
-      "label": "stair_019",
-      "exit_number": null,
-      "exit_length_source": null,
-      "exit_rise": null,
-      "direction_point_source": null,
-      "bidirectional": true,
-      "start_line": [
-        [-211.513267, 55.66953, -7],
-        [-211.723256, 52.109592, -7]
-      ],
-      "end_line": [
-        [-199.606883, 56.977037, 0],
-        [-199.829779, 52.553676, 0]
-      ],
-      "from": {
-        "polygon_id": "edited_007",
-        "layer": "B1",
-        "point_source": [1236.025, 673.52],
-        "line_source": [
-          [1245.67, 682.16],
-          [1226.38, 664.88]
-        ],
-        "position": [-199.718316, 54.765362, 0],
-        "alignment_transform": [
-          [1, 0, 0],
-          [0, 1, 0],
-          [0, 0, 1]
-        ],
-        "local_shift_offset": null
-      },
-      "to": {
-        "polygon_id": "edited_004",
-        "layer": "B2",
-        "xy_reference_polygon_id": "edited_004",
-        "xy_reference_layer": "B2",
-        "point_source": [1336.77, 892.03],
-        "line_source": [
-          [1346.41, 900.67],
-          [1327.13, 883.39]
-        ],
-        "position": [-211.618262, 53.889564, -7],
-        "alignment_transform": [
-          [0.936761, 0, -44.216068],
-          [0, 0.804916, -28.085277],
-          [0, 0, 1]
-        ],
-        "local_shift_offset": null
-      },
-      "blend": "Stair.blend",
-      "location": null,
-      "rotation_z": null,
-      "scale": null,
-      "target_height": 7.0,
-      "same_layer": false
-    },
-    {
-      "connection_id": "stair_020",
-      "type": "stair",
-      "asset_type": "stair",
-      "connection_schema": "start_line_end_center_v3",
-      "label": "stair_020",
-      "exit_number": null,
-      "exit_length_source": null,
-      "exit_rise": null,
-      "direction_point_source": null,
-      "bidirectional": true,
-      "start_line": [
-        [-216.432479, 30.852116, -7],
-        [-216.59825, 26.509512, -7]
-      ],
-      "end_line": [
-        [-199.680315, 31.526304, 0],
-        [-199.858547, 26.131819, 0]
-      ],
-      "from": {
-        "polygon_id": "edited_007",
-        "layer": "B1",
-        "point_source": [1115.875, 574.53],
-        "line_source": [
-          [1127.9, 584.98],
-          [1103.85, 564.08]
-        ],
-        "position": [-199.769431, 28.829068, 0],
-        "alignment_transform": [
-          [1, 0, 0],
-          [0, 1, 0],
-          [0, 0, 1]
-        ],
-        "local_shift_offset": null
-      },
-      "to": {
-        "polygon_id": "edited_003",
-        "layer": "B2",
-        "xy_reference_polygon_id": "edited_003",
-        "xy_reference_layer": "B2",
-        "point_source": [1220.66, 762.91],
-        "line_source": [
-          [1232.69, 773.36],
-          [1208.63, 752.46]
-        ],
-        "position": [-216.515379, 28.680811, -7],
         "alignment_transform": [
           [0.936761, 0, -44.216068],
           [0, 0.804916, -28.085277],
@@ -3360,6 +3086,7 @@
       ],
       "from": {
         "polygon_id": "edited_009",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [1970.845, 265.02],
         "line_source": [
@@ -3376,6 +3103,7 @@
       },
       "to": {
         "polygon_id": "added_002",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "xy_reference_polygon_id": "added_002",
         "xy_reference_layer": "B1",
@@ -3420,6 +3148,7 @@
       ],
       "from": {
         "polygon_id": "edited_005",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [586.885, 687.19],
         "line_source": [
@@ -3435,8 +3164,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "edited_003",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B2",
         "xy_reference_polygon_id": "edited_005",
         "xy_reference_layer": "B1",
         "point_source": [496.34, 729.63],
@@ -3480,6 +3210,7 @@
       ],
       "from": {
         "polygon_id": "edited_005",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [1156.785, 524.485],
         "line_source": [
@@ -3495,8 +3226,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "edited_005",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B1",
         "xy_reference_polygon_id": "edited_005",
         "xy_reference_layer": "B1",
         "point_source": [1082.83, 457.17],
@@ -3540,6 +3272,7 @@
       ],
       "from": {
         "polygon_id": "added_002",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [1943.285, 295.72],
         "line_source": [
@@ -3555,8 +3288,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "edited_009",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B1",
         "xy_reference_polygon_id": "added_002",
         "xy_reference_layer": "B1",
         "point_source": [2008.75, 371.31],
@@ -3600,6 +3334,7 @@
       ],
       "from": {
         "polygon_id": "added_002",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [1895.24, 261.64],
         "line_source": [
@@ -3615,8 +3350,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "added_002",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B1",
         "xy_reference_polygon_id": "added_002",
         "xy_reference_layer": "B1",
         "point_source": [1839.48, 178.63],
@@ -3660,6 +3396,7 @@
       ],
       "from": {
         "polygon_id": "edited_009",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [2276.735, 130.825],
         "line_source": [
@@ -3675,8 +3412,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "edited_009",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B1",
         "xy_reference_polygon_id": "edited_009",
         "xy_reference_layer": "B1",
         "point_source": [2177.39, 119.41],
@@ -3720,6 +3458,7 @@
       ],
       "from": {
         "polygon_id": "edited_009",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [2315.155, 134.755],
         "line_source": [
@@ -3735,8 +3474,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "edited_009",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B1",
         "xy_reference_polygon_id": "edited_009",
         "xy_reference_layer": "B1",
         "point_source": [2413.73, 151.56],
@@ -3780,6 +3520,7 @@
       ],
       "from": {
         "polygon_id": "edited_009",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [2488.56, 279.085],
         "line_source": [
@@ -3795,8 +3536,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "edited_009",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B1",
         "xy_reference_polygon_id": "edited_009",
         "xy_reference_layer": "B1",
         "point_source": [2460.45, 183.12],
@@ -3840,6 +3582,7 @@
       ],
       "from": {
         "polygon_id": "edited_009",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [2538.91, 303.755],
         "line_source": [
@@ -3855,8 +3598,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "edited_006",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B1",
         "xy_reference_polygon_id": "edited_009",
         "xy_reference_layer": "B1",
         "point_source": [2597.04, 385.13],
@@ -3900,6 +3644,7 @@
       ],
       "from": {
         "polygon_id": "edited_006",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [2900.735, 733.305],
         "line_source": [
@@ -3915,8 +3660,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "edited_006",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B1",
         "xy_reference_polygon_id": "edited_006",
         "xy_reference_layer": "B1",
         "point_source": [2979.06, 795.47],
@@ -3960,6 +3706,7 @@
       ],
       "from": {
         "polygon_id": "edited_006",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [2749.79, 783.46],
         "line_source": [
@@ -3975,8 +3722,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "edited_001",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B4",
         "xy_reference_polygon_id": "edited_006",
         "xy_reference_layer": "B1",
         "point_source": [2823.45, 851.09],
@@ -4020,6 +3768,7 @@
       ],
       "from": {
         "polygon_id": "edited_009",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [2218.195, 449.51],
         "line_source": [
@@ -4035,8 +3784,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "edited_002",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B3",
         "xy_reference_polygon_id": "edited_009",
         "xy_reference_layer": "B1",
         "point_source": [2176.92, 540.59],
@@ -4080,6 +3830,7 @@
       ],
       "from": {
         "polygon_id": "edited_009",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [2149.325, 436.98],
         "line_source": [
@@ -4095,8 +3846,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "edited_002",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B3",
         "xy_reference_polygon_id": "edited_009",
         "xy_reference_layer": "B1",
         "point_source": [2097.07, 522.24],
@@ -4140,6 +3892,7 @@
       ],
       "from": {
         "polygon_id": "edited_003",
+        "polygon_context_source": "explicit",
         "layer": "B2",
         "point_source": [1361.725, 669.845],
         "line_source": [
@@ -4155,8 +3908,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "edited_003",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B2",
         "xy_reference_polygon_id": "edited_003",
         "xy_reference_layer": "B2",
         "point_source": [1446.37, 616.59],
@@ -4200,6 +3954,7 @@
       ],
       "from": {
         "polygon_id": "edited_005",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [824.915, 882.635],
         "line_source": [
@@ -4215,8 +3970,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "edited_004",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B2",
         "xy_reference_polygon_id": "edited_005",
         "xy_reference_layer": "B1",
         "point_source": [730.91, 916.73],
@@ -4260,6 +4016,7 @@
       ],
       "from": {
         "polygon_id": "edited_009",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [2303.83, 389.34],
         "line_source": [
@@ -4276,6 +4033,7 @@
       },
       "to": {
         "polygon_id": "edited_002",
+        "polygon_context_source": "explicit",
         "layer": "B3",
         "xy_reference_polygon_id": "edited_002",
         "xy_reference_layer": "B3",
@@ -4320,6 +4078,7 @@
       ],
       "from": {
         "polygon_id": "edited_009",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [2407.105, 355.055],
         "line_source": [
@@ -4336,6 +4095,7 @@
       },
       "to": {
         "polygon_id": "edited_002",
+        "polygon_context_source": "explicit",
         "layer": "B3",
         "xy_reference_polygon_id": "edited_002",
         "xy_reference_layer": "B3",
@@ -4380,6 +4140,7 @@
       ],
       "from": {
         "polygon_id": "edited_009",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [2365.37, 379.545],
         "line_source": [
@@ -4396,6 +4157,7 @@
       },
       "to": {
         "polygon_id": "edited_006",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "xy_reference_polygon_id": "edited_006",
         "xy_reference_layer": "B1",
@@ -4418,6 +4180,316 @@
       "scale": null,
       "target_height": 3.0,
       "same_layer": true
+    },
+    {
+      "connection_id": "stair_023",
+      "type": "stair",
+      "asset_type": "stair",
+      "connection_schema": "start_line_end_center_v3",
+      "label": "stair_023",
+      "exit_number": null,
+      "exit_length_source": null,
+      "exit_rise": null,
+      "direction_point_source": null,
+      "bidirectional": true,
+      "start_line": [
+        [-126.339205, 26.68699, -7],
+        [-126.397725, 31.051632, -7]
+      ],
+      "end_line": [
+        [-106.37711, 27.665773, 0],
+        [-106.438024, 33.090128, 0]
+      ],
+      "from": {
+        "polygon_id": "edited_005",
+        "polygon_context_source": "explicit",
+        "layer": "B1",
+        "point_source": [599.455, 753.715],
+        "line_source": [
+          [586.69, 743.43],
+          [612.22, 764]
+        ],
+        "position": [-106.407563, 30.377958, 0],
+        "alignment_transform": [
+          [1, 0, 0],
+          [0, 1, 0],
+          [0, 0, 1]
+        ],
+        "local_shift_offset": null
+      },
+      "to": {
+        "polygon_id": "edited_003",
+        "polygon_context_source": "explicit",
+        "layer": "B2",
+        "xy_reference_polygon_id": "edited_003",
+        "xy_reference_layer": "B2",
+        "point_source": [682.04, 942.41],
+        "line_source": [
+          [669.27, 932.13],
+          [694.8, 952.69]
+        ],
+        "position": [-126.369063, 28.869551, -7],
+        "alignment_transform": [
+          [0.936761, 0, -44.216068],
+          [0, 0.804916, -28.085277],
+          [0, 0, 1]
+        ],
+        "local_shift_offset": null
+      },
+      "blend": "Stair.blend",
+      "location": null,
+      "rotation_z": null,
+      "scale": null,
+      "target_height": 7.0,
+      "same_layer": false
+    },
+    {
+      "connection_id": "stair_024",
+      "type": "stair",
+      "asset_type": "stair",
+      "connection_schema": "start_line_end_center_v3",
+      "label": "stair_024",
+      "exit_number": null,
+      "exit_length_source": null,
+      "exit_rise": null,
+      "direction_point_source": null,
+      "bidirectional": true,
+      "start_line": [
+        [-124.034353, 52.190426, -7],
+        [-123.720473, 56.804618, -7]
+      ],
+      "end_line": [
+        [-106.223371, 50.984582, 0],
+        [-105.889836, 56.715227, 0]
+      ],
+      "from": {
+        "polygon_id": "edited_005",
+        "polygon_context_source": "explicit",
+        "layer": "B1",
+        "point_source": [706.48, 843.865],
+        "line_source": [
+          [694.11, 832.63],
+          [718.85, 855.1]
+        ],
+        "position": [-106.0566, 53.849906, 0],
+        "alignment_transform": [
+          [1, 0, 0],
+          [0, 1, 0],
+          [0, 0, 1]
+        ],
+        "local_shift_offset": null
+      },
+      "to": {
+        "polygon_id": "edited_004",
+        "polygon_context_source": "explicit",
+        "layer": "B2",
+        "xy_reference_polygon_id": "edited_004",
+        "xy_reference_layer": "B2",
+        "point_source": [814.97, 1068.75],
+        "line_source": [
+          [802.6, 1057.51],
+          [827.34, 1079.99]
+        ],
+        "position": [-123.877406, 54.497519, -7],
+        "alignment_transform": [
+          [0.936761, 0, -44.216068],
+          [0, 0.804916, -28.085277],
+          [0, 0, 1]
+        ],
+        "local_shift_offset": null
+      },
+      "blend": "Stair.blend",
+      "location": null,
+      "rotation_z": null,
+      "scale": null,
+      "target_height": 7.0,
+      "same_layer": false
+    },
+    {
+      "connection_id": "stair_025",
+      "type": "stair",
+      "asset_type": "stair",
+      "connection_schema": "start_line_end_center_v3",
+      "label": "stair_025",
+      "exit_number": null,
+      "exit_length_source": null,
+      "exit_rise": null,
+      "direction_point_source": null,
+      "bidirectional": true,
+      "start_line": [
+        [-174.695594, 56.740543, -7],
+        [-174.467828, 52.393773, -7]
+      ],
+      "end_line": [
+        [-190.210122, 57.700794, 0],
+        [-189.967281, 52.298049, 0]
+      ],
+      "from": {
+        "polygon_id": "edited_005",
+        "polygon_context_source": "explicit",
+        "layer": "B1",
+        "point_source": [1183.105, 692.285],
+        "line_source": [
+          [1196.33, 702.36],
+          [1169.88, 682.21]
+        ],
+        "position": [-190.088717, 54.999416, 0],
+        "alignment_transform": [
+          [1, 0, 0],
+          [0, 1, 0],
+          [0, 0, 1]
+        ],
+        "local_shift_offset": null
+      },
+      "to": {
+        "polygon_id": "edited_004",
+        "polygon_context_source": "explicit",
+        "layer": "B2",
+        "xy_reference_polygon_id": "edited_004",
+        "xy_reference_layer": "B2",
+        "point_source": [1118.94, 968.62],
+        "line_source": [
+          [1132.16, 978.69],
+          [1105.72, 958.55]
+        ],
+        "position": [-174.581711, 54.567152, -7],
+        "alignment_transform": [
+          [0.936761, 0, -44.216068],
+          [0, 0.804916, -28.085277],
+          [0, 0, 1]
+        ],
+        "local_shift_offset": null
+      },
+      "blend": "Stair.blend",
+      "location": null,
+      "rotation_z": null,
+      "scale": null,
+      "target_height": 7.0,
+      "same_layer": false
+    },
+    {
+      "connection_id": "stair_026",
+      "type": "stair",
+      "asset_type": "stair",
+      "connection_schema": "start_line_end_center_v3",
+      "label": "stair_026",
+      "exit_number": null,
+      "exit_length_source": null,
+      "exit_rise": null,
+      "direction_point_source": null,
+      "bidirectional": true,
+      "start_line": [
+        [-213.179463, 56.913157, -7],
+        [-213.388277, 53.352714, -7]
+      ],
+      "end_line": [
+        [-199.606883, 56.977037, 0],
+        [-199.829779, 52.553676, 0]
+      ],
+      "from": {
+        "polygon_id": "edited_005",
+        "polygon_context_source": "explicit",
+        "layer": "B1",
+        "point_source": [1236.025, 673.52],
+        "line_source": [
+          [1245.67, 682.16],
+          [1226.38, 664.88]
+        ],
+        "position": [-199.718316, 54.765362, 0],
+        "alignment_transform": [
+          [1, 0, 0],
+          [0, 1, 0],
+          [0, 0, 1]
+        ],
+        "local_shift_offset": null
+      },
+      "to": {
+        "polygon_id": "edited_004",
+        "polygon_context_source": "explicit",
+        "layer": "B2",
+        "xy_reference_polygon_id": "edited_004",
+        "xy_reference_layer": "B2",
+        "point_source": [1353.91, 894.62],
+        "line_source": [
+          [1363.56, 903.26],
+          [1344.27, 885.98]
+        ],
+        "position": [-213.283269, 55.132686, -7],
+        "alignment_transform": [
+          [0.936761, 0, -44.216068],
+          [0, 0.804916, -28.085277],
+          [0, 0, 1]
+        ],
+        "local_shift_offset": null
+      },
+      "blend": "Stair.blend",
+      "location": null,
+      "rotation_z": null,
+      "scale": null,
+      "target_height": 7.0,
+      "same_layer": false
+    },
+    {
+      "connection_id": "stair_027",
+      "type": "stair",
+      "asset_type": "stair",
+      "connection_schema": "start_line_end_center_v3",
+      "label": "stair_027",
+      "exit_number": null,
+      "exit_length_source": null,
+      "exit_rise": null,
+      "direction_point_source": null,
+      "bidirectional": true,
+      "start_line": [
+        [-216.799266, 26.091173, -7],
+        [-216.63348, 30.433771, -7]
+      ],
+      "end_line": [
+        [-199.858547, 26.131819, 0],
+        [-199.680315, 31.526304, 0]
+      ],
+      "from": {
+        "polygon_id": "edited_005",
+        "polygon_context_source": "explicit",
+        "layer": "B1",
+        "point_source": [1115.875, 574.53],
+        "line_source": [
+          [1103.85, 564.08],
+          [1127.9, 584.98]
+        ],
+        "position": [-199.769431, 28.829068, 0],
+        "alignment_transform": [
+          [1, 0, 0],
+          [0, 1, 0],
+          [0, 0, 1]
+        ],
+        "local_shift_offset": null
+      },
+      "to": {
+        "polygon_id": "edited_003",
+        "polygon_context_source": "explicit",
+        "layer": "B2",
+        "xy_reference_polygon_id": "edited_003",
+        "xy_reference_layer": "B2",
+        "point_source": [1219.45, 760.53],
+        "line_source": [
+          [1207.42, 750.08],
+          [1231.48, 770.98]
+        ],
+        "position": [-216.716366, 28.262478, -7],
+        "alignment_transform": [
+          [0.936761, 0, -44.216068],
+          [0, 0.804916, -28.085277],
+          [0, 0, 1]
+        ],
+        "local_shift_offset": null
+      },
+      "blend": "Stair.blend",
+      "location": null,
+      "rotation_z": null,
+      "scale": null,
+      "target_height": 7.0,
+      "same_layer": false
     }
   ],
   "platforms": [
@@ -4432,6 +4504,7 @@
       "car_order": "train_direction_front_is_car_1",
       "layer": "B2",
       "polygon_id": "edited_003",
+      "polygon_context_source": "explicit",
       "car_count": 10,
       "doors_per_car": 4,
       "anchors": [
@@ -4878,6 +4951,7 @@
       "car_order": "train_direction_front_is_car_1",
       "layer": "B2",
       "polygon_id": "edited_004",
+      "polygon_context_source": "explicit",
       "car_count": 10,
       "doors_per_car": 4,
       "anchors": [
@@ -5340,6 +5414,7 @@
       "car_order": "train_direction_front_is_car_1",
       "layer": "B4",
       "polygon_id": "added_001",
+      "polygon_context_source": "explicit",
       "car_count": 10,
       "doors_per_car": 4,
       "anchors": [
@@ -5810,6 +5885,7 @@
       "car_order": "train_direction_front_is_car_1",
       "layer": "B4",
       "polygon_id": "edited_001",
+      "polygon_context_source": "explicit",
       "car_count": 10,
       "doors_per_car": 4,
       "anchors": [
@@ -6276,7 +6352,8 @@
       "elevator_id": "EV_001",
       "type": "elevator_point",
       "label": "elevator_point_001",
-      "polygon_id": "edited_007",
+      "polygon_id": "edited_005",
+      "polygon_context_source": "fallback_contains",
       "layer": "B1",
       "point_source": [626.61, 878.73],
       "facing_point_source": [655.18, 837.7],
@@ -6314,6 +6391,7 @@
       "type": "elevator_point",
       "label": "elevator_point_002",
       "polygon_id": "edited_004",
+      "polygon_context_source": "explicit",
       "layer": "B2",
       "point_source": [627.67, 1142],
       "facing_point_source": [655.55, 1100.49],
@@ -6350,7 +6428,8 @@
       "elevator_id": "EV_002",
       "type": "elevator_point",
       "label": "elevator_point_003",
-      "polygon_id": "edited_007",
+      "polygon_id": "edited_005",
+      "polygon_context_source": "fallback_contains",
       "layer": "B1",
       "point_source": [964.12, 618.85],
       "facing_point_source": [980.14, 666.21],
@@ -6388,6 +6467,7 @@
       "type": "elevator_point",
       "label": "elevator_point_004",
       "polygon_id": "edited_003",
+      "polygon_context_source": "explicit",
       "layer": "B2",
       "point_source": [965.95, 842.94],
       "facing_point_source": [982.16, 890.24],
@@ -6420,85 +6500,12 @@
       "local_shift_offset": null
     },
     {
-      "elevator_point_id": "elevator_point_007",
-      "elevator_id": "EV_007",
-      "type": "elevator_point",
-      "label": "elevator_point_007",
-      "polygon_id": "added_001",
-      "layer": "B4",
-      "point_source": [2247.86, 1026.29],
-      "facing_point_source": [2263.24, 1073.86],
-      "direction_points_source": [
-        [1780.67, 891.8],
-        [2059.62, 801.6]
-      ],
-      "direction_vertex_refs": [
-        {
-          "hole_index": null,
-          "polygon_id": "added_001",
-          "vertex_index": 16
-        },
-        {
-          "hole_index": null,
-          "polygon_id": "added_001",
-          "vertex_index": 15
-        }
-      ],
-      "position": [-367.241156, 79.840281, -21],
-      "facing_position": [-367.234312, 80.840257, -21],
-      "direction_positions": [
-        [-324.464922, 28.509527, -21],
-        [-379.280377, 28.884689, -21]
-      ],
-      "facing_angle_deg": 89.60786847507256,
-      "exit": false,
-      "exit_number": null,
-      "access_transition": null,
-      "local_shift_offset": null
-    },
-    {
-      "elevator_point_id": "elevator_point_008",
-      "elevator_id": "EV_007",
-      "type": "elevator_point",
-      "label": "elevator_point_008",
-      "polygon_id": "edited_002",
-      "layer": "B3",
-      "point_source": [2246.03, 790.32],
-      "facing_point_source": [2261.24, 837.95],
-      "direction_points_source": [
-        [2246.21, 768.1],
-        [2216.89, 777.46]
-      ],
-      "direction_vertex_refs": [
-        {
-          "hole_index": null,
-          "polygon_id": "edited_002",
-          "vertex_index": 3
-        },
-        {
-          "hole_index": null,
-          "polygon_id": "edited_002",
-          "vertex_index": 4
-        }
-      ],
-      "position": [-367.173701, 71.617877, -14],
-      "facing_position": [-367.163866, 72.617829, -14],
-      "direction_positions": [
-        [-371.37161, 67.628973, -14],
-        [-365.096458, 67.567253, -14]
-      ],
-      "facing_angle_deg": 89.43647797876726,
-      "exit": false,
-      "exit_number": null,
-      "access_transition": null,
-      "local_shift_offset": null
-    },
-    {
       "elevator_point_id": "elevator_point_009",
-      "elevator_id": "EV_005",
+      "elevator_id": "EV_007",
       "type": "elevator_point",
       "label": "elevator_point_009",
       "polygon_id": "edited_002",
+      "polygon_context_source": "explicit",
       "layer": "B3",
       "point_source": [2400.97, 924.04],
       "facing_point_source": [2431.9, 884.75],
@@ -6536,6 +6543,7 @@
       "type": "elevator_point",
       "label": "elevator_point_011",
       "polygon_id": "edited_005",
+      "polygon_context_source": "explicit",
       "layer": "B1",
       "point_source": [636.27, 667.25],
       "facing_point_source": [653.5, 714.19],
@@ -6573,6 +6581,7 @@
       "type": "elevator_point",
       "label": "elevator_point_012",
       "polygon_id": "edited_005",
+      "polygon_context_source": "explicit",
       "layer": "B1",
       "point_source": [871.25, 868.56],
       "facing_point_source": [839.36, 907.07],
@@ -6610,6 +6619,7 @@
       "type": "elevator_point",
       "label": "elevator_point_013",
       "polygon_id": "edited_009",
+      "polygon_context_source": "explicit",
       "layer": "B1",
       "point_source": [2192.14, 431.98],
       "facing_point_source": [2201.24, 382.82],
@@ -6647,6 +6657,7 @@
       "type": "elevator_point",
       "label": "elevator_point_014",
       "polygon_id": "edited_006",
+      "polygon_context_source": "explicit",
       "layer": "B1",
       "point_source": [2906.6, 718.53],
       "facing_point_source": [2890.02, 671.36],
@@ -6680,10 +6691,11 @@
     },
     {
       "elevator_point_id": "elevator_point_015",
-      "elevator_id": "EV_005",
+      "elevator_id": "EV_007",
       "type": "elevator_point",
       "label": "elevator_point_015",
       "polygon_id": "edited_006",
+      "polygon_context_source": "explicit",
       "layer": "B1",
       "point_source": [2404.69, 616.84],
       "facing_point_source": [2436.06, 577.9],
@@ -6716,54 +6728,132 @@
       "local_shift_offset": null
     },
     {
-      "elevator_point_id": "elevator_point_017",
-      "elevator_id": "EV_006",
+      "elevator_point_id": "elevator_point_019",
+      "elevator_id": "EV_005",
       "type": "elevator_point",
-      "label": "elevator_point_017",
-      "polygon_id": "edited_002",
-      "layer": "B3",
-      "point_source": [2404.68, 742.41],
-      "facing_point_source": [2421, 789.67],
+      "label": "elevator_point_019",
+      "polygon_id": "added_001",
+      "polygon_context_source": "explicit",
+      "layer": "B4",
+      "point_source": [2203.42, 975.84],
+      "facing_point_source": [2235.03, 937.1],
       "direction_points_source": [
-        [2305.5, 655.74],
-        [2280.05, 664.53]
+        [2015.28, 847.27],
+        [2458.83, 1209.17]
       ],
       "direction_vertex_refs": [
         {
-          "hole_index": 3,
-          "polygon_id": "edited_002",
-          "vertex_index": 2
+          "hole_index": null,
+          "polygon_id": "added_001",
+          "vertex_index": 10
         },
         {
-          "hole_index": 3,
-          "polygon_id": "edited_002",
-          "vertex_index": 1
+          "hole_index": null,
+          "polygon_id": "added_001",
+          "vertex_index": 11
         }
       ],
-      "position": [-400.614722, 72.444449, -14],
-      "facing_position": [-400.626605, 73.444378, -14],
+      "position": [-369.63779, 68.271396, -21],
+      "facing_position": [-370.63778, 68.266994, -21],
       "direction_positions": [
-        [-401.596214, 50.935777, -14],
-        [-396.024421, 51.001993, -14]
+        [-365.187579, 34.388305, -21],
+        [-365.585213, 124.707885, -21]
       ],
-      "facing_angle_deg": 90.68087891018409,
+      "facing_angle_deg": -179.74775553667087,
       "exit": false,
       "exit_number": null,
       "access_transition": null,
       "local_shift_offset": null
     },
     {
-      "elevator_point_id": "elevator_point_018",
+      "elevator_point_id": "elevator_point_020",
+      "elevator_id": "EV_005",
+      "type": "elevator_point",
+      "label": "elevator_point_020",
+      "polygon_id": "edited_002",
+      "polygon_context_source": "explicit",
+      "layer": "B3",
+      "point_source": [2247.06, 782.21],
+      "facing_point_source": [2278.71, 743.5],
+      "direction_points_source": [
+        [2216.89, 777.46],
+        [2343.52, 881.01]
+      ],
+      "direction_vertex_refs": [
+        {
+          "hole_index": null,
+          "polygon_id": "edited_002",
+          "vertex_index": 4
+        },
+        {
+          "hole_index": null,
+          "polygon_id": "edited_002",
+          "vertex_index": 5
+        }
+      ],
+      "position": [-368.854484, 70.219441, -14],
+      "facing_position": [-369.854479, 70.216352, -14],
+      "direction_positions": [
+        [-365.096458, 67.567253, -14],
+        [-365.177333, 93.74949, -14]
+      ],
+      "facing_angle_deg": -179.823018336949,
+      "exit": false,
+      "exit_number": null,
+      "access_transition": null,
+      "local_shift_offset": null
+    },
+    {
+      "elevator_point_id": "elevator_point_022",
       "elevator_id": "EV_006",
       "type": "elevator_point",
-      "label": "elevator_point_018",
+      "label": "elevator_point_022",
+      "polygon_id": "edited_002",
+      "polygon_context_source": "explicit",
+      "layer": "B3",
+      "point_source": [2400.17, 746.36],
+      "facing_point_source": [2368.42, 784.99],
+      "direction_points_source": [
+        [2422.42, 751.84],
+        [2305.5, 655.74]
+      ],
+      "direction_vertex_refs": [
+        {
+          "hole_index": 5,
+          "polygon_id": "edited_002",
+          "vertex_index": 0
+        },
+        {
+          "hole_index": 3,
+          "polygon_id": "edited_002",
+          "vertex_index": 2
+        }
+      ],
+      "position": [-399.178359, 72.886805, -14],
+      "facing_position": [-398.178359, 72.886088, -14],
+      "direction_positions": [
+        [-401.578808, 75.198602, -14],
+        [-401.596214, 50.935777, -14]
+      ],
+      "facing_angle_deg": -0.041104203280303744,
+      "exit": false,
+      "exit_number": null,
+      "access_transition": null,
+      "local_shift_offset": null
+    },
+    {
+      "elevator_point_id": "elevator_point_023",
+      "elevator_id": "EV_006",
+      "type": "elevator_point",
+      "label": "elevator_point_023",
       "polygon_id": "edited_001",
+      "polygon_context_source": "explicit",
       "layer": "B4",
-      "point_source": [2409.25, 961.79],
-      "facing_point_source": [2427.62, 1008.29],
+      "point_source": [2341.75, 914.9],
+      "facing_point_source": [2310.58, 953.99],
       "direction_points_source": [
         [2174.99, 760.88],
-        [2123.79, 781.11]
+        [2592.61, 1093.88]
       ],
       "direction_vertex_refs": [
         {
@@ -6773,17 +6863,17 @@
         },
         {
           "hole_index": null,
-          "polygon_id": "added_003",
-          "vertex_index": 0
+          "polygon_id": "edited_001",
+          "vertex_index": 5
         }
       ],
-      "position": [-401.069531, 77.870981, -21],
-      "facing_position": [-401.124023, 78.869495, -21],
+      "position": [-399.603772, 65.579214, -21],
+      "facing_position": [-398.603979, 65.599575, -21],
       "direction_positions": [
         [-402.537569, 28.433605, -21],
-        [-391.845597, 29.017101, -21]
+        [-404.241452, 112.09822, -21]
       ],
-      "facing_angle_deg": 93.12372102749605,
+      "facing_angle_deg": 1.1667037366619863,
       "exit": false,
       "exit_number": null,
       "access_transition": null,
@@ -8537,404 +8627,12 @@
   ],
   "manual_assets": [
     {
-      "asset_id": "ticket_gate_004",
-      "parent_asset_id": "ticket_gate_004",
-      "segment_index": 1,
-      "type": "ticket_gate",
-      "blend": "TicketGate.blend",
-      "label": "ticket_gate_004",
-      "polygon_id": "edited_007",
-      "layer": "B1",
-      "location": [-111.196088, 41.811853, 0],
-      "rotation_z": 90.56837142694383,
-      "scale": [14, 1, 1],
-      "point_source": [679.405, 788.425],
-      "points_source": [
-        [638.73, 755.58],
-        [720.08, 821.27]
-      ],
-      "start_point_source": [638.73, 755.58],
-      "end_point_source": [720.08, 821.27],
-      "public_side_point_source": null,
-      "public_side_position": null,
-      "paid_side_point_source": [648.94, 798.13],
-      "paid_side_position": [-105.822394, 41.74142, 0],
-      "gate_public_side_flipped": false,
-      "gate_segment_index": 1,
-      "gate_segment_flipped": false,
-      "start": [-111.11022, 33.156108, 0],
-      "end": [-111.281955, 50.467599, 0],
-      "gate_count": 14,
-      "gate_width": 1.0,
-      "passage_width": 1.5,
-      "passage": {
-        "location": [-111.196088, 41.811853, 0],
-        "rotation_z": 90.56837142694383,
-        "width": 1.5,
-        "range": [7.906171, 9.406171]
-      },
-      "gate_type": "ticket_gate",
-      "navigation": {
-        "access_transition": "public_paid",
-        "cost": 10,
-        "node_type": "gate"
-      },
-      "gates": [
-        {
-          "gate_id": "ticket_gate_004_gate_001",
-          "index": 1,
-          "location": [-111.124169, 34.56221, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_004_gate_002",
-          "index": 2,
-          "location": [-111.134089, 35.562161, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_004_gate_003",
-          "index": 3,
-          "location": [-111.144009, 36.562112, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_004_gate_004",
-          "index": 4,
-          "location": [-111.153929, 37.562062, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_004_gate_005",
-          "index": 5,
-          "location": [-111.163848, 38.562013, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_004_gate_006",
-          "index": 6,
-          "location": [-111.173768, 39.561964, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_004_gate_007",
-          "index": 7,
-          "location": [-111.183688, 40.561915, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_004_gate_008",
-          "index": 8,
-          "location": [-111.208487, 43.061792, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_004_gate_009",
-          "index": 9,
-          "location": [-111.218407, 44.061743, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_004_gate_010",
-          "index": 10,
-          "location": [-111.228327, 45.061693, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_004_gate_011",
-          "index": 11,
-          "location": [-111.238247, 46.061644, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_004_gate_012",
-          "index": 12,
-          "location": [-111.248167, 47.061595, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_004_gate_013",
-          "index": 13,
-          "location": [-111.258086, 48.061546, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_004_gate_014",
-          "index": 14,
-          "location": [-111.268006, 49.061497, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        }
-      ],
-      "local_shift_offset": null
-    },
-    {
-      "asset_id": "ticket_gate_005",
-      "parent_asset_id": "ticket_gate_005",
-      "segment_index": 1,
-      "type": "ticket_gate",
-      "blend": "TicketGate.blend",
-      "label": "ticket_gate_005",
-      "polygon_id": "edited_007",
-      "layer": "B1",
-      "location": [-192.155057, 34.616562, 0],
-      "rotation_z": 178.9736007228179,
-      "scale": [14, 1, 1],
-      "point_source": [1100.045, 610.73],
-      "points_source": [
-        [1055.44, 624.74],
-        [1144.65, 596.72]
-      ],
-      "start_point_source": [1055.44, 624.74],
-      "end_point_source": [1144.65, 596.72],
-      "public_side_point_source": null,
-      "public_side_position": null,
-      "paid_side_point_source": [1106.33, 594.47],
-      "paid_side_position": [-195.47032, 31.96592, 0],
-      "gate_public_side_flipped": false,
-      "gate_segment_index": 1,
-      "gate_segment_flipped": false,
-      "start": [-184.318074, 34.476155, 0],
-      "end": [-199.99204, 34.756969, 0],
-      "gate_count": 14,
-      "gate_width": 1.0,
-      "passage_width": 1.5,
-      "passage": {
-        "location": [-192.155057, 34.616562, 0],
-        "rotation_z": 178.9736007228179,
-        "width": 1.5,
-        "range": [7.088241, 8.588241]
-      },
-      "gate_type": "ticket_gate",
-      "navigation": {
-        "access_transition": "public_paid",
-        "cost": 10,
-        "node_type": "gate"
-      },
-      "gates": [
-        {
-          "gate_id": "ticket_gate_005_gate_001",
-          "index": 1,
-          "location": [-184.90622, 34.486692, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_005_gate_002",
-          "index": 2,
-          "location": [-185.90606, 34.504605, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_005_gate_003",
-          "index": 3,
-          "location": [-186.905899, 34.522518, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_005_gate_004",
-          "index": 4,
-          "location": [-187.905739, 34.540431, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_005_gate_005",
-          "index": 5,
-          "location": [-188.905578, 34.558344, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_005_gate_006",
-          "index": 6,
-          "location": [-189.905418, 34.576258, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_005_gate_007",
-          "index": 7,
-          "location": [-190.905257, 34.594171, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_005_gate_008",
-          "index": 8,
-          "location": [-193.404856, 34.638953, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_005_gate_009",
-          "index": 9,
-          "location": [-194.404696, 34.656866, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_005_gate_010",
-          "index": 10,
-          "location": [-195.404535, 34.67478, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_005_gate_011",
-          "index": 11,
-          "location": [-196.404375, 34.692693, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_005_gate_012",
-          "index": 12,
-          "location": [-197.404214, 34.710606, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_005_gate_013",
-          "index": 13,
-          "location": [-198.404054, 34.728519, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_005_gate_014",
-          "index": 14,
-          "location": [-199.403893, 34.746432, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        }
-      ],
-      "local_shift_offset": null
-    },
-    {
-      "asset_id": "ticket_gate_006",
-      "parent_asset_id": "ticket_gate_006",
-      "segment_index": 1,
-      "type": "ticket_gate",
-      "blend": "TicketGate.blend",
-      "label": "ticket_gate_006",
-      "polygon_id": "edited_007",
-      "layer": "B1",
-      "location": [-195.418026, 48.840545, 0],
-      "rotation_z": 179.1547702955497,
-      "scale": [8, 1, 1],
-      "point_source": [1184.395, 658.91],
-      "points_source": [
-        [1155.47, 668.08],
-        [1213.32, 649.74]
-      ],
-      "start_point_source": [1155.47, 668.08],
-      "end_point_source": [1213.32, 649.74],
-      "public_side_point_source": null,
-      "public_side_position": null,
-      "paid_side_point_source": [1196.23, 671.46],
-      "paid_side_position": [-194.979744, 51.918585, 0],
-      "gate_public_side_flipped": false,
-      "gate_segment_index": 1,
-      "gate_segment_flipped": false,
-      "start": [-190.322839, 48.765375, 0],
-      "end": [-200.513213, 48.915715, 0],
-      "gate_count": 8,
-      "gate_width": 1.0,
-      "passage_width": 1.5,
-      "passage": {
-        "location": [-195.418026, 48.840545, 0],
-        "rotation_z": 179.1547702955497,
-        "width": 1.5,
-        "range": [4.345741, 5.845741]
-      },
-      "gate_type": "ticket_gate",
-      "navigation": {
-        "access_transition": "public_paid",
-        "cost": 10,
-        "node_type": "gate"
-      },
-      "gates": [
-        {
-          "gate_id": "ticket_gate_006_gate_001",
-          "index": 1,
-          "location": [-191.168488, 48.777851, 0],
-          "rotation_z": 179.1547702955497,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_006_gate_002",
-          "index": 2,
-          "location": [-192.168379, 48.792603, 0],
-          "rotation_z": 179.1547702955497,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_006_gate_003",
-          "index": 3,
-          "location": [-193.16827, 48.807354, 0],
-          "rotation_z": 179.1547702955497,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_006_gate_004",
-          "index": 4,
-          "location": [-194.168162, 48.822106, 0],
-          "rotation_z": 179.1547702955497,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_006_gate_005",
-          "index": 5,
-          "location": [-196.66789, 48.858985, 0],
-          "rotation_z": 179.1547702955497,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_006_gate_006",
-          "index": 6,
-          "location": [-197.667781, 48.873736, 0],
-          "rotation_z": 179.1547702955497,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_006_gate_007",
-          "index": 7,
-          "location": [-198.667672, 48.888488, 0],
-          "rotation_z": 179.1547702955497,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_006_gate_008",
-          "index": 8,
-          "location": [-199.667563, 48.903239, 0],
-          "rotation_z": 179.1547702955497,
-          "width": 1.0
-        }
-      ],
-      "local_shift_offset": null
-    },
-    {
       "asset_id": "toilet_001",
       "type": "toilet",
       "blend": "Toilet.blend",
       "label": "toilet_001",
-      "polygon_id": "edited_007",
+      "polygon_id": "edited_005",
+      "polygon_context_source": "fallback_contains",
       "layer": "B1",
       "location": [-83.855154, 24.093622, 0],
       "rotation_z": 90.28453235639367,
@@ -8994,6 +8692,7 @@
       "blend": "Toilet.blend",
       "label": "toilet_002",
       "polygon_id": "edited_006",
+      "polygon_context_source": "explicit",
       "layer": "B1",
       "location": [-403.83456, 84.778074, 0],
       "rotation_z": -1.3830764903819952,
@@ -9055,6 +8754,7 @@
       "blend": "TicketGate.blend",
       "label": "ticket_gate_007",
       "polygon_id": "edited_002",
+      "polygon_context_source": "explicit",
       "layer": "B3",
       "location": [-384.44412, 78.547244, -14],
       "rotation_z": -178.93236690427,
@@ -9186,6 +8886,7 @@
       "blend": "TicketGate.blend",
       "label": "ticket_gate_008",
       "polygon_id": "edited_002",
+      "polygon_context_source": "explicit",
       "layer": "B3",
       "location": [-385.121773, 120.26691, -14],
       "rotation_z": 1.260485936372412,
@@ -9259,6 +8960,7 @@
       "blend": "Subway.blend",
       "label": "subway_001",
       "polygon_id": "added_004",
+      "polygon_context_source": "explicit",
       "layer": "B2",
       "location": [-154.570152, 44.951928, -9],
       "rotation_z": 0.36143543100173303,
@@ -9297,6 +8999,7 @@
       "blend": "Subway.blend",
       "label": "subway_002",
       "polygon_id": "added_004",
+      "polygon_context_source": "explicit",
       "layer": "B2",
       "location": [-156.147828, 39.378072, -9],
       "rotation_z": -179.8242787196166,
@@ -9335,6 +9038,7 @@
       "blend": "Subway.blend",
       "label": "subway_003",
       "polygon_id": "added_003",
+      "polygon_context_source": "explicit",
       "layer": "B4",
       "location": [-388.276075, 91.35457, -23],
       "rotation_z": 89.73159821451422,
@@ -9373,6 +9077,7 @@
       "blend": "Subway.blend",
       "label": "subway_004",
       "polygon_id": "added_003",
+      "polygon_context_source": "explicit",
       "layer": "B4",
       "location": [-382.089831, 90.981044, -23],
       "rotation_z": -89.9057610336296,
@@ -9403,6 +9108,402 @@
       "passage": null,
       "gate_type": null,
       "navigation": null,
+      "local_shift_offset": null
+    },
+    {
+      "asset_id": "ticket_gate_009",
+      "parent_asset_id": "ticket_gate_009",
+      "segment_index": 1,
+      "type": "ticket_gate",
+      "blend": "TicketGate.blend",
+      "label": "ticket_gate_009",
+      "polygon_id": "edited_005",
+      "polygon_context_source": "explicit",
+      "layer": "B1",
+      "location": [-111.165151, 41.788919, 0],
+      "rotation_z": 89.49376107204894,
+      "scale": [14, 1, 1],
+      "point_source": [679.125, 788.395],
+      "points_source": [
+        [639.59, 755.44],
+        [718.66, 821.35]
+      ],
+      "start_point_source": [639.59, 755.44],
+      "end_point_source": [718.66, 821.35],
+      "public_side_point_source": null,
+      "public_side_position": null,
+      "paid_side_point_source": [632.23, 811.89],
+      "paid_side_position": [-101.56917, 43.279857, 0],
+      "gate_public_side_flipped": false,
+      "gate_segment_index": 1,
+      "gate_segment_flipped": false,
+      "start": [-111.24119, 33.183139, 0],
+      "end": [-111.089112, 50.394699, 0],
+      "gate_count": 14,
+      "gate_width": 1.0,
+      "passage_width": 1.5,
+      "passage": {
+        "location": [-111.165151, 41.788919, 0],
+        "rotation_z": 89.49376107204894,
+        "width": 1.5,
+        "range": [7.856116, 9.356116]
+      },
+      "gate_type": "ticket_gate",
+      "navigation": {
+        "access_transition": "public_paid",
+        "cost": 10,
+        "node_type": "gate"
+      },
+      "gates": [
+        {
+          "gate_id": "ticket_gate_009_gate_001",
+          "index": 1,
+          "location": [-111.229208, 34.539202, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_009_gate_002",
+          "index": 2,
+          "location": [-111.220372, 35.539163, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_009_gate_003",
+          "index": 3,
+          "location": [-111.211537, 36.539124, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_009_gate_004",
+          "index": 4,
+          "location": [-111.202701, 37.539085, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_009_gate_005",
+          "index": 5,
+          "location": [-111.193866, 38.539046, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_009_gate_006",
+          "index": 6,
+          "location": [-111.185031, 39.539007, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_009_gate_007",
+          "index": 7,
+          "location": [-111.176195, 40.538968, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_009_gate_008",
+          "index": 8,
+          "location": [-111.154107, 43.03887, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_009_gate_009",
+          "index": 9,
+          "location": [-111.145271, 44.038831, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_009_gate_010",
+          "index": 10,
+          "location": [-111.136436, 45.038792, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_009_gate_011",
+          "index": 11,
+          "location": [-111.1276, 46.038753, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_009_gate_012",
+          "index": 12,
+          "location": [-111.118765, 47.038714, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_009_gate_013",
+          "index": 13,
+          "location": [-111.10993, 48.038675, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_009_gate_014",
+          "index": 14,
+          "location": [-111.101094, 49.038636, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        }
+      ],
+      "local_shift_offset": null
+    },
+    {
+      "asset_id": "ticket_gate_010",
+      "parent_asset_id": "ticket_gate_010",
+      "segment_index": 1,
+      "type": "ticket_gate",
+      "blend": "TicketGate.blend",
+      "label": "ticket_gate_010",
+      "polygon_id": "edited_005",
+      "polygon_context_source": "explicit",
+      "layer": "B1",
+      "location": [-195.379013, 48.866135, 0],
+      "rotation_z": -0.5079409073269703,
+      "scale": [8, 1, 1],
+      "point_source": [1184.295, 659.08],
+      "points_source": [
+        [1212.85, 649.87],
+        [1155.74, 668.29]
+      ],
+      "start_point_source": [1212.85, 649.87],
+      "end_point_source": [1155.74, 668.29],
+      "public_side_point_source": null,
+      "public_side_position": null,
+      "paid_side_point_source": [1197.52, 676.58],
+      "paid_side_position": [-194.351278, 52.955453, 0],
+      "gate_public_side_flipped": false,
+      "gate_segment_index": 1,
+      "gate_segment_flipped": false,
+      "start": [-200.433359, 48.910944, 0],
+      "end": [-190.324667, 48.821326, 0],
+      "gate_count": 8,
+      "gate_width": 1.0,
+      "passage_width": 1.5,
+      "passage": {
+        "location": [-195.379013, 48.866135, 0],
+        "rotation_z": -0.5079409073269703,
+        "width": 1.5,
+        "range": [4.304545, 5.804545]
+      },
+      "gate_type": "ticket_gate",
+      "navigation": {
+        "access_transition": "public_paid",
+        "cost": 10,
+        "node_type": "gate"
+      },
+      "gates": [
+        {
+          "gate_id": "ticket_gate_010_gate_001",
+          "index": 1,
+          "location": [-199.628846, 48.903812, 0],
+          "rotation_z": -0.5079409073269703,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_010_gate_002",
+          "index": 2,
+          "location": [-198.628885, 48.894947, 0],
+          "rotation_z": -0.5079409073269703,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_010_gate_003",
+          "index": 3,
+          "location": [-197.628924, 48.886082, 0],
+          "rotation_z": -0.5079409073269703,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_010_gate_004",
+          "index": 4,
+          "location": [-196.628964, 48.877216, 0],
+          "rotation_z": -0.5079409073269703,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_010_gate_005",
+          "index": 5,
+          "location": [-194.129062, 48.855054, 0],
+          "rotation_z": -0.5079409073269703,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_010_gate_006",
+          "index": 6,
+          "location": [-193.129101, 48.846189, 0],
+          "rotation_z": -0.5079409073269703,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_010_gate_007",
+          "index": 7,
+          "location": [-192.129141, 48.837323, 0],
+          "rotation_z": -0.5079409073269703,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_010_gate_008",
+          "index": 8,
+          "location": [-191.12918, 48.828458, 0],
+          "rotation_z": -0.5079409073269703,
+          "width": 1.0
+        }
+      ],
+      "local_shift_offset": null
+    },
+    {
+      "asset_id": "ticket_gate_011",
+      "parent_asset_id": "ticket_gate_011",
+      "segment_index": 1,
+      "type": "ticket_gate",
+      "blend": "TicketGate.blend",
+      "label": "ticket_gate_011",
+      "polygon_id": "edited_005",
+      "polygon_context_source": "explicit",
+      "layer": "B1",
+      "location": [-192.150267, 34.653575, 0],
+      "rotation_z": -0.188616903110932,
+      "scale": [14, 1, 1],
+      "point_source": [1100.19, 610.88],
+      "points_source": [
+        [1144.76, 596.27],
+        [1055.62, 625.49]
+      ],
+      "start_point_source": [1144.76, 596.27],
+      "end_point_source": [1055.62, 625.49],
+      "public_side_point_source": null,
+      "public_side_position": null,
+      "paid_side_point_source": [1089.54, 592.78],
+      "paid_side_position": [-193.598099, 30.611406, 0],
+      "gate_public_side_flipped": false,
+      "gate_segment_index": 1,
+      "gate_segment_flipped": false,
+      "start": [-200.075656, 34.679665, 0],
+      "end": [-184.224878, 34.627484, 0],
+      "gate_count": 14,
+      "gate_width": 1.0,
+      "passage_width": 1.5,
+      "passage": {
+        "location": [-192.150267, 34.653575, 0],
+        "rotation_z": -0.188616903110932,
+        "width": 1.5,
+        "range": [7.175432, 8.675432]
+      },
+      "gate_type": "ticket_gate",
+      "navigation": {
+        "access_transition": "public_paid",
+        "cost": 10,
+        "node_type": "gate"
+      },
+      "gates": [
+        {
+          "gate_id": "ticket_gate_011_gate_001",
+          "index": 1,
+          "location": [-199.400228, 34.677442, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_011_gate_002",
+          "index": 2,
+          "location": [-198.400233, 34.67415, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_011_gate_003",
+          "index": 3,
+          "location": [-197.400239, 34.670858, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_011_gate_004",
+          "index": 4,
+          "location": [-196.400244, 34.667566, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_011_gate_005",
+          "index": 5,
+          "location": [-195.400249, 34.664274, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_011_gate_006",
+          "index": 6,
+          "location": [-194.400255, 34.660982, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_011_gate_007",
+          "index": 7,
+          "location": [-193.40026, 34.65769, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_011_gate_008",
+          "index": 8,
+          "location": [-190.900274, 34.64946, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_011_gate_009",
+          "index": 9,
+          "location": [-189.900279, 34.646168, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_011_gate_010",
+          "index": 10,
+          "location": [-188.900285, 34.642876, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_011_gate_011",
+          "index": 11,
+          "location": [-187.90029, 34.639584, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_011_gate_012",
+          "index": 12,
+          "location": [-186.900295, 34.636292, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_011_gate_013",
+          "index": 13,
+          "location": [-185.900301, 34.633, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_011_gate_014",
+          "index": 14,
+          "location": [-184.900306, 34.629708, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        }
+      ],
       "local_shift_offset": null
     }
   ],
@@ -10006,46 +10107,14 @@
       "type": "stair",
       "connection_id": "stair_014",
       "start_line": [
+        [-131.119693, -1.323252, -7],
+        [-130.680126, -5.720601, -7]
+      ],
+      "end_line": [
         [-89.022309, 30.643911, -7],
         [-88.582757, 26.246541, -7]
       ],
-      "end_line": [
-        [-92.770338, 33.248223, 0],
-        [-92.301096, 27.785108, 0]
-      ],
-      "target_height": 7.0,
-      "hasPillar": true
-    },
-    {
-      "name": "stair_015",
-      "blend": "Stair.blend",
-      "type": "stair",
-      "connection_id": "stair_015",
-      "start_line": [
-        [-126.485798, 30.332737, -7],
-        [-126.428729, 25.966586, -7]
-      ],
-      "end_line": [
-        [-106.438024, 33.090128, 0],
-        [-106.37711, 27.665773, 0]
-      ],
-      "target_height": 7.0,
-      "hasPillar": true
-    },
-    {
-      "name": "stair_016",
-      "blend": "Stair.blend",
-      "type": "stair",
-      "connection_id": "stair_016",
-      "start_line": [
-        [-124.27047, 56.656778, -7],
-        [-124.584349, 52.042586, -7]
-      ],
-      "end_line": [
-        [-105.889836, 56.715227, 0],
-        [-106.223371, 50.984582, 0]
-      ],
-      "target_height": 7.0,
+      "target_height": 5.0,
       "hasPillar": true
     },
     {
@@ -10060,54 +10129,6 @@
       "end_line": [
         [-190.936089, 31.442588, 0],
         [-190.388353, 26.143196, 0]
-      ],
-      "target_height": 7.0,
-      "hasPillar": true
-    },
-    {
-      "name": "stair_018",
-      "blend": "Stair.blend",
-      "type": "stair",
-      "connection_id": "stair_018",
-      "start_line": [
-        [-174.935363, 55.703006, -7],
-        [-174.709323, 51.352739, -7]
-      ],
-      "end_line": [
-        [-190.210122, 57.700794, 0],
-        [-189.967281, 52.298049, 0]
-      ],
-      "target_height": 7.0,
-      "hasPillar": true
-    },
-    {
-      "name": "stair_019",
-      "blend": "Stair.blend",
-      "type": "stair",
-      "connection_id": "stair_019",
-      "start_line": [
-        [-211.513267, 55.66953, -7],
-        [-211.723256, 52.109592, -7]
-      ],
-      "end_line": [
-        [-199.606883, 56.977037, 0],
-        [-199.829779, 52.553676, 0]
-      ],
-      "target_height": 7.0,
-      "hasPillar": true
-    },
-    {
-      "name": "stair_020",
-      "blend": "Stair.blend",
-      "type": "stair",
-      "connection_id": "stair_020",
-      "start_line": [
-        [-216.432479, 30.852116, -7],
-        [-216.59825, 26.509512, -7]
-      ],
-      "end_line": [
-        [-199.680315, 31.526304, 0],
-        [-199.858547, 26.131819, 0]
       ],
       "target_height": 7.0,
       "hasPillar": true
@@ -10493,256 +10514,84 @@
       "hasPillar": true
     },
     {
-      "name": "ticket_gate_004_gate_001",
-      "blend": "Gate.blend",
-      "location": [-111.124169, 34.56221, 0],
-      "rotation_z": 90.56837142694383,
-      "scale": [1, 1, 1]
+      "name": "stair_023",
+      "blend": "Stair.blend",
+      "type": "stair",
+      "connection_id": "stair_023",
+      "start_line": [
+        [-126.339205, 26.68699, -7],
+        [-126.397725, 31.051632, -7]
+      ],
+      "end_line": [
+        [-106.37711, 27.665773, 0],
+        [-106.438024, 33.090128, 0]
+      ],
+      "target_height": 7.0,
+      "hasPillar": true
     },
     {
-      "name": "ticket_gate_004_gate_002",
-      "blend": "Gate.blend",
-      "location": [-111.134089, 35.562161, 0],
-      "rotation_z": 90.56837142694383,
-      "scale": [1, 1, 1]
+      "name": "stair_024",
+      "blend": "Stair.blend",
+      "type": "stair",
+      "connection_id": "stair_024",
+      "start_line": [
+        [-124.034353, 52.190426, -7],
+        [-123.720473, 56.804618, -7]
+      ],
+      "end_line": [
+        [-106.223371, 50.984582, 0],
+        [-105.889836, 56.715227, 0]
+      ],
+      "target_height": 7.0,
+      "hasPillar": true
     },
     {
-      "name": "ticket_gate_004_gate_003",
-      "blend": "Gate.blend",
-      "location": [-111.144009, 36.562112, 0],
-      "rotation_z": 90.56837142694383,
-      "scale": [1, 1, 1]
+      "name": "stair_025",
+      "blend": "Stair.blend",
+      "type": "stair",
+      "connection_id": "stair_025",
+      "start_line": [
+        [-174.695594, 56.740543, -7],
+        [-174.467828, 52.393773, -7]
+      ],
+      "end_line": [
+        [-190.210122, 57.700794, 0],
+        [-189.967281, 52.298049, 0]
+      ],
+      "target_height": 7.0,
+      "hasPillar": true
     },
     {
-      "name": "ticket_gate_004_gate_004",
-      "blend": "Gate.blend",
-      "location": [-111.153929, 37.562062, 0],
-      "rotation_z": 90.56837142694383,
-      "scale": [1, 1, 1]
+      "name": "stair_026",
+      "blend": "Stair.blend",
+      "type": "stair",
+      "connection_id": "stair_026",
+      "start_line": [
+        [-213.179463, 56.913157, -7],
+        [-213.388277, 53.352714, -7]
+      ],
+      "end_line": [
+        [-199.606883, 56.977037, 0],
+        [-199.829779, 52.553676, 0]
+      ],
+      "target_height": 7.0,
+      "hasPillar": true
     },
     {
-      "name": "ticket_gate_004_gate_005",
-      "blend": "Gate.blend",
-      "location": [-111.163848, 38.562013, 0],
-      "rotation_z": 90.56837142694383,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_004_gate_006",
-      "blend": "Gate.blend",
-      "location": [-111.173768, 39.561964, 0],
-      "rotation_z": 90.56837142694383,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_004_gate_007",
-      "blend": "Gate.blend",
-      "location": [-111.183688, 40.561915, 0],
-      "rotation_z": 90.56837142694383,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_004_gate_008",
-      "blend": "Gate.blend",
-      "location": [-111.208487, 43.061792, 0],
-      "rotation_z": 90.56837142694383,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_004_gate_009",
-      "blend": "Gate.blend",
-      "location": [-111.218407, 44.061743, 0],
-      "rotation_z": 90.56837142694383,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_004_gate_010",
-      "blend": "Gate.blend",
-      "location": [-111.228327, 45.061693, 0],
-      "rotation_z": 90.56837142694383,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_004_gate_011",
-      "blend": "Gate.blend",
-      "location": [-111.238247, 46.061644, 0],
-      "rotation_z": 90.56837142694383,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_004_gate_012",
-      "blend": "Gate.blend",
-      "location": [-111.248167, 47.061595, 0],
-      "rotation_z": 90.56837142694383,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_004_gate_013",
-      "blend": "Gate.blend",
-      "location": [-111.258086, 48.061546, 0],
-      "rotation_z": 90.56837142694383,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_004_gate_014",
-      "blend": "Gate.blend",
-      "location": [-111.268006, 49.061497, 0],
-      "rotation_z": 90.56837142694383,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_005_gate_001",
-      "blend": "Gate.blend",
-      "location": [-184.90622, 34.486692, 0],
-      "rotation_z": 178.9736007228179,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_005_gate_002",
-      "blend": "Gate.blend",
-      "location": [-185.90606, 34.504605, 0],
-      "rotation_z": 178.9736007228179,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_005_gate_003",
-      "blend": "Gate.blend",
-      "location": [-186.905899, 34.522518, 0],
-      "rotation_z": 178.9736007228179,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_005_gate_004",
-      "blend": "Gate.blend",
-      "location": [-187.905739, 34.540431, 0],
-      "rotation_z": 178.9736007228179,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_005_gate_005",
-      "blend": "Gate.blend",
-      "location": [-188.905578, 34.558344, 0],
-      "rotation_z": 178.9736007228179,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_005_gate_006",
-      "blend": "Gate.blend",
-      "location": [-189.905418, 34.576258, 0],
-      "rotation_z": 178.9736007228179,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_005_gate_007",
-      "blend": "Gate.blend",
-      "location": [-190.905257, 34.594171, 0],
-      "rotation_z": 178.9736007228179,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_005_gate_008",
-      "blend": "Gate.blend",
-      "location": [-193.404856, 34.638953, 0],
-      "rotation_z": 178.9736007228179,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_005_gate_009",
-      "blend": "Gate.blend",
-      "location": [-194.404696, 34.656866, 0],
-      "rotation_z": 178.9736007228179,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_005_gate_010",
-      "blend": "Gate.blend",
-      "location": [-195.404535, 34.67478, 0],
-      "rotation_z": 178.9736007228179,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_005_gate_011",
-      "blend": "Gate.blend",
-      "location": [-196.404375, 34.692693, 0],
-      "rotation_z": 178.9736007228179,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_005_gate_012",
-      "blend": "Gate.blend",
-      "location": [-197.404214, 34.710606, 0],
-      "rotation_z": 178.9736007228179,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_005_gate_013",
-      "blend": "Gate.blend",
-      "location": [-198.404054, 34.728519, 0],
-      "rotation_z": 178.9736007228179,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_005_gate_014",
-      "blend": "Gate.blend",
-      "location": [-199.403893, 34.746432, 0],
-      "rotation_z": 178.9736007228179,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_006_gate_001",
-      "blend": "Gate.blend",
-      "location": [-191.168488, 48.777851, 0],
-      "rotation_z": 179.1547702955497,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_006_gate_002",
-      "blend": "Gate.blend",
-      "location": [-192.168379, 48.792603, 0],
-      "rotation_z": 179.1547702955497,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_006_gate_003",
-      "blend": "Gate.blend",
-      "location": [-193.16827, 48.807354, 0],
-      "rotation_z": 179.1547702955497,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_006_gate_004",
-      "blend": "Gate.blend",
-      "location": [-194.168162, 48.822106, 0],
-      "rotation_z": 179.1547702955497,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_006_gate_005",
-      "blend": "Gate.blend",
-      "location": [-196.66789, 48.858985, 0],
-      "rotation_z": 179.1547702955497,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_006_gate_006",
-      "blend": "Gate.blend",
-      "location": [-197.667781, 48.873736, 0],
-      "rotation_z": 179.1547702955497,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_006_gate_007",
-      "blend": "Gate.blend",
-      "location": [-198.667672, 48.888488, 0],
-      "rotation_z": 179.1547702955497,
-      "scale": [1, 1, 1]
-    },
-    {
-      "name": "ticket_gate_006_gate_008",
-      "blend": "Gate.blend",
-      "location": [-199.667563, 48.903239, 0],
-      "rotation_z": 179.1547702955497,
-      "scale": [1, 1, 1]
+      "name": "stair_027",
+      "blend": "Stair.blend",
+      "type": "stair",
+      "connection_id": "stair_027",
+      "start_line": [
+        [-216.799266, 26.091173, -7],
+        [-216.63348, 30.433771, -7]
+      ],
+      "end_line": [
+        [-199.858547, 26.131819, 0],
+        [-199.680315, 31.526304, 0]
+      ],
+      "target_height": 7.0,
+      "hasPillar": true
     },
     {
       "name": "toilet_001",
@@ -10905,6 +10754,258 @@
       "scale": [122.151558, 1, 1]
     },
     {
+      "name": "ticket_gate_009_gate_001",
+      "blend": "Gate.blend",
+      "location": [-111.229208, 34.539202, 0],
+      "rotation_z": 89.49376107204894,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_009_gate_002",
+      "blend": "Gate.blend",
+      "location": [-111.220372, 35.539163, 0],
+      "rotation_z": 89.49376107204894,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_009_gate_003",
+      "blend": "Gate.blend",
+      "location": [-111.211537, 36.539124, 0],
+      "rotation_z": 89.49376107204894,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_009_gate_004",
+      "blend": "Gate.blend",
+      "location": [-111.202701, 37.539085, 0],
+      "rotation_z": 89.49376107204894,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_009_gate_005",
+      "blend": "Gate.blend",
+      "location": [-111.193866, 38.539046, 0],
+      "rotation_z": 89.49376107204894,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_009_gate_006",
+      "blend": "Gate.blend",
+      "location": [-111.185031, 39.539007, 0],
+      "rotation_z": 89.49376107204894,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_009_gate_007",
+      "blend": "Gate.blend",
+      "location": [-111.176195, 40.538968, 0],
+      "rotation_z": 89.49376107204894,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_009_gate_008",
+      "blend": "Gate.blend",
+      "location": [-111.154107, 43.03887, 0],
+      "rotation_z": 89.49376107204894,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_009_gate_009",
+      "blend": "Gate.blend",
+      "location": [-111.145271, 44.038831, 0],
+      "rotation_z": 89.49376107204894,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_009_gate_010",
+      "blend": "Gate.blend",
+      "location": [-111.136436, 45.038792, 0],
+      "rotation_z": 89.49376107204894,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_009_gate_011",
+      "blend": "Gate.blend",
+      "location": [-111.1276, 46.038753, 0],
+      "rotation_z": 89.49376107204894,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_009_gate_012",
+      "blend": "Gate.blend",
+      "location": [-111.118765, 47.038714, 0],
+      "rotation_z": 89.49376107204894,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_009_gate_013",
+      "blend": "Gate.blend",
+      "location": [-111.10993, 48.038675, 0],
+      "rotation_z": 89.49376107204894,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_009_gate_014",
+      "blend": "Gate.blend",
+      "location": [-111.101094, 49.038636, 0],
+      "rotation_z": 89.49376107204894,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_010_gate_001",
+      "blend": "Gate.blend",
+      "location": [-199.628846, 48.903812, 0],
+      "rotation_z": -0.5079409073269703,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_010_gate_002",
+      "blend": "Gate.blend",
+      "location": [-198.628885, 48.894947, 0],
+      "rotation_z": -0.5079409073269703,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_010_gate_003",
+      "blend": "Gate.blend",
+      "location": [-197.628924, 48.886082, 0],
+      "rotation_z": -0.5079409073269703,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_010_gate_004",
+      "blend": "Gate.blend",
+      "location": [-196.628964, 48.877216, 0],
+      "rotation_z": -0.5079409073269703,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_010_gate_005",
+      "blend": "Gate.blend",
+      "location": [-194.129062, 48.855054, 0],
+      "rotation_z": -0.5079409073269703,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_010_gate_006",
+      "blend": "Gate.blend",
+      "location": [-193.129101, 48.846189, 0],
+      "rotation_z": -0.5079409073269703,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_010_gate_007",
+      "blend": "Gate.blend",
+      "location": [-192.129141, 48.837323, 0],
+      "rotation_z": -0.5079409073269703,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_010_gate_008",
+      "blend": "Gate.blend",
+      "location": [-191.12918, 48.828458, 0],
+      "rotation_z": -0.5079409073269703,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_011_gate_001",
+      "blend": "Gate.blend",
+      "location": [-199.400228, 34.677442, 0],
+      "rotation_z": -0.188616903110932,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_011_gate_002",
+      "blend": "Gate.blend",
+      "location": [-198.400233, 34.67415, 0],
+      "rotation_z": -0.188616903110932,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_011_gate_003",
+      "blend": "Gate.blend",
+      "location": [-197.400239, 34.670858, 0],
+      "rotation_z": -0.188616903110932,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_011_gate_004",
+      "blend": "Gate.blend",
+      "location": [-196.400244, 34.667566, 0],
+      "rotation_z": -0.188616903110932,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_011_gate_005",
+      "blend": "Gate.blend",
+      "location": [-195.400249, 34.664274, 0],
+      "rotation_z": -0.188616903110932,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_011_gate_006",
+      "blend": "Gate.blend",
+      "location": [-194.400255, 34.660982, 0],
+      "rotation_z": -0.188616903110932,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_011_gate_007",
+      "blend": "Gate.blend",
+      "location": [-193.40026, 34.65769, 0],
+      "rotation_z": -0.188616903110932,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_011_gate_008",
+      "blend": "Gate.blend",
+      "location": [-190.900274, 34.64946, 0],
+      "rotation_z": -0.188616903110932,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_011_gate_009",
+      "blend": "Gate.blend",
+      "location": [-189.900279, 34.646168, 0],
+      "rotation_z": -0.188616903110932,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_011_gate_010",
+      "blend": "Gate.blend",
+      "location": [-188.900285, 34.642876, 0],
+      "rotation_z": -0.188616903110932,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_011_gate_011",
+      "blend": "Gate.blend",
+      "location": [-187.90029, 34.639584, 0],
+      "rotation_z": -0.188616903110932,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_011_gate_012",
+      "blend": "Gate.blend",
+      "location": [-186.900295, 34.636292, 0],
+      "rotation_z": -0.188616903110932,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_011_gate_013",
+      "blend": "Gate.blend",
+      "location": [-185.900301, 34.633, 0],
+      "rotation_z": -0.188616903110932,
+      "scale": [1, 1, 1]
+    },
+    {
+      "name": "ticket_gate_011_gate_014",
+      "blend": "Gate.blend",
+      "location": [-184.900306, 34.629708, 0],
+      "rotation_z": -0.188616903110932,
+      "scale": [1, 1, 1]
+    },
+    {
       "name": "elevator_point_001",
       "blend": "Elevator.blend",
       "location": [-90.510256, 55.426373, 0],
@@ -10937,28 +11038,12 @@
       "elevator_id": "EV_002"
     },
     {
-      "name": "elevator_point_007",
-      "blend": "Elevator.blend",
-      "location": [-367.241156, 79.840281, -21],
-      "rotation_z": 89.60786847507256,
-      "scale": [1, 1, 1],
-      "elevator_id": "EV_007"
-    },
-    {
-      "name": "elevator_point_008",
-      "blend": "Elevator.blend",
-      "location": [-367.173701, 71.617877, -14],
-      "rotation_z": 89.43647797876726,
-      "scale": [1, 1, 1],
-      "elevator_id": "EV_007"
-    },
-    {
       "name": "elevator_point_009",
       "blend": "Elevator.blend",
       "location": [-365.955117, 104.91713, -14],
       "rotation_z": -178.18635489038718,
       "scale": [1, 1, 1],
-      "elevator_id": "EV_005"
+      "elevator_id": "EV_007"
     },
     {
       "name": "elevator_point_011",
@@ -10998,21 +11083,37 @@
       "location": [-357.011517, 116.463538, 0],
       "rotation_z": -179.35429881991402,
       "scale": [1, 1, 1],
+      "elevator_id": "EV_007"
+    },
+    {
+      "name": "elevator_point_019",
+      "blend": "Elevator.blend",
+      "location": [-369.63779, 68.271396, -21],
+      "rotation_z": -179.74775553667087,
+      "scale": [1, 1, 1],
       "elevator_id": "EV_005"
     },
     {
-      "name": "elevator_point_017",
+      "name": "elevator_point_020",
       "blend": "Elevator.blend",
-      "location": [-400.614722, 72.444449, -14],
-      "rotation_z": 90.68087891018409,
+      "location": [-368.854484, 70.219441, -14],
+      "rotation_z": -179.823018336949,
+      "scale": [1, 1, 1],
+      "elevator_id": "EV_005"
+    },
+    {
+      "name": "elevator_point_022",
+      "blend": "Elevator.blend",
+      "location": [-399.178359, 72.886805, -14],
+      "rotation_z": -0.041104203280303744,
       "scale": [1, 1, 1],
       "elevator_id": "EV_006"
     },
     {
-      "name": "elevator_point_018",
+      "name": "elevator_point_023",
       "blend": "Elevator.blend",
-      "location": [-401.069531, 77.870981, -21],
-      "rotation_z": 93.12372102749605,
+      "location": [-399.603772, 65.579214, -21],
+      "rotation_z": 1.1667037366619863,
       "scale": [1, 1, 1],
       "elevator_id": "EV_006"
     }
@@ -11026,6 +11127,7 @@
       "same_layer": false,
       "from": {
         "polygon_id": "edited_002",
+        "polygon_context_source": "explicit",
         "layer": "B3",
         "point_source": [2065.91, 633.12],
         "line_source": [
@@ -11042,6 +11144,7 @@
       },
       "to": {
         "polygon_id": "added_001",
+        "polygon_context_source": "explicit",
         "layer": "B4",
         "xy_reference_polygon_id": "added_001",
         "xy_reference_layer": "B4",
@@ -11077,6 +11180,7 @@
       "same_layer": false,
       "from": {
         "polygon_id": "edited_002",
+        "polygon_context_source": "explicit",
         "layer": "B3",
         "point_source": [2269.935, 802.045],
         "line_source": [
@@ -11093,6 +11197,7 @@
       },
       "to": {
         "polygon_id": "added_001",
+        "polygon_context_source": "explicit",
         "layer": "B4",
         "xy_reference_polygon_id": "added_001",
         "xy_reference_layer": "B4",
@@ -11128,6 +11233,7 @@
       "same_layer": false,
       "from": {
         "polygon_id": "edited_002",
+        "polygon_context_source": "explicit",
         "layer": "B3",
         "point_source": [2409.945, 756.32],
         "line_source": [
@@ -11144,6 +11250,7 @@
       },
       "to": {
         "polygon_id": "edited_001",
+        "polygon_context_source": "explicit",
         "layer": "B4",
         "xy_reference_polygon_id": "edited_001",
         "xy_reference_layer": "B4",
@@ -11179,6 +11286,7 @@
       "same_layer": false,
       "from": {
         "polygon_id": "edited_002",
+        "polygon_context_source": "explicit",
         "layer": "B3",
         "point_source": [2203.77, 587.525],
         "line_source": [
@@ -11195,6 +11303,7 @@
       },
       "to": {
         "polygon_id": "edited_001",
+        "polygon_context_source": "explicit",
         "layer": "B4",
         "xy_reference_polygon_id": "edited_001",
         "xy_reference_layer": "B4",
@@ -11230,6 +11339,7 @@
       "same_layer": false,
       "from": {
         "polygon_id": "edited_002",
+        "polygon_context_source": "explicit",
         "layer": "B3",
         "point_source": [2267.42, 640.12],
         "line_source": [
@@ -11246,6 +11356,7 @@
       },
       "to": {
         "polygon_id": "edited_001",
+        "polygon_context_source": "explicit",
         "layer": "B4",
         "xy_reference_polygon_id": "edited_001",
         "xy_reference_layer": "B4",
@@ -11281,6 +11392,7 @@
       "same_layer": false,
       "from": {
         "polygon_id": "edited_002",
+        "polygon_context_source": "explicit",
         "layer": "B3",
         "point_source": [2030.86, 625.02],
         "line_source": [
@@ -11297,6 +11409,7 @@
       },
       "to": {
         "polygon_id": "added_001",
+        "polygon_context_source": "explicit",
         "layer": "B4",
         "xy_reference_polygon_id": "added_001",
         "xy_reference_layer": "B4",
@@ -11331,6 +11444,7 @@
       "same_layer": false,
       "from": {
         "polygon_id": "edited_006",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [2670.14, 699.93],
         "line_source": [
@@ -11347,6 +11461,7 @@
       },
       "to": {
         "polygon_id": "edited_002",
+        "polygon_context_source": "explicit",
         "layer": "B3",
         "xy_reference_polygon_id": "edited_002",
         "xy_reference_layer": "B3",
@@ -11381,6 +11496,7 @@
       "same_layer": false,
       "from": {
         "polygon_id": "edited_006",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [2747.65, 664.98],
         "line_source": [
@@ -11397,6 +11513,7 @@
       },
       "to": {
         "polygon_id": "edited_002",
+        "polygon_context_source": "explicit",
         "layer": "B3",
         "xy_reference_polygon_id": "edited_002",
         "xy_reference_layer": "B3",
@@ -11431,6 +11548,7 @@
       "same_layer": false,
       "from": {
         "polygon_id": "edited_002",
+        "polygon_context_source": "explicit",
         "layer": "B3",
         "point_source": [2128.47, 686.025],
         "line_source": [
@@ -11447,6 +11565,7 @@
       },
       "to": {
         "polygon_id": "added_001",
+        "polygon_context_source": "explicit",
         "layer": "B4",
         "xy_reference_polygon_id": "added_001",
         "xy_reference_layer": "B4",
@@ -11481,6 +11600,7 @@
       "same_layer": false,
       "from": {
         "polygon_id": "edited_004",
+        "polygon_context_source": "explicit",
         "layer": "B2",
         "point_source": [1610.965, 805.94],
         "line_source": [
@@ -11497,6 +11617,7 @@
       },
       "to": {
         "polygon_id": "added_001",
+        "polygon_context_source": "explicit",
         "layer": "B4",
         "xy_reference_polygon_id": "added_001",
         "xy_reference_layer": "B4",
@@ -11531,6 +11652,7 @@
       "same_layer": false,
       "from": {
         "polygon_id": "edited_003",
+        "polygon_context_source": "explicit",
         "layer": "B2",
         "point_source": [1418.635, 637.19],
         "line_source": [
@@ -11547,6 +11669,7 @@
       },
       "to": {
         "polygon_id": "added_001",
+        "polygon_context_source": "explicit",
         "layer": "B4",
         "xy_reference_polygon_id": "added_001",
         "xy_reference_layer": "B4",
@@ -11578,25 +11701,27 @@
       "connection_id": "stair_014",
       "type": "stair",
       "blend": "Stair.blend",
-      "same_layer": false,
+      "same_layer": true,
       "from": {
-        "polygon_id": "edited_007",
-        "layer": "B1",
+        "polygon_id": "edited_004",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B2",
         "point_source": [522.3, 779.99],
         "line_source": [
           [536.3, 789.97],
           [508.3, 770.01]
         ],
-        "position": [-92.535717, 30.516666, 0],
+        "position": [-130.89991, -3.521926, -7],
         "alignment_transform": [
-          [1, 0, 0],
-          [0, 1, 0],
+          [0.936761, 0, -44.216068],
+          [0, 0.804916, -28.085277],
           [0, 0, 1]
         ],
         "local_shift_offset": null
       },
       "to": {
         "polygon_id": "edited_003",
+        "polygon_context_source": "explicit",
         "layer": "B2",
         "xy_reference_polygon_id": "edited_003",
         "xy_reference_layer": "B2",
@@ -11613,116 +11738,14 @@
         ],
         "local_shift_offset": null
       },
-      "target_height": 7.0,
+      "target_height": 0.0,
       "start_line": [
+        [-131.119693, -1.323252, -7],
+        [-130.680126, -5.720601, -7]
+      ],
+      "end_line": [
         [-89.022309, 30.643911, -7],
         [-88.582757, 26.246541, -7]
-      ],
-      "end_line": [
-        [-92.770338, 33.248223, 0],
-        [-92.301096, 27.785108, 0]
-      ],
-      "hasPillar": true
-    },
-    {
-      "asset_id": "stair_015",
-      "connection_id": "stair_015",
-      "type": "stair",
-      "blend": "Stair.blend",
-      "same_layer": false,
-      "from": {
-        "polygon_id": "edited_007",
-        "layer": "B1",
-        "point_source": [599.455, 753.715],
-        "line_source": [
-          [612.22, 764],
-          [586.69, 743.43]
-        ],
-        "position": [-106.407563, 30.377958, 0],
-        "alignment_transform": [
-          [1, 0, 0],
-          [0, 1, 0],
-          [0, 0, 1]
-        ],
-        "local_shift_offset": null
-      },
-      "to": {
-        "polygon_id": "edited_003",
-        "layer": "B2",
-        "xy_reference_polygon_id": "edited_003",
-        "xy_reference_layer": "B2",
-        "point_source": [678.42, 938.82],
-        "line_source": [
-          [691.18, 949.11],
-          [665.65, 928.54]
-        ],
-        "position": [-126.45858, 28.14916, -7],
-        "alignment_transform": [
-          [0.936761, 0, -44.216068],
-          [0, 0.804916, -28.085277],
-          [0, 0, 1]
-        ],
-        "local_shift_offset": null
-      },
-      "target_height": 7.0,
-      "start_line": [
-        [-126.485798, 30.332737, -7],
-        [-126.428729, 25.966586, -7]
-      ],
-      "end_line": [
-        [-106.438024, 33.090128, 0],
-        [-106.37711, 27.665773, 0]
-      ],
-      "hasPillar": true
-    },
-    {
-      "asset_id": "stair_016",
-      "connection_id": "stair_016",
-      "type": "stair",
-      "blend": "Stair.blend",
-      "same_layer": false,
-      "from": {
-        "polygon_id": "edited_007",
-        "layer": "B1",
-        "point_source": [706.48, 843.865],
-        "line_source": [
-          [718.85, 855.1],
-          [694.11, 832.63]
-        ],
-        "position": [-106.0566, 53.849906, 0],
-        "alignment_transform": [
-          [1, 0, 0],
-          [0, 1, 0],
-          [0, 0, 1]
-        ],
-        "local_shift_offset": null
-      },
-      "to": {
-        "polygon_id": "edited_004",
-        "layer": "B2",
-        "xy_reference_polygon_id": "edited_004",
-        "xy_reference_layer": "B2",
-        "point_source": [817.41, 1066.96],
-        "line_source": [
-          [829.78, 1078.2],
-          [805.04, 1055.72]
-        ],
-        "position": [-124.427409, 54.349685, -7],
-        "alignment_transform": [
-          [0.936761, 0, -44.216068],
-          [0, 0.804916, -28.085277],
-          [0, 0, 1]
-        ],
-        "local_shift_offset": null
-      },
-      "target_height": 7.0,
-      "start_line": [
-        [-124.27047, 56.656778, -7],
-        [-124.584349, 52.042586, -7]
-      ],
-      "end_line": [
-        [-105.889836, 56.715227, 0],
-        [-106.223371, 50.984582, 0]
       ],
       "hasPillar": true
     },
@@ -11733,7 +11756,8 @@
       "blend": "Stair.blend",
       "same_layer": false,
       "from": {
-        "polygon_id": "edited_007",
+        "polygon_id": "edited_005",
+        "polygon_context_source": "fallback_contains",
         "layer": "B1",
         "point_source": [1064.63, 591.295],
         "line_source": [
@@ -11750,6 +11774,7 @@
       },
       "to": {
         "polygon_id": "edited_003",
+        "polygon_context_source": "explicit",
         "layer": "B2",
         "xy_reference_polygon_id": "edited_003",
         "xy_reference_layer": "B2",
@@ -11778,159 +11803,6 @@
       "hasPillar": true
     },
     {
-      "asset_id": "stair_018",
-      "connection_id": "stair_018",
-      "type": "stair",
-      "blend": "Stair.blend",
-      "same_layer": false,
-      "from": {
-        "polygon_id": "edited_007",
-        "layer": "B1",
-        "point_source": [1183.105, 692.285],
-        "line_source": [
-          [1196.33, 702.36],
-          [1169.88, 682.21]
-        ],
-        "position": [-190.088717, 54.999416, 0],
-        "alignment_transform": [
-          [1, 0, 0],
-          [0, 1, 0],
-          [0, 0, 1]
-        ],
-        "local_shift_offset": null
-      },
-      "to": {
-        "polygon_id": "edited_004",
-        "layer": "B2",
-        "xy_reference_polygon_id": "edited_004",
-        "xy_reference_layer": "B2",
-        "point_source": [1114.38, 963.22],
-        "line_source": [
-          [1127.61, 973.3],
-          [1101.16, 953.14]
-        ],
-        "position": [-174.821749, 53.52762, -7],
-        "alignment_transform": [
-          [0.936761, 0, -44.216068],
-          [0, 0.804916, -28.085277],
-          [0, 0, 1]
-        ],
-        "local_shift_offset": null
-      },
-      "target_height": 7.0,
-      "start_line": [
-        [-174.935363, 55.703006, -7],
-        [-174.709323, 51.352739, -7]
-      ],
-      "end_line": [
-        [-190.210122, 57.700794, 0],
-        [-189.967281, 52.298049, 0]
-      ],
-      "hasPillar": true
-    },
-    {
-      "asset_id": "stair_019",
-      "connection_id": "stair_019",
-      "type": "stair",
-      "blend": "Stair.blend",
-      "same_layer": false,
-      "from": {
-        "polygon_id": "edited_007",
-        "layer": "B1",
-        "point_source": [1236.025, 673.52],
-        "line_source": [
-          [1245.67, 682.16],
-          [1226.38, 664.88]
-        ],
-        "position": [-199.718316, 54.765362, 0],
-        "alignment_transform": [
-          [1, 0, 0],
-          [0, 1, 0],
-          [0, 0, 1]
-        ],
-        "local_shift_offset": null
-      },
-      "to": {
-        "polygon_id": "edited_004",
-        "layer": "B2",
-        "xy_reference_polygon_id": "edited_004",
-        "xy_reference_layer": "B2",
-        "point_source": [1336.77, 892.03],
-        "line_source": [
-          [1346.41, 900.67],
-          [1327.13, 883.39]
-        ],
-        "position": [-211.618262, 53.889564, -7],
-        "alignment_transform": [
-          [0.936761, 0, -44.216068],
-          [0, 0.804916, -28.085277],
-          [0, 0, 1]
-        ],
-        "local_shift_offset": null
-      },
-      "target_height": 7.0,
-      "start_line": [
-        [-211.513267, 55.66953, -7],
-        [-211.723256, 52.109592, -7]
-      ],
-      "end_line": [
-        [-199.606883, 56.977037, 0],
-        [-199.829779, 52.553676, 0]
-      ],
-      "hasPillar": true
-    },
-    {
-      "asset_id": "stair_020",
-      "connection_id": "stair_020",
-      "type": "stair",
-      "blend": "Stair.blend",
-      "same_layer": false,
-      "from": {
-        "polygon_id": "edited_007",
-        "layer": "B1",
-        "point_source": [1115.875, 574.53],
-        "line_source": [
-          [1127.9, 584.98],
-          [1103.85, 564.08]
-        ],
-        "position": [-199.769431, 28.829068, 0],
-        "alignment_transform": [
-          [1, 0, 0],
-          [0, 1, 0],
-          [0, 0, 1]
-        ],
-        "local_shift_offset": null
-      },
-      "to": {
-        "polygon_id": "edited_003",
-        "layer": "B2",
-        "xy_reference_polygon_id": "edited_003",
-        "xy_reference_layer": "B2",
-        "point_source": [1220.66, 762.91],
-        "line_source": [
-          [1232.69, 773.36],
-          [1208.63, 752.46]
-        ],
-        "position": [-216.515379, 28.680811, -7],
-        "alignment_transform": [
-          [0.936761, 0, -44.216068],
-          [0, 0.804916, -28.085277],
-          [0, 0, 1]
-        ],
-        "local_shift_offset": null
-      },
-      "target_height": 7.0,
-      "start_line": [
-        [-216.432479, 30.852116, -7],
-        [-216.59825, 26.509512, -7]
-      ],
-      "end_line": [
-        [-199.680315, 31.526304, 0],
-        [-199.858547, 26.131819, 0]
-      ],
-      "hasPillar": true
-    },
-    {
       "asset_id": "stair_021",
       "connection_id": "stair_021",
       "type": "stair",
@@ -11938,6 +11810,7 @@
       "same_layer": true,
       "from": {
         "polygon_id": "edited_009",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [1970.845, 265.02],
         "line_source": [
@@ -11954,6 +11827,7 @@
       },
       "to": {
         "polygon_id": "added_002",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "xy_reference_polygon_id": "added_002",
         "xy_reference_layer": "B1",
@@ -11989,6 +11863,7 @@
       "same_layer": false,
       "from": {
         "polygon_id": "edited_005",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [586.885, 687.19],
         "line_source": [
@@ -12004,8 +11879,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "edited_003",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B2",
         "xy_reference_polygon_id": "edited_005",
         "xy_reference_layer": "B1",
         "point_source": [496.34, 729.63],
@@ -12047,9 +11923,10 @@
       "connection_id": "exit_stair_001",
       "type": "exit_stair",
       "blend": "Stair.blend",
-      "same_layer": false,
+      "same_layer": true,
       "from": {
         "polygon_id": "edited_005",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [1156.785, 524.485],
         "line_source": [
@@ -12065,8 +11942,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "edited_005",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B1",
         "xy_reference_polygon_id": "edited_005",
         "xy_reference_layer": "B1",
         "point_source": [1082.83, 457.17],
@@ -12109,9 +11987,10 @@
       "connection_id": "exit_escalator_002",
       "type": "exit_escalator",
       "blend": "Escalator.blend",
-      "same_layer": false,
+      "same_layer": true,
       "from": {
         "polygon_id": "added_002",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [1943.285, 295.72],
         "line_source": [
@@ -12127,8 +12006,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "edited_009",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B1",
         "xy_reference_polygon_id": "added_002",
         "xy_reference_layer": "B1",
         "point_source": [2008.75, 371.31],
@@ -12170,9 +12050,10 @@
       "connection_id": "exit_stair_002",
       "type": "exit_stair",
       "blend": "Stair.blend",
-      "same_layer": false,
+      "same_layer": true,
       "from": {
         "polygon_id": "added_002",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [1895.24, 261.64],
         "line_source": [
@@ -12188,8 +12069,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "added_002",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B1",
         "xy_reference_polygon_id": "added_002",
         "xy_reference_layer": "B1",
         "point_source": [1839.48, 178.63],
@@ -12232,9 +12114,10 @@
       "connection_id": "exit_stair_003",
       "type": "exit_stair",
       "blend": "Stair.blend",
-      "same_layer": false,
+      "same_layer": true,
       "from": {
         "polygon_id": "edited_009",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [2276.735, 130.825],
         "line_source": [
@@ -12250,8 +12133,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "edited_009",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B1",
         "xy_reference_polygon_id": "edited_009",
         "xy_reference_layer": "B1",
         "point_source": [2177.39, 119.41],
@@ -12294,9 +12178,10 @@
       "connection_id": "exit_escalator_003",
       "type": "exit_escalator",
       "blend": "Escalator.blend",
-      "same_layer": false,
+      "same_layer": true,
       "from": {
         "polygon_id": "edited_009",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [2315.155, 134.755],
         "line_source": [
@@ -12312,8 +12197,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "edited_009",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B1",
         "xy_reference_polygon_id": "edited_009",
         "xy_reference_layer": "B1",
         "point_source": [2413.73, 151.56],
@@ -12355,9 +12241,10 @@
       "connection_id": "exit_escalator_004",
       "type": "exit_escalator",
       "blend": "Escalator.blend",
-      "same_layer": false,
+      "same_layer": true,
       "from": {
         "polygon_id": "edited_009",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [2488.56, 279.085],
         "line_source": [
@@ -12373,8 +12260,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "edited_009",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B1",
         "xy_reference_polygon_id": "edited_009",
         "xy_reference_layer": "B1",
         "point_source": [2460.45, 183.12],
@@ -12416,9 +12304,10 @@
       "connection_id": "exit_stair_004",
       "type": "exit_stair",
       "blend": "Stair.blend",
-      "same_layer": false,
+      "same_layer": true,
       "from": {
         "polygon_id": "edited_009",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [2538.91, 303.755],
         "line_source": [
@@ -12434,8 +12323,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "edited_006",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B1",
         "xy_reference_polygon_id": "edited_009",
         "xy_reference_layer": "B1",
         "point_source": [2597.04, 385.13],
@@ -12478,9 +12368,10 @@
       "connection_id": "exit_escalator_005",
       "type": "exit_escalator",
       "blend": "Escalator.blend",
-      "same_layer": false,
+      "same_layer": true,
       "from": {
         "polygon_id": "edited_006",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [2900.735, 733.305],
         "line_source": [
@@ -12496,8 +12387,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "edited_006",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B1",
         "xy_reference_polygon_id": "edited_006",
         "xy_reference_layer": "B1",
         "point_source": [2979.06, 795.47],
@@ -12542,6 +12434,7 @@
       "same_layer": false,
       "from": {
         "polygon_id": "edited_006",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [2749.79, 783.46],
         "line_source": [
@@ -12557,8 +12450,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "edited_001",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B4",
         "xy_reference_polygon_id": "edited_006",
         "xy_reference_layer": "B1",
         "point_source": [2823.45, 851.09],
@@ -12603,6 +12497,7 @@
       "same_layer": false,
       "from": {
         "polygon_id": "edited_009",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [2218.195, 449.51],
         "line_source": [
@@ -12618,8 +12513,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "edited_002",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B3",
         "xy_reference_polygon_id": "edited_009",
         "xy_reference_layer": "B1",
         "point_source": [2176.92, 540.59],
@@ -12665,6 +12561,7 @@
       "same_layer": false,
       "from": {
         "polygon_id": "edited_009",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [2149.325, 436.98],
         "line_source": [
@@ -12680,8 +12577,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "edited_002",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B3",
         "xy_reference_polygon_id": "edited_009",
         "xy_reference_layer": "B1",
         "point_source": [2097.07, 522.24],
@@ -12723,9 +12621,10 @@
       "connection_id": "exit_stair_006",
       "type": "exit_stair",
       "blend": "Stair.blend",
-      "same_layer": false,
+      "same_layer": true,
       "from": {
         "polygon_id": "edited_003",
+        "polygon_context_source": "explicit",
         "layer": "B2",
         "point_source": [1361.725, 669.845],
         "line_source": [
@@ -12741,8 +12640,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "edited_003",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B2",
         "xy_reference_polygon_id": "edited_003",
         "xy_reference_layer": "B2",
         "point_source": [1446.37, 616.59],
@@ -12788,6 +12688,7 @@
       "same_layer": false,
       "from": {
         "polygon_id": "edited_005",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [824.915, 882.635],
         "line_source": [
@@ -12803,8 +12704,9 @@
         "local_shift_offset": null
       },
       "to": {
-        "polygon_id": null,
-        "layer": "OUTSIDE",
+        "polygon_id": "edited_004",
+        "polygon_context_source": "fallback_nearest",
+        "layer": "B2",
         "xy_reference_polygon_id": "edited_005",
         "xy_reference_layer": "B1",
         "point_source": [730.91, 916.73],
@@ -12849,6 +12751,7 @@
       "same_layer": false,
       "from": {
         "polygon_id": "edited_009",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [2303.83, 389.34],
         "line_source": [
@@ -12865,6 +12768,7 @@
       },
       "to": {
         "polygon_id": "edited_002",
+        "polygon_context_source": "explicit",
         "layer": "B3",
         "xy_reference_polygon_id": "edited_002",
         "xy_reference_layer": "B3",
@@ -12899,6 +12803,7 @@
       "same_layer": false,
       "from": {
         "polygon_id": "edited_009",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [2407.105, 355.055],
         "line_source": [
@@ -12915,6 +12820,7 @@
       },
       "to": {
         "polygon_id": "edited_002",
+        "polygon_context_source": "explicit",
         "layer": "B3",
         "xy_reference_polygon_id": "edited_002",
         "xy_reference_layer": "B3",
@@ -12949,6 +12855,7 @@
       "same_layer": true,
       "from": {
         "polygon_id": "edited_009",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "point_source": [2365.37, 379.545],
         "line_source": [
@@ -12965,6 +12872,7 @@
       },
       "to": {
         "polygon_id": "edited_006",
+        "polygon_context_source": "explicit",
         "layer": "B1",
         "xy_reference_polygon_id": "edited_006",
         "xy_reference_layer": "B1",
@@ -12993,404 +12901,277 @@
       "hasPillar": true
     },
     {
-      "asset_id": "ticket_gate_004",
-      "parent_asset_id": "ticket_gate_004",
-      "segment_index": 1,
-      "type": "ticket_gate",
-      "blend": "TicketGate.blend",
-      "label": "ticket_gate_004",
-      "polygon_id": "edited_007",
-      "layer": "B1",
-      "location": [-111.196088, 41.811853, 0],
-      "rotation_z": 90.56837142694383,
-      "scale": [14, 1, 1],
-      "point_source": [679.405, 788.425],
-      "points_source": [
-        [638.73, 755.58],
-        [720.08, 821.27]
-      ],
-      "start_point_source": [638.73, 755.58],
-      "end_point_source": [720.08, 821.27],
-      "public_side_point_source": null,
-      "public_side_position": null,
-      "paid_side_point_source": [648.94, 798.13],
-      "paid_side_position": [-105.822394, 41.74142, 0],
-      "gate_public_side_flipped": false,
-      "gate_segment_index": 1,
-      "gate_segment_flipped": false,
-      "start": [-111.11022, 33.156108, 0],
-      "end": [-111.281955, 50.467599, 0],
-      "gate_count": 14,
-      "gate_width": 1.0,
-      "passage_width": 1.5,
-      "passage": {
-        "location": [-111.196088, 41.811853, 0],
-        "rotation_z": 90.56837142694383,
-        "width": 1.5,
-        "range": [7.906171, 9.406171]
+      "asset_id": "stair_023",
+      "connection_id": "stair_023",
+      "type": "stair",
+      "blend": "Stair.blend",
+      "same_layer": false,
+      "from": {
+        "polygon_id": "edited_005",
+        "polygon_context_source": "explicit",
+        "layer": "B1",
+        "point_source": [599.455, 753.715],
+        "line_source": [
+          [586.69, 743.43],
+          [612.22, 764]
+        ],
+        "position": [-106.407563, 30.377958, 0],
+        "alignment_transform": [
+          [1, 0, 0],
+          [0, 1, 0],
+          [0, 0, 1]
+        ],
+        "local_shift_offset": null
       },
-      "gate_type": "ticket_gate",
-      "navigation": {
-        "access_transition": "public_paid",
-        "cost": 10,
-        "node_type": "gate"
+      "to": {
+        "polygon_id": "edited_003",
+        "polygon_context_source": "explicit",
+        "layer": "B2",
+        "xy_reference_polygon_id": "edited_003",
+        "xy_reference_layer": "B2",
+        "point_source": [682.04, 942.41],
+        "line_source": [
+          [669.27, 932.13],
+          [694.8, 952.69]
+        ],
+        "position": [-126.369063, 28.869551, -7],
+        "alignment_transform": [
+          [0.936761, 0, -44.216068],
+          [0, 0.804916, -28.085277],
+          [0, 0, 1]
+        ],
+        "local_shift_offset": null
       },
-      "gates": [
-        {
-          "gate_id": "ticket_gate_004_gate_001",
-          "index": 1,
-          "location": [-111.124169, 34.56221, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_004_gate_002",
-          "index": 2,
-          "location": [-111.134089, 35.562161, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_004_gate_003",
-          "index": 3,
-          "location": [-111.144009, 36.562112, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_004_gate_004",
-          "index": 4,
-          "location": [-111.153929, 37.562062, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_004_gate_005",
-          "index": 5,
-          "location": [-111.163848, 38.562013, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_004_gate_006",
-          "index": 6,
-          "location": [-111.173768, 39.561964, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_004_gate_007",
-          "index": 7,
-          "location": [-111.183688, 40.561915, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_004_gate_008",
-          "index": 8,
-          "location": [-111.208487, 43.061792, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_004_gate_009",
-          "index": 9,
-          "location": [-111.218407, 44.061743, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_004_gate_010",
-          "index": 10,
-          "location": [-111.228327, 45.061693, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_004_gate_011",
-          "index": 11,
-          "location": [-111.238247, 46.061644, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_004_gate_012",
-          "index": 12,
-          "location": [-111.248167, 47.061595, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_004_gate_013",
-          "index": 13,
-          "location": [-111.258086, 48.061546, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_004_gate_014",
-          "index": 14,
-          "location": [-111.268006, 49.061497, 0],
-          "rotation_z": 90.56837142694383,
-          "width": 1.0
-        }
+      "target_height": 7.0,
+      "start_line": [
+        [-126.339205, 26.68699, -7],
+        [-126.397725, 31.051632, -7]
       ],
-      "local_shift_offset": null
+      "end_line": [
+        [-106.37711, 27.665773, 0],
+        [-106.438024, 33.090128, 0]
+      ],
+      "hasPillar": true
     },
     {
-      "asset_id": "ticket_gate_005",
-      "parent_asset_id": "ticket_gate_005",
-      "segment_index": 1,
-      "type": "ticket_gate",
-      "blend": "TicketGate.blend",
-      "label": "ticket_gate_005",
-      "polygon_id": "edited_007",
-      "layer": "B1",
-      "location": [-192.155057, 34.616562, 0],
-      "rotation_z": 178.9736007228179,
-      "scale": [14, 1, 1],
-      "point_source": [1100.045, 610.73],
-      "points_source": [
-        [1055.44, 624.74],
-        [1144.65, 596.72]
-      ],
-      "start_point_source": [1055.44, 624.74],
-      "end_point_source": [1144.65, 596.72],
-      "public_side_point_source": null,
-      "public_side_position": null,
-      "paid_side_point_source": [1106.33, 594.47],
-      "paid_side_position": [-195.47032, 31.96592, 0],
-      "gate_public_side_flipped": false,
-      "gate_segment_index": 1,
-      "gate_segment_flipped": false,
-      "start": [-184.318074, 34.476155, 0],
-      "end": [-199.99204, 34.756969, 0],
-      "gate_count": 14,
-      "gate_width": 1.0,
-      "passage_width": 1.5,
-      "passage": {
-        "location": [-192.155057, 34.616562, 0],
-        "rotation_z": 178.9736007228179,
-        "width": 1.5,
-        "range": [7.088241, 8.588241]
+      "asset_id": "stair_024",
+      "connection_id": "stair_024",
+      "type": "stair",
+      "blend": "Stair.blend",
+      "same_layer": false,
+      "from": {
+        "polygon_id": "edited_005",
+        "polygon_context_source": "explicit",
+        "layer": "B1",
+        "point_source": [706.48, 843.865],
+        "line_source": [
+          [694.11, 832.63],
+          [718.85, 855.1]
+        ],
+        "position": [-106.0566, 53.849906, 0],
+        "alignment_transform": [
+          [1, 0, 0],
+          [0, 1, 0],
+          [0, 0, 1]
+        ],
+        "local_shift_offset": null
       },
-      "gate_type": "ticket_gate",
-      "navigation": {
-        "access_transition": "public_paid",
-        "cost": 10,
-        "node_type": "gate"
+      "to": {
+        "polygon_id": "edited_004",
+        "polygon_context_source": "explicit",
+        "layer": "B2",
+        "xy_reference_polygon_id": "edited_004",
+        "xy_reference_layer": "B2",
+        "point_source": [814.97, 1068.75],
+        "line_source": [
+          [802.6, 1057.51],
+          [827.34, 1079.99]
+        ],
+        "position": [-123.877406, 54.497519, -7],
+        "alignment_transform": [
+          [0.936761, 0, -44.216068],
+          [0, 0.804916, -28.085277],
+          [0, 0, 1]
+        ],
+        "local_shift_offset": null
       },
-      "gates": [
-        {
-          "gate_id": "ticket_gate_005_gate_001",
-          "index": 1,
-          "location": [-184.90622, 34.486692, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_005_gate_002",
-          "index": 2,
-          "location": [-185.90606, 34.504605, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_005_gate_003",
-          "index": 3,
-          "location": [-186.905899, 34.522518, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_005_gate_004",
-          "index": 4,
-          "location": [-187.905739, 34.540431, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_005_gate_005",
-          "index": 5,
-          "location": [-188.905578, 34.558344, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_005_gate_006",
-          "index": 6,
-          "location": [-189.905418, 34.576258, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_005_gate_007",
-          "index": 7,
-          "location": [-190.905257, 34.594171, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_005_gate_008",
-          "index": 8,
-          "location": [-193.404856, 34.638953, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_005_gate_009",
-          "index": 9,
-          "location": [-194.404696, 34.656866, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_005_gate_010",
-          "index": 10,
-          "location": [-195.404535, 34.67478, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_005_gate_011",
-          "index": 11,
-          "location": [-196.404375, 34.692693, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_005_gate_012",
-          "index": 12,
-          "location": [-197.404214, 34.710606, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_005_gate_013",
-          "index": 13,
-          "location": [-198.404054, 34.728519, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_005_gate_014",
-          "index": 14,
-          "location": [-199.403893, 34.746432, 0],
-          "rotation_z": 178.9736007228179,
-          "width": 1.0
-        }
+      "target_height": 7.0,
+      "start_line": [
+        [-124.034353, 52.190426, -7],
+        [-123.720473, 56.804618, -7]
       ],
-      "local_shift_offset": null
+      "end_line": [
+        [-106.223371, 50.984582, 0],
+        [-105.889836, 56.715227, 0]
+      ],
+      "hasPillar": true
     },
     {
-      "asset_id": "ticket_gate_006",
-      "parent_asset_id": "ticket_gate_006",
-      "segment_index": 1,
-      "type": "ticket_gate",
-      "blend": "TicketGate.blend",
-      "label": "ticket_gate_006",
-      "polygon_id": "edited_007",
-      "layer": "B1",
-      "location": [-195.418026, 48.840545, 0],
-      "rotation_z": 179.1547702955497,
-      "scale": [8, 1, 1],
-      "point_source": [1184.395, 658.91],
-      "points_source": [
-        [1155.47, 668.08],
-        [1213.32, 649.74]
-      ],
-      "start_point_source": [1155.47, 668.08],
-      "end_point_source": [1213.32, 649.74],
-      "public_side_point_source": null,
-      "public_side_position": null,
-      "paid_side_point_source": [1196.23, 671.46],
-      "paid_side_position": [-194.979744, 51.918585, 0],
-      "gate_public_side_flipped": false,
-      "gate_segment_index": 1,
-      "gate_segment_flipped": false,
-      "start": [-190.322839, 48.765375, 0],
-      "end": [-200.513213, 48.915715, 0],
-      "gate_count": 8,
-      "gate_width": 1.0,
-      "passage_width": 1.5,
-      "passage": {
-        "location": [-195.418026, 48.840545, 0],
-        "rotation_z": 179.1547702955497,
-        "width": 1.5,
-        "range": [4.345741, 5.845741]
+      "asset_id": "stair_025",
+      "connection_id": "stair_025",
+      "type": "stair",
+      "blend": "Stair.blend",
+      "same_layer": false,
+      "from": {
+        "polygon_id": "edited_005",
+        "polygon_context_source": "explicit",
+        "layer": "B1",
+        "point_source": [1183.105, 692.285],
+        "line_source": [
+          [1196.33, 702.36],
+          [1169.88, 682.21]
+        ],
+        "position": [-190.088717, 54.999416, 0],
+        "alignment_transform": [
+          [1, 0, 0],
+          [0, 1, 0],
+          [0, 0, 1]
+        ],
+        "local_shift_offset": null
       },
-      "gate_type": "ticket_gate",
-      "navigation": {
-        "access_transition": "public_paid",
-        "cost": 10,
-        "node_type": "gate"
+      "to": {
+        "polygon_id": "edited_004",
+        "polygon_context_source": "explicit",
+        "layer": "B2",
+        "xy_reference_polygon_id": "edited_004",
+        "xy_reference_layer": "B2",
+        "point_source": [1118.94, 968.62],
+        "line_source": [
+          [1132.16, 978.69],
+          [1105.72, 958.55]
+        ],
+        "position": [-174.581711, 54.567152, -7],
+        "alignment_transform": [
+          [0.936761, 0, -44.216068],
+          [0, 0.804916, -28.085277],
+          [0, 0, 1]
+        ],
+        "local_shift_offset": null
       },
-      "gates": [
-        {
-          "gate_id": "ticket_gate_006_gate_001",
-          "index": 1,
-          "location": [-191.168488, 48.777851, 0],
-          "rotation_z": 179.1547702955497,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_006_gate_002",
-          "index": 2,
-          "location": [-192.168379, 48.792603, 0],
-          "rotation_z": 179.1547702955497,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_006_gate_003",
-          "index": 3,
-          "location": [-193.16827, 48.807354, 0],
-          "rotation_z": 179.1547702955497,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_006_gate_004",
-          "index": 4,
-          "location": [-194.168162, 48.822106, 0],
-          "rotation_z": 179.1547702955497,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_006_gate_005",
-          "index": 5,
-          "location": [-196.66789, 48.858985, 0],
-          "rotation_z": 179.1547702955497,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_006_gate_006",
-          "index": 6,
-          "location": [-197.667781, 48.873736, 0],
-          "rotation_z": 179.1547702955497,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_006_gate_007",
-          "index": 7,
-          "location": [-198.667672, 48.888488, 0],
-          "rotation_z": 179.1547702955497,
-          "width": 1.0
-        },
-        {
-          "gate_id": "ticket_gate_006_gate_008",
-          "index": 8,
-          "location": [-199.667563, 48.903239, 0],
-          "rotation_z": 179.1547702955497,
-          "width": 1.0
-        }
+      "target_height": 7.0,
+      "start_line": [
+        [-174.695594, 56.740543, -7],
+        [-174.467828, 52.393773, -7]
       ],
-      "local_shift_offset": null
+      "end_line": [
+        [-190.210122, 57.700794, 0],
+        [-189.967281, 52.298049, 0]
+      ],
+      "hasPillar": true
+    },
+    {
+      "asset_id": "stair_026",
+      "connection_id": "stair_026",
+      "type": "stair",
+      "blend": "Stair.blend",
+      "same_layer": false,
+      "from": {
+        "polygon_id": "edited_005",
+        "polygon_context_source": "explicit",
+        "layer": "B1",
+        "point_source": [1236.025, 673.52],
+        "line_source": [
+          [1245.67, 682.16],
+          [1226.38, 664.88]
+        ],
+        "position": [-199.718316, 54.765362, 0],
+        "alignment_transform": [
+          [1, 0, 0],
+          [0, 1, 0],
+          [0, 0, 1]
+        ],
+        "local_shift_offset": null
+      },
+      "to": {
+        "polygon_id": "edited_004",
+        "polygon_context_source": "explicit",
+        "layer": "B2",
+        "xy_reference_polygon_id": "edited_004",
+        "xy_reference_layer": "B2",
+        "point_source": [1353.91, 894.62],
+        "line_source": [
+          [1363.56, 903.26],
+          [1344.27, 885.98]
+        ],
+        "position": [-213.283269, 55.132686, -7],
+        "alignment_transform": [
+          [0.936761, 0, -44.216068],
+          [0, 0.804916, -28.085277],
+          [0, 0, 1]
+        ],
+        "local_shift_offset": null
+      },
+      "target_height": 7.0,
+      "start_line": [
+        [-213.179463, 56.913157, -7],
+        [-213.388277, 53.352714, -7]
+      ],
+      "end_line": [
+        [-199.606883, 56.977037, 0],
+        [-199.829779, 52.553676, 0]
+      ],
+      "hasPillar": true
+    },
+    {
+      "asset_id": "stair_027",
+      "connection_id": "stair_027",
+      "type": "stair",
+      "blend": "Stair.blend",
+      "same_layer": false,
+      "from": {
+        "polygon_id": "edited_005",
+        "polygon_context_source": "explicit",
+        "layer": "B1",
+        "point_source": [1115.875, 574.53],
+        "line_source": [
+          [1103.85, 564.08],
+          [1127.9, 584.98]
+        ],
+        "position": [-199.769431, 28.829068, 0],
+        "alignment_transform": [
+          [1, 0, 0],
+          [0, 1, 0],
+          [0, 0, 1]
+        ],
+        "local_shift_offset": null
+      },
+      "to": {
+        "polygon_id": "edited_003",
+        "polygon_context_source": "explicit",
+        "layer": "B2",
+        "xy_reference_polygon_id": "edited_003",
+        "xy_reference_layer": "B2",
+        "point_source": [1219.45, 760.53],
+        "line_source": [
+          [1207.42, 750.08],
+          [1231.48, 770.98]
+        ],
+        "position": [-216.716366, 28.262478, -7],
+        "alignment_transform": [
+          [0.936761, 0, -44.216068],
+          [0, 0.804916, -28.085277],
+          [0, 0, 1]
+        ],
+        "local_shift_offset": null
+      },
+      "target_height": 7.0,
+      "start_line": [
+        [-216.799266, 26.091173, -7],
+        [-216.63348, 30.433771, -7]
+      ],
+      "end_line": [
+        [-199.858547, 26.131819, 0],
+        [-199.680315, 31.526304, 0]
+      ],
+      "hasPillar": true
     },
     {
       "asset_id": "toilet_001",
       "type": "toilet",
       "blend": "Toilet.blend",
       "label": "toilet_001",
-      "polygon_id": "edited_007",
+      "polygon_id": "edited_005",
+      "polygon_context_source": "fallback_contains",
       "layer": "B1",
       "location": [-83.855154, 24.093622, 0],
       "rotation_z": 90.28453235639367,
@@ -13450,6 +13231,7 @@
       "blend": "Toilet.blend",
       "label": "toilet_002",
       "polygon_id": "edited_006",
+      "polygon_context_source": "explicit",
       "layer": "B1",
       "location": [-403.83456, 84.778074, 0],
       "rotation_z": -1.3830764903819952,
@@ -13511,6 +13293,7 @@
       "blend": "TicketGate.blend",
       "label": "ticket_gate_007",
       "polygon_id": "edited_002",
+      "polygon_context_source": "explicit",
       "layer": "B3",
       "location": [-384.44412, 78.547244, -14],
       "rotation_z": -178.93236690427,
@@ -13642,6 +13425,7 @@
       "blend": "TicketGate.blend",
       "label": "ticket_gate_008",
       "polygon_id": "edited_002",
+      "polygon_context_source": "explicit",
       "layer": "B3",
       "location": [-385.121773, 120.26691, -14],
       "rotation_z": 1.260485936372412,
@@ -13715,6 +13499,7 @@
       "blend": "Subway.blend",
       "label": "subway_001",
       "polygon_id": "added_004",
+      "polygon_context_source": "explicit",
       "layer": "B2",
       "location": [-154.570152, 44.951928, -9],
       "rotation_z": 0.36143543100173303,
@@ -13753,6 +13538,7 @@
       "blend": "Subway.blend",
       "label": "subway_002",
       "polygon_id": "added_004",
+      "polygon_context_source": "explicit",
       "layer": "B2",
       "location": [-156.147828, 39.378072, -9],
       "rotation_z": -179.8242787196166,
@@ -13791,6 +13577,7 @@
       "blend": "Subway.blend",
       "label": "subway_003",
       "polygon_id": "added_003",
+      "polygon_context_source": "explicit",
       "layer": "B4",
       "location": [-388.276075, 91.35457, -23],
       "rotation_z": 89.73159821451422,
@@ -13829,6 +13616,7 @@
       "blend": "Subway.blend",
       "label": "subway_004",
       "polygon_id": "added_003",
+      "polygon_context_source": "explicit",
       "layer": "B4",
       "location": [-382.089831, 90.981044, -23],
       "rotation_z": -89.9057610336296,
@@ -13860,6 +13648,402 @@
       "gate_type": null,
       "navigation": null,
       "local_shift_offset": null
+    },
+    {
+      "asset_id": "ticket_gate_009",
+      "parent_asset_id": "ticket_gate_009",
+      "segment_index": 1,
+      "type": "ticket_gate",
+      "blend": "TicketGate.blend",
+      "label": "ticket_gate_009",
+      "polygon_id": "edited_005",
+      "polygon_context_source": "explicit",
+      "layer": "B1",
+      "location": [-111.165151, 41.788919, 0],
+      "rotation_z": 89.49376107204894,
+      "scale": [14, 1, 1],
+      "point_source": [679.125, 788.395],
+      "points_source": [
+        [639.59, 755.44],
+        [718.66, 821.35]
+      ],
+      "start_point_source": [639.59, 755.44],
+      "end_point_source": [718.66, 821.35],
+      "public_side_point_source": null,
+      "public_side_position": null,
+      "paid_side_point_source": [632.23, 811.89],
+      "paid_side_position": [-101.56917, 43.279857, 0],
+      "gate_public_side_flipped": false,
+      "gate_segment_index": 1,
+      "gate_segment_flipped": false,
+      "start": [-111.24119, 33.183139, 0],
+      "end": [-111.089112, 50.394699, 0],
+      "gate_count": 14,
+      "gate_width": 1.0,
+      "passage_width": 1.5,
+      "passage": {
+        "location": [-111.165151, 41.788919, 0],
+        "rotation_z": 89.49376107204894,
+        "width": 1.5,
+        "range": [7.856116, 9.356116]
+      },
+      "gate_type": "ticket_gate",
+      "navigation": {
+        "access_transition": "public_paid",
+        "cost": 10,
+        "node_type": "gate"
+      },
+      "gates": [
+        {
+          "gate_id": "ticket_gate_009_gate_001",
+          "index": 1,
+          "location": [-111.229208, 34.539202, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_009_gate_002",
+          "index": 2,
+          "location": [-111.220372, 35.539163, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_009_gate_003",
+          "index": 3,
+          "location": [-111.211537, 36.539124, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_009_gate_004",
+          "index": 4,
+          "location": [-111.202701, 37.539085, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_009_gate_005",
+          "index": 5,
+          "location": [-111.193866, 38.539046, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_009_gate_006",
+          "index": 6,
+          "location": [-111.185031, 39.539007, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_009_gate_007",
+          "index": 7,
+          "location": [-111.176195, 40.538968, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_009_gate_008",
+          "index": 8,
+          "location": [-111.154107, 43.03887, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_009_gate_009",
+          "index": 9,
+          "location": [-111.145271, 44.038831, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_009_gate_010",
+          "index": 10,
+          "location": [-111.136436, 45.038792, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_009_gate_011",
+          "index": 11,
+          "location": [-111.1276, 46.038753, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_009_gate_012",
+          "index": 12,
+          "location": [-111.118765, 47.038714, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_009_gate_013",
+          "index": 13,
+          "location": [-111.10993, 48.038675, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_009_gate_014",
+          "index": 14,
+          "location": [-111.101094, 49.038636, 0],
+          "rotation_z": 89.49376107204894,
+          "width": 1.0
+        }
+      ],
+      "local_shift_offset": null
+    },
+    {
+      "asset_id": "ticket_gate_010",
+      "parent_asset_id": "ticket_gate_010",
+      "segment_index": 1,
+      "type": "ticket_gate",
+      "blend": "TicketGate.blend",
+      "label": "ticket_gate_010",
+      "polygon_id": "edited_005",
+      "polygon_context_source": "explicit",
+      "layer": "B1",
+      "location": [-195.379013, 48.866135, 0],
+      "rotation_z": -0.5079409073269703,
+      "scale": [8, 1, 1],
+      "point_source": [1184.295, 659.08],
+      "points_source": [
+        [1212.85, 649.87],
+        [1155.74, 668.29]
+      ],
+      "start_point_source": [1212.85, 649.87],
+      "end_point_source": [1155.74, 668.29],
+      "public_side_point_source": null,
+      "public_side_position": null,
+      "paid_side_point_source": [1197.52, 676.58],
+      "paid_side_position": [-194.351278, 52.955453, 0],
+      "gate_public_side_flipped": false,
+      "gate_segment_index": 1,
+      "gate_segment_flipped": false,
+      "start": [-200.433359, 48.910944, 0],
+      "end": [-190.324667, 48.821326, 0],
+      "gate_count": 8,
+      "gate_width": 1.0,
+      "passage_width": 1.5,
+      "passage": {
+        "location": [-195.379013, 48.866135, 0],
+        "rotation_z": -0.5079409073269703,
+        "width": 1.5,
+        "range": [4.304545, 5.804545]
+      },
+      "gate_type": "ticket_gate",
+      "navigation": {
+        "access_transition": "public_paid",
+        "cost": 10,
+        "node_type": "gate"
+      },
+      "gates": [
+        {
+          "gate_id": "ticket_gate_010_gate_001",
+          "index": 1,
+          "location": [-199.628846, 48.903812, 0],
+          "rotation_z": -0.5079409073269703,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_010_gate_002",
+          "index": 2,
+          "location": [-198.628885, 48.894947, 0],
+          "rotation_z": -0.5079409073269703,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_010_gate_003",
+          "index": 3,
+          "location": [-197.628924, 48.886082, 0],
+          "rotation_z": -0.5079409073269703,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_010_gate_004",
+          "index": 4,
+          "location": [-196.628964, 48.877216, 0],
+          "rotation_z": -0.5079409073269703,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_010_gate_005",
+          "index": 5,
+          "location": [-194.129062, 48.855054, 0],
+          "rotation_z": -0.5079409073269703,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_010_gate_006",
+          "index": 6,
+          "location": [-193.129101, 48.846189, 0],
+          "rotation_z": -0.5079409073269703,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_010_gate_007",
+          "index": 7,
+          "location": [-192.129141, 48.837323, 0],
+          "rotation_z": -0.5079409073269703,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_010_gate_008",
+          "index": 8,
+          "location": [-191.12918, 48.828458, 0],
+          "rotation_z": -0.5079409073269703,
+          "width": 1.0
+        }
+      ],
+      "local_shift_offset": null
+    },
+    {
+      "asset_id": "ticket_gate_011",
+      "parent_asset_id": "ticket_gate_011",
+      "segment_index": 1,
+      "type": "ticket_gate",
+      "blend": "TicketGate.blend",
+      "label": "ticket_gate_011",
+      "polygon_id": "edited_005",
+      "polygon_context_source": "explicit",
+      "layer": "B1",
+      "location": [-192.150267, 34.653575, 0],
+      "rotation_z": -0.188616903110932,
+      "scale": [14, 1, 1],
+      "point_source": [1100.19, 610.88],
+      "points_source": [
+        [1144.76, 596.27],
+        [1055.62, 625.49]
+      ],
+      "start_point_source": [1144.76, 596.27],
+      "end_point_source": [1055.62, 625.49],
+      "public_side_point_source": null,
+      "public_side_position": null,
+      "paid_side_point_source": [1089.54, 592.78],
+      "paid_side_position": [-193.598099, 30.611406, 0],
+      "gate_public_side_flipped": false,
+      "gate_segment_index": 1,
+      "gate_segment_flipped": false,
+      "start": [-200.075656, 34.679665, 0],
+      "end": [-184.224878, 34.627484, 0],
+      "gate_count": 14,
+      "gate_width": 1.0,
+      "passage_width": 1.5,
+      "passage": {
+        "location": [-192.150267, 34.653575, 0],
+        "rotation_z": -0.188616903110932,
+        "width": 1.5,
+        "range": [7.175432, 8.675432]
+      },
+      "gate_type": "ticket_gate",
+      "navigation": {
+        "access_transition": "public_paid",
+        "cost": 10,
+        "node_type": "gate"
+      },
+      "gates": [
+        {
+          "gate_id": "ticket_gate_011_gate_001",
+          "index": 1,
+          "location": [-199.400228, 34.677442, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_011_gate_002",
+          "index": 2,
+          "location": [-198.400233, 34.67415, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_011_gate_003",
+          "index": 3,
+          "location": [-197.400239, 34.670858, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_011_gate_004",
+          "index": 4,
+          "location": [-196.400244, 34.667566, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_011_gate_005",
+          "index": 5,
+          "location": [-195.400249, 34.664274, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_011_gate_006",
+          "index": 6,
+          "location": [-194.400255, 34.660982, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_011_gate_007",
+          "index": 7,
+          "location": [-193.40026, 34.65769, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_011_gate_008",
+          "index": 8,
+          "location": [-190.900274, 34.64946, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_011_gate_009",
+          "index": 9,
+          "location": [-189.900279, 34.646168, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_011_gate_010",
+          "index": 10,
+          "location": [-188.900285, 34.642876, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_011_gate_011",
+          "index": 11,
+          "location": [-187.90029, 34.639584, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_011_gate_012",
+          "index": 12,
+          "location": [-186.900295, 34.636292, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_011_gate_013",
+          "index": 13,
+          "location": [-185.900301, 34.633, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        },
+        {
+          "gate_id": "ticket_gate_011_gate_014",
+          "index": 14,
+          "location": [-184.900306, 34.629708, 0],
+          "rotation_z": -0.188616903110932,
+          "width": 1.0
+        }
+      ],
+      "local_shift_offset": null
     }
   ],
   "navigation": {
@@ -13877,7 +14061,7 @@
         "node_id": "elevator_point_001_node",
         "type": "elevator",
         "layer": "B1",
-        "polygon_id": "edited_007",
+        "polygon_id": "edited_005",
         "position": [-90.908251, 55.386373, 0],
         "source_position": [625.002293, 878.568418],
         "elevator_id": "EV_001",
@@ -13913,7 +14097,7 @@
         "node_id": "elevator_point_003_node",
         "type": "elevator",
         "layer": "B1",
-        "polygon_id": "edited_007",
+        "polygon_id": "edited_005",
         "position": [-173.627227, 28.126124, 0],
         "source_position": [964.10767, 620.46576],
         "elevator_id": "EV_002",
@@ -13946,49 +14130,13 @@
         "node_key_str": "N0004"
       },
       {
-        "node_id": "elevator_point_007_node",
-        "type": "elevator",
-        "layer": "B4",
-        "polygon_id": "added_001",
-        "position": [-367.238418, 80.240271, -21],
-        "source_position": [2247.871058, 1027.905769],
-        "elevator_id": "EV_007",
-        "elevator_point_id": "elevator_point_007",
-        "label": "elevator_point_007",
-        "facing_angle_deg": 89.60786847507256,
-        "navigation_offset": 0.4,
-        "zone_type": "paid",
-        "zone_id": "zone_006",
-        "zone_label": "zone_006",
-        "node_key": 5,
-        "node_key_str": "N0005"
-      },
-      {
-        "node_id": "elevator_point_008_node",
-        "type": "elevator",
-        "layer": "B3",
-        "polygon_id": "edited_002",
-        "position": [-367.169767, 72.017858, -14],
-        "source_position": [2246.045892, 791.935728],
-        "elevator_id": "EV_007",
-        "elevator_point_id": "elevator_point_008",
-        "label": "elevator_point_008",
-        "facing_angle_deg": 89.43647797876726,
-        "navigation_offset": 0.4,
-        "zone_type": "paid",
-        "zone_id": "zone_008",
-        "zone_label": "zone_008",
-        "node_key": 6,
-        "node_key_str": "N0006"
-      },
-      {
         "node_id": "elevator_point_009_node",
         "type": "elevator",
         "layer": "B3",
         "polygon_id": "edited_002",
         "position": [-366.354917, 104.90447, -14],
         "source_position": [2399.355003, 923.988862],
-        "elevator_id": "EV_005",
+        "elevator_id": "EV_007",
         "elevator_point_id": "elevator_point_009",
         "label": "elevator_point_009",
         "facing_angle_deg": -178.18635489038718,
@@ -13996,8 +14144,8 @@
         "zone_type": "public",
         "zone_id": null,
         "zone_label": null,
-        "node_key": 7,
-        "node_key_str": "N0007"
+        "node_key": 5,
+        "node_key_str": "N0005"
       },
       {
         "node_id": "elevator_point_011_node",
@@ -14015,8 +14163,8 @@
         "zone_type": "public",
         "zone_id": null,
         "zone_label": null,
-        "node_key": 8,
-        "node_key_str": "N0008"
+        "node_key": 6,
+        "node_key_str": "N0006"
       },
       {
         "node_id": "elevator_point_012_node",
@@ -14034,8 +14182,8 @@
         "zone_type": "public",
         "zone_id": null,
         "zone_label": null,
-        "node_key": 9,
-        "node_key_str": "N0009"
+        "node_key": 7,
+        "node_key_str": "N0007"
       },
       {
         "node_id": "elevator_point_013_node",
@@ -14053,8 +14201,8 @@
         "zone_type": "public",
         "zone_id": null,
         "zone_label": null,
-        "node_key": 10,
-        "node_key_str": "N0010"
+        "node_key": 8,
+        "node_key_str": "N0008"
       },
       {
         "node_id": "elevator_point_014_node",
@@ -14072,8 +14220,8 @@
         "zone_type": "public",
         "zone_id": null,
         "zone_label": null,
-        "node_key": 11,
-        "node_key_str": "N0011"
+        "node_key": 9,
+        "node_key_str": "N0009"
       },
       {
         "node_id": "elevator_point_015_node",
@@ -14082,7 +14230,7 @@
         "polygon_id": "edited_006",
         "position": [-357.411492, 116.459031, 0],
         "source_position": [2403.074296, 616.821791],
-        "elevator_id": "EV_005",
+        "elevator_id": "EV_007",
         "elevator_point_id": "elevator_point_015",
         "label": "elevator_point_015",
         "facing_angle_deg": -179.35429881991402,
@@ -14090,20 +14238,56 @@
         "zone_type": "public",
         "zone_id": null,
         "zone_label": null,
+        "node_key": 10,
+        "node_key_str": "N0010"
+      },
+      {
+        "node_id": "elevator_point_019_node",
+        "type": "elevator",
+        "layer": "B4",
+        "polygon_id": "added_001",
+        "position": [-370.037786, 68.269635, -21],
+        "source_position": [2201.804209, 975.832886],
+        "elevator_id": "EV_005",
+        "elevator_point_id": "elevator_point_019",
+        "label": "elevator_point_019",
+        "facing_angle_deg": -179.74775553667087,
+        "navigation_offset": 0.4,
+        "zone_type": "paid",
+        "zone_id": "zone_006",
+        "zone_label": "zone_006",
+        "node_key": 11,
+        "node_key_str": "N0011"
+      },
+      {
+        "node_id": "elevator_point_020_node",
+        "type": "elevator",
+        "layer": "B3",
+        "polygon_id": "edited_002",
+        "position": [-369.254482, 70.218206, -14],
+        "source_position": [2245.444201, 782.205009],
+        "elevator_id": "EV_005",
+        "elevator_point_id": "elevator_point_020",
+        "label": "elevator_point_020",
+        "facing_angle_deg": -179.823018336949,
+        "navigation_offset": 0.4,
+        "zone_type": "paid",
+        "zone_id": "zone_008",
+        "zone_label": "zone_008",
         "node_key": 12,
         "node_key_str": "N0012"
       },
       {
-        "node_id": "elevator_point_017_node",
+        "node_id": "elevator_point_022_node",
         "type": "elevator",
         "layer": "B3",
         "polygon_id": "edited_002",
-        "position": [-400.619475, 72.844421, -14],
-        "source_position": [2404.660799, 744.025693],
+        "position": [-398.778359, 72.886518, -14],
+        "source_position": [2401.785806, 746.358841],
         "elevator_id": "EV_006",
-        "elevator_point_id": "elevator_point_017",
-        "label": "elevator_point_017",
-        "facing_angle_deg": 90.68087891018409,
+        "elevator_point_id": "elevator_point_022",
+        "label": "elevator_point_022",
+        "facing_angle_deg": -0.041104203280303744,
         "navigation_offset": 0.4,
         "zone_type": "paid",
         "zone_id": "zone_008",
@@ -14112,16 +14296,16 @@
         "node_key_str": "N0013"
       },
       {
-        "node_id": "elevator_point_018_node",
+        "node_id": "elevator_point_023_node",
         "type": "elevator",
         "layer": "B4",
         "polygon_id": "edited_001",
-        "position": [-401.091328, 78.270387, -21],
-        "source_position": [2409.161951, 963.403406],
+        "position": [-399.203855, 65.587358, -21],
+        "source_position": [2343.365472, 914.9329],
         "elevator_id": "EV_006",
-        "elevator_point_id": "elevator_point_018",
-        "label": "elevator_point_018",
-        "facing_angle_deg": 93.12372102749605,
+        "elevator_point_id": "elevator_point_023",
+        "label": "elevator_point_023",
+        "facing_angle_deg": 1.1667037366619863,
         "navigation_offset": 0.4,
         "zone_type": "paid",
         "zone_id": "zone_007",
@@ -18000,16 +18184,16 @@
       {
         "node_id": "stair_014_from",
         "type": "connector",
-        "layer": "B1",
-        "polygon_id": "edited_007",
-        "position": [-92.535717, 30.516666, 0],
+        "layer": "B2",
+        "polygon_id": "edited_004",
+        "position": [-130.89991, -3.521926, -7],
         "source_position": [522.3, 779.99],
         "connector_id": "stair_014",
         "connector_type": "stair",
         "endpoint": "from",
-        "zone_type": "paid",
-        "zone_id": "zone_003",
-        "zone_label": "zone_003",
+        "zone_type": "public",
+        "zone_id": null,
+        "zone_label": null,
         "node_key": 215,
         "node_key_str": "N0215"
       },
@@ -18030,74 +18214,10 @@
         "node_key_str": "N0216"
       },
       {
-        "node_id": "stair_015_from",
-        "type": "connector",
-        "layer": "B1",
-        "polygon_id": "edited_007",
-        "position": [-106.407563, 30.377958, 0],
-        "source_position": [599.455, 753.715],
-        "connector_id": "stair_015",
-        "connector_type": "stair",
-        "endpoint": "from",
-        "zone_type": "paid",
-        "zone_id": "zone_003",
-        "zone_label": "zone_003",
-        "node_key": 217,
-        "node_key_str": "N0217"
-      },
-      {
-        "node_id": "stair_015_to",
-        "type": "connector",
-        "layer": "B2",
-        "polygon_id": "edited_003",
-        "position": [-126.45858, 28.14916, -7],
-        "source_position": [678.42, 938.82],
-        "connector_id": "stair_015",
-        "connector_type": "stair",
-        "endpoint": "to",
-        "zone_type": "paid",
-        "zone_id": "zone_002",
-        "zone_label": "zone_002",
-        "node_key": 218,
-        "node_key_str": "N0218"
-      },
-      {
-        "node_id": "stair_016_from",
-        "type": "connector",
-        "layer": "B1",
-        "polygon_id": "edited_007",
-        "position": [-106.0566, 53.849906, 0],
-        "source_position": [706.48, 843.865],
-        "connector_id": "stair_016",
-        "connector_type": "stair",
-        "endpoint": "from",
-        "zone_type": "paid",
-        "zone_id": "zone_003",
-        "zone_label": "zone_003",
-        "node_key": 219,
-        "node_key_str": "N0219"
-      },
-      {
-        "node_id": "stair_016_to",
-        "type": "connector",
-        "layer": "B2",
-        "polygon_id": "edited_004",
-        "position": [-124.427409, 54.349685, -7],
-        "source_position": [817.41, 1066.96],
-        "connector_id": "stair_016",
-        "connector_type": "stair",
-        "endpoint": "to",
-        "zone_type": "paid",
-        "zone_id": "zone_001",
-        "zone_label": "zone_001",
-        "node_key": 220,
-        "node_key_str": "N0220"
-      },
-      {
         "node_id": "stair_017_from",
         "type": "connector",
         "layer": "B1",
-        "polygon_id": "edited_007",
+        "polygon_id": "edited_005",
         "position": [-190.662229, 28.792886, 0],
         "source_position": [1064.63, 591.295],
         "connector_id": "stair_017",
@@ -18106,8 +18226,8 @@
         "zone_type": "paid",
         "zone_id": "zone_004",
         "zone_label": "zone_004",
-        "node_key": 221,
-        "node_key_str": "N0221"
+        "node_key": 217,
+        "node_key_str": "N0217"
       },
       {
         "node_id": "stair_017_to",
@@ -18122,104 +18242,8 @@
         "zone_type": "paid",
         "zone_id": "zone_002",
         "zone_label": "zone_002",
-        "node_key": 222,
-        "node_key_str": "N0222"
-      },
-      {
-        "node_id": "stair_018_from",
-        "type": "connector",
-        "layer": "B1",
-        "polygon_id": "edited_007",
-        "position": [-190.088717, 54.999416, 0],
-        "source_position": [1183.105, 692.285],
-        "connector_id": "stair_018",
-        "connector_type": "stair",
-        "endpoint": "from",
-        "zone_type": "paid",
-        "zone_id": "zone_005",
-        "zone_label": "zone_005",
-        "node_key": 223,
-        "node_key_str": "N0223"
-      },
-      {
-        "node_id": "stair_018_to",
-        "type": "connector",
-        "layer": "B2",
-        "polygon_id": "edited_004",
-        "position": [-174.821749, 53.52762, -7],
-        "source_position": [1114.38, 963.22],
-        "connector_id": "stair_018",
-        "connector_type": "stair",
-        "endpoint": "to",
-        "zone_type": "paid",
-        "zone_id": "zone_001",
-        "zone_label": "zone_001",
-        "node_key": 224,
-        "node_key_str": "N0224"
-      },
-      {
-        "node_id": "stair_019_from",
-        "type": "connector",
-        "layer": "B1",
-        "polygon_id": "edited_007",
-        "position": [-199.718316, 54.765362, 0],
-        "source_position": [1236.025, 673.52],
-        "connector_id": "stair_019",
-        "connector_type": "stair",
-        "endpoint": "from",
-        "zone_type": "paid",
-        "zone_id": "zone_005",
-        "zone_label": "zone_005",
-        "node_key": 225,
-        "node_key_str": "N0225"
-      },
-      {
-        "node_id": "stair_019_to",
-        "type": "connector",
-        "layer": "B2",
-        "polygon_id": "edited_004",
-        "position": [-211.618262, 53.889564, -7],
-        "source_position": [1336.77, 892.03],
-        "connector_id": "stair_019",
-        "connector_type": "stair",
-        "endpoint": "to",
-        "zone_type": "paid",
-        "zone_id": "zone_001",
-        "zone_label": "zone_001",
-        "node_key": 226,
-        "node_key_str": "N0226"
-      },
-      {
-        "node_id": "stair_020_from",
-        "type": "connector",
-        "layer": "B1",
-        "polygon_id": "edited_007",
-        "position": [-199.769431, 28.829068, 0],
-        "source_position": [1115.875, 574.53],
-        "connector_id": "stair_020",
-        "connector_type": "stair",
-        "endpoint": "from",
-        "zone_type": "paid",
-        "zone_id": "zone_004",
-        "zone_label": "zone_004",
-        "node_key": 227,
-        "node_key_str": "N0227"
-      },
-      {
-        "node_id": "stair_020_to",
-        "type": "connector",
-        "layer": "B2",
-        "polygon_id": "edited_003",
-        "position": [-216.515379, 28.680811, -7],
-        "source_position": [1220.66, 762.91],
-        "connector_id": "stair_020",
-        "connector_type": "stair",
-        "endpoint": "to",
-        "zone_type": "paid",
-        "zone_id": "zone_002",
-        "zone_label": "zone_002",
-        "node_key": 228,
-        "node_key_str": "N0228"
+        "node_key": 218,
+        "node_key_str": "N0218"
       },
       {
         "node_id": "stair_021_from",
@@ -18234,8 +18258,8 @@
         "zone_type": "public",
         "zone_id": null,
         "zone_label": null,
-        "node_key": 229,
-        "node_key_str": "N0229"
+        "node_key": 219,
+        "node_key_str": "N0219"
       },
       {
         "node_id": "stair_021_to",
@@ -18250,8 +18274,8 @@
         "zone_type": "public",
         "zone_id": null,
         "zone_label": null,
-        "node_key": 230,
-        "node_key_str": "N0230"
+        "node_key": 220,
+        "node_key_str": "N0220"
       },
       {
         "node_id": "stair_022_from",
@@ -18266,8 +18290,8 @@
         "zone_type": "public",
         "zone_id": null,
         "zone_label": null,
-        "node_key": 231,
-        "node_key_str": "N0231"
+        "node_key": 221,
+        "node_key_str": "N0221"
       },
       {
         "node_id": "stair_022_to",
@@ -18282,6 +18306,166 @@
         "zone_type": "public",
         "zone_id": null,
         "zone_label": null,
+        "node_key": 222,
+        "node_key_str": "N0222"
+      },
+      {
+        "node_id": "stair_023_from",
+        "type": "connector",
+        "layer": "B1",
+        "polygon_id": "edited_005",
+        "position": [-106.407563, 30.377958, 0],
+        "source_position": [599.455, 753.715],
+        "connector_id": "stair_023",
+        "connector_type": "stair",
+        "endpoint": "from",
+        "zone_type": "paid",
+        "zone_id": "zone_003",
+        "zone_label": "zone_003",
+        "node_key": 223,
+        "node_key_str": "N0223"
+      },
+      {
+        "node_id": "stair_023_to",
+        "type": "connector",
+        "layer": "B2",
+        "polygon_id": "edited_003",
+        "position": [-126.369063, 28.869551, -7],
+        "source_position": [682.04, 942.41],
+        "connector_id": "stair_023",
+        "connector_type": "stair",
+        "endpoint": "to",
+        "zone_type": "paid",
+        "zone_id": "zone_002",
+        "zone_label": "zone_002",
+        "node_key": 224,
+        "node_key_str": "N0224"
+      },
+      {
+        "node_id": "stair_024_from",
+        "type": "connector",
+        "layer": "B1",
+        "polygon_id": "edited_005",
+        "position": [-106.0566, 53.849906, 0],
+        "source_position": [706.48, 843.865],
+        "connector_id": "stair_024",
+        "connector_type": "stair",
+        "endpoint": "from",
+        "zone_type": "paid",
+        "zone_id": "zone_003",
+        "zone_label": "zone_003",
+        "node_key": 225,
+        "node_key_str": "N0225"
+      },
+      {
+        "node_id": "stair_024_to",
+        "type": "connector",
+        "layer": "B2",
+        "polygon_id": "edited_004",
+        "position": [-123.877406, 54.497519, -7],
+        "source_position": [814.97, 1068.75],
+        "connector_id": "stair_024",
+        "connector_type": "stair",
+        "endpoint": "to",
+        "zone_type": "paid",
+        "zone_id": "zone_001",
+        "zone_label": "zone_001",
+        "node_key": 226,
+        "node_key_str": "N0226"
+      },
+      {
+        "node_id": "stair_025_from",
+        "type": "connector",
+        "layer": "B1",
+        "polygon_id": "edited_005",
+        "position": [-190.088717, 54.999416, 0],
+        "source_position": [1183.105, 692.285],
+        "connector_id": "stair_025",
+        "connector_type": "stair",
+        "endpoint": "from",
+        "zone_type": "paid",
+        "zone_id": "zone_005",
+        "zone_label": "zone_005",
+        "node_key": 227,
+        "node_key_str": "N0227"
+      },
+      {
+        "node_id": "stair_025_to",
+        "type": "connector",
+        "layer": "B2",
+        "polygon_id": "edited_004",
+        "position": [-174.581711, 54.567152, -7],
+        "source_position": [1118.94, 968.62],
+        "connector_id": "stair_025",
+        "connector_type": "stair",
+        "endpoint": "to",
+        "zone_type": "paid",
+        "zone_id": "zone_001",
+        "zone_label": "zone_001",
+        "node_key": 228,
+        "node_key_str": "N0228"
+      },
+      {
+        "node_id": "stair_026_from",
+        "type": "connector",
+        "layer": "B1",
+        "polygon_id": "edited_005",
+        "position": [-199.718316, 54.765362, 0],
+        "source_position": [1236.025, 673.52],
+        "connector_id": "stair_026",
+        "connector_type": "stair",
+        "endpoint": "from",
+        "zone_type": "paid",
+        "zone_id": "zone_005",
+        "zone_label": "zone_005",
+        "node_key": 229,
+        "node_key_str": "N0229"
+      },
+      {
+        "node_id": "stair_026_to",
+        "type": "connector",
+        "layer": "B2",
+        "polygon_id": "edited_004",
+        "position": [-213.283269, 55.132686, -7],
+        "source_position": [1353.91, 894.62],
+        "connector_id": "stair_026",
+        "connector_type": "stair",
+        "endpoint": "to",
+        "zone_type": "paid",
+        "zone_id": "zone_001",
+        "zone_label": "zone_001",
+        "node_key": 230,
+        "node_key_str": "N0230"
+      },
+      {
+        "node_id": "stair_027_from",
+        "type": "connector",
+        "layer": "B1",
+        "polygon_id": "edited_005",
+        "position": [-199.769431, 28.829068, 0],
+        "source_position": [1115.875, 574.53],
+        "connector_id": "stair_027",
+        "connector_type": "stair",
+        "endpoint": "from",
+        "zone_type": "paid",
+        "zone_id": "zone_004",
+        "zone_label": "zone_004",
+        "node_key": 231,
+        "node_key_str": "N0231"
+      },
+      {
+        "node_id": "stair_027_to",
+        "type": "connector",
+        "layer": "B2",
+        "polygon_id": "edited_003",
+        "position": [-216.716366, 28.262478, -7],
+        "source_position": [1219.45, 760.53],
+        "connector_id": "stair_027",
+        "connector_type": "stair",
+        "endpoint": "to",
+        "zone_type": "paid",
+        "zone_id": "zone_002",
+        "zone_label": "zone_002",
         "node_key": 232,
         "node_key_str": "N0232"
       },
@@ -18350,129 +18534,6 @@
         "node_key_str": "N0236"
       },
       {
-        "node_id": "ticket_gate_004_back_node",
-        "type": "gate",
-        "layer": "B1",
-        "polygon_id": "edited_007",
-        "position": [-110.196137, 41.821773, 0],
-        "source_position": [683.444318, 788.465071],
-        "asset_id": "ticket_gate_004",
-        "asset_type": "ticket_gate",
-        "label": "ticket_gate_004",
-        "gate_type": "ticket_gate",
-        "gate_side": "back",
-        "paid_side_point_source": [648.94, 798.13],
-        "zone_type": "paid",
-        "zone_id": "ticket_gate_004_back",
-        "access_transition": "public_paid",
-        "cost": 10,
-        "zone_label": "zone_003",
-        "node_key": 237,
-        "node_key_str": "N0237"
-      },
-      {
-        "node_id": "ticket_gate_004_front_node",
-        "type": "gate",
-        "layer": "B1",
-        "polygon_id": "edited_007",
-        "position": [-112.196038, 41.801934, 0],
-        "source_position": [675.365682, 788.384929],
-        "asset_id": "ticket_gate_004",
-        "asset_type": "ticket_gate",
-        "label": "ticket_gate_004",
-        "gate_type": "ticket_gate",
-        "gate_side": "front",
-        "zone_type": "public",
-        "zone_id": "ticket_gate_004_front",
-        "access_transition": "public_paid",
-        "cost": 10,
-        "zone_label": "zone_003",
-        "node_key": 238,
-        "node_key_str": "N0238"
-      },
-      {
-        "node_id": "ticket_gate_005_back_node",
-        "type": "gate",
-        "layer": "B1",
-        "polygon_id": "edited_007",
-        "position": [-192.17297, 33.616722, 0],
-        "source_position": [1099.97264, 606.691132],
-        "asset_id": "ticket_gate_005",
-        "asset_type": "ticket_gate",
-        "label": "ticket_gate_005",
-        "gate_type": "ticket_gate",
-        "gate_side": "back",
-        "paid_side_point_source": [1106.33, 594.47],
-        "zone_type": "paid",
-        "zone_id": "ticket_gate_005_back",
-        "access_transition": "public_paid",
-        "cost": 10,
-        "zone_label": "zone_004",
-        "node_key": 239,
-        "node_key_str": "N0239"
-      },
-      {
-        "node_id": "ticket_gate_005_front_node",
-        "type": "gate",
-        "layer": "B1",
-        "polygon_id": "edited_007",
-        "position": [-192.137144, 35.616402, 0],
-        "source_position": [1100.11736, 614.768868],
-        "asset_id": "ticket_gate_005",
-        "asset_type": "ticket_gate",
-        "label": "ticket_gate_005",
-        "gate_type": "ticket_gate",
-        "gate_side": "front",
-        "zone_type": "public",
-        "zone_id": "ticket_gate_005_front",
-        "access_transition": "public_paid",
-        "cost": 10,
-        "zone_label": "zone_004",
-        "node_key": 240,
-        "node_key_str": "N0240"
-      },
-      {
-        "node_id": "ticket_gate_006_back_node",
-        "type": "gate",
-        "layer": "B1",
-        "polygon_id": "edited_007",
-        "position": [-195.403274, 49.840436, 0],
-        "source_position": [1184.454589, 662.949077],
-        "asset_id": "ticket_gate_006",
-        "asset_type": "ticket_gate",
-        "label": "ticket_gate_006",
-        "gate_type": "ticket_gate",
-        "gate_side": "back",
-        "paid_side_point_source": [1196.23, 671.46],
-        "zone_type": "paid",
-        "zone_id": "ticket_gate_006_back",
-        "access_transition": "public_paid",
-        "cost": 10,
-        "zone_label": "zone_005",
-        "node_key": 241,
-        "node_key_str": "N0241"
-      },
-      {
-        "node_id": "ticket_gate_006_front_node",
-        "type": "gate",
-        "layer": "B1",
-        "polygon_id": "edited_007",
-        "position": [-195.432777, 47.840654, 0],
-        "source_position": [1184.335411, 654.870923],
-        "asset_id": "ticket_gate_006",
-        "asset_type": "ticket_gate",
-        "label": "ticket_gate_006",
-        "gate_type": "ticket_gate",
-        "gate_side": "front",
-        "zone_type": "public",
-        "zone_id": "ticket_gate_006_front",
-        "access_transition": "public_paid",
-        "cost": 10,
-        "zone_label": "zone_005",
-        "node_key": 242,
-        "node_key_str": "N0242"
-      },
-      {
         "node_id": "ticket_gate_007_back_node",
         "type": "gate",
         "layer": "B3",
@@ -18490,8 +18551,8 @@
         "access_transition": "public_paid",
         "cost": 10,
         "zone_label": "zone_008",
-        "node_key": 243,
-        "node_key_str": "N0243"
+        "node_key": 237,
+        "node_key_str": "N0237"
       },
       {
         "node_id": "ticket_gate_007_front_node",
@@ -18510,8 +18571,8 @@
         "access_transition": "public_paid",
         "cost": 10,
         "zone_label": "zone_008",
-        "node_key": 244,
-        "node_key_str": "N0244"
+        "node_key": 238,
+        "node_key_str": "N0238"
       },
       {
         "node_id": "ticket_gate_008_back_node",
@@ -18531,8 +18592,8 @@
         "access_transition": "public_paid",
         "cost": 10,
         "zone_label": null,
-        "node_key": 245,
-        "node_key_str": "N0245"
+        "node_key": 239,
+        "node_key_str": "N0239"
       },
       {
         "node_id": "ticket_gate_008_front_node",
@@ -18551,6 +18612,129 @@
         "access_transition": "public_paid",
         "cost": 10,
         "zone_label": null,
+        "node_key": 240,
+        "node_key_str": "N0240"
+      },
+      {
+        "node_id": "ticket_gate_009_back_node",
+        "type": "gate",
+        "layer": "B1",
+        "polygon_id": "edited_005",
+        "position": [-110.16519, 41.780084, 0],
+        "source_position": [683.164359, 788.359309],
+        "asset_id": "ticket_gate_009",
+        "asset_type": "ticket_gate",
+        "label": "ticket_gate_009",
+        "gate_type": "ticket_gate",
+        "gate_side": "back",
+        "paid_side_point_source": [632.23, 811.89],
+        "zone_type": "paid",
+        "zone_id": "ticket_gate_009_back",
+        "access_transition": "public_paid",
+        "cost": 10,
+        "zone_label": "zone_003",
+        "node_key": 241,
+        "node_key_str": "N0241"
+      },
+      {
+        "node_id": "ticket_gate_009_front_node",
+        "type": "gate",
+        "layer": "B1",
+        "polygon_id": "edited_005",
+        "position": [-112.165112, 41.797754, 0],
+        "source_position": [675.085641, 788.430691],
+        "asset_id": "ticket_gate_009",
+        "asset_type": "ticket_gate",
+        "label": "ticket_gate_009",
+        "gate_type": "ticket_gate",
+        "gate_side": "front",
+        "zone_type": "public",
+        "zone_id": "ticket_gate_009_front",
+        "access_transition": "public_paid",
+        "cost": 10,
+        "zone_label": "zone_003",
+        "node_key": 242,
+        "node_key_str": "N0242"
+      },
+      {
+        "node_id": "ticket_gate_010_back_node",
+        "type": "gate",
+        "layer": "B1",
+        "polygon_id": "edited_005",
+        "position": [-195.370148, 49.866096, 0],
+        "source_position": [1184.330811, 663.119358],
+        "asset_id": "ticket_gate_010",
+        "asset_type": "ticket_gate",
+        "label": "ticket_gate_010",
+        "gate_type": "ticket_gate",
+        "gate_side": "back",
+        "paid_side_point_source": [1197.52, 676.58],
+        "zone_type": "paid",
+        "zone_id": "ticket_gate_010_back",
+        "access_transition": "public_paid",
+        "cost": 10,
+        "zone_label": "zone_005",
+        "node_key": 243,
+        "node_key_str": "N0243"
+      },
+      {
+        "node_id": "ticket_gate_010_front_node",
+        "type": "gate",
+        "layer": "B1",
+        "polygon_id": "edited_005",
+        "position": [-195.387878, 47.866174, 0],
+        "source_position": [1184.259189, 655.040642],
+        "asset_id": "ticket_gate_010",
+        "asset_type": "ticket_gate",
+        "label": "ticket_gate_010",
+        "gate_type": "ticket_gate",
+        "gate_side": "front",
+        "zone_type": "public",
+        "zone_id": "ticket_gate_010_front",
+        "access_transition": "public_paid",
+        "cost": 10,
+        "zone_label": "zone_005",
+        "node_key": 244,
+        "node_key_str": "N0244"
+      },
+      {
+        "node_id": "ticket_gate_011_back_node",
+        "type": "gate",
+        "layer": "B1",
+        "polygon_id": "edited_005",
+        "position": [-192.153559, 33.65358, 0],
+        "source_position": [1100.176702, 606.840505],
+        "asset_id": "ticket_gate_011",
+        "asset_type": "ticket_gate",
+        "label": "ticket_gate_011",
+        "gate_type": "ticket_gate",
+        "gate_side": "back",
+        "paid_side_point_source": [1089.54, 592.78],
+        "zone_type": "paid",
+        "zone_id": "ticket_gate_011_back",
+        "access_transition": "public_paid",
+        "cost": 10,
+        "zone_label": "zone_004",
+        "node_key": 245,
+        "node_key_str": "N0245"
+      },
+      {
+        "node_id": "ticket_gate_011_front_node",
+        "type": "gate",
+        "layer": "B1",
+        "polygon_id": "edited_005",
+        "position": [-192.146975, 35.653569, 0],
+        "source_position": [1100.203298, 614.919495],
+        "asset_id": "ticket_gate_011",
+        "asset_type": "ticket_gate",
+        "label": "ticket_gate_011",
+        "gate_type": "ticket_gate",
+        "gate_side": "front",
+        "zone_type": "public",
+        "zone_id": "ticket_gate_011_front",
+        "access_transition": "public_paid",
+        "cost": 10,
+        "zone_label": "zone_004",
         "node_key": 246,
         "node_key_str": "N0246"
       },
@@ -18558,7 +18742,7 @@
         "node_id": "toilet_001_node",
         "type": "poi",
         "layer": "B1",
-        "polygon_id": "edited_007",
+        "polygon_id": "edited_005",
         "position": [-83.857141, 24.493617, 0],
         "source_position": [443.781976, 773.225787],
         "asset_id": "toilet_001",
@@ -18714,28 +18898,8 @@
         "to": "stair_014_to",
         "type": "vertical",
         "bidirectional": true,
-        "cost": 8.199240099982887,
+        "cost": 52.8591312766911,
         "connector_id": "stair_014",
-        "connector_type": "stair"
-      },
-      {
-        "edge_id": "stair_015_edge",
-        "from": "stair_015_from",
-        "to": "stair_015_to",
-        "type": "vertical",
-        "bidirectional": true,
-        "cost": 21.35440976421698,
-        "connector_id": "stair_015",
-        "connector_type": "stair"
-      },
-      {
-        "edge_id": "stair_016_edge",
-        "from": "stair_016_from",
-        "to": "stair_016_to",
-        "type": "vertical",
-        "bidirectional": true,
-        "cost": 19.665615503430608,
-        "connector_id": "stair_016",
         "connector_type": "stair"
       },
       {
@@ -18746,36 +18910,6 @@
         "bidirectional": true,
         "cost": 13.943902190771995,
         "connector_id": "stair_017",
-        "connector_type": "stair"
-      },
-      {
-        "edge_id": "stair_018_edge",
-        "from": "stair_018_from",
-        "to": "stair_018_to",
-        "type": "vertical",
-        "bidirectional": true,
-        "cost": 16.85961135979809,
-        "connector_id": "stair_018",
-        "connector_type": "stair"
-      },
-      {
-        "edge_id": "stair_019_edge",
-        "from": "stair_019_from",
-        "to": "stair_019_to",
-        "type": "vertical",
-        "bidirectional": true,
-        "cost": 13.833861930831501,
-        "connector_id": "stair_019",
-        "connector_type": "stair"
-      },
-      {
-        "edge_id": "stair_020_edge",
-        "from": "stair_020_from",
-        "to": "stair_020_to",
-        "type": "vertical",
-        "bidirectional": true,
-        "cost": 18.150722556575523,
-        "connector_id": "stair_020",
         "connector_type": "stair"
       },
       {
@@ -18819,34 +18953,54 @@
         "connector_type": "stair"
       },
       {
-        "edge_id": "ticket_gate_004_gate_crossing",
-        "from": "ticket_gate_004_front_node",
-        "to": "ticket_gate_004_back_node",
-        "type": "gate_crossing",
+        "edge_id": "stair_023_edge",
+        "from": "stair_023_from",
+        "to": "stair_023_to",
+        "type": "vertical",
         "bidirectional": true,
-        "cost": 10.0,
-        "asset_id": "ticket_gate_004",
-        "gate_type": "ticket_gate"
+        "cost": 21.206997996612102,
+        "connector_id": "stair_023",
+        "connector_type": "stair"
       },
       {
-        "edge_id": "ticket_gate_005_gate_crossing",
-        "from": "ticket_gate_005_front_node",
-        "to": "ticket_gate_005_back_node",
-        "type": "gate_crossing",
+        "edge_id": "stair_024_edge",
+        "from": "stair_024_from",
+        "to": "stair_024_to",
+        "type": "vertical",
         "bidirectional": true,
-        "cost": 10.0,
-        "asset_id": "ticket_gate_005",
-        "gate_type": "ticket_gate"
+        "cost": 19.157258172492977,
+        "connector_id": "stair_024",
+        "connector_type": "stair"
       },
       {
-        "edge_id": "ticket_gate_006_gate_crossing",
-        "from": "ticket_gate_006_front_node",
-        "to": "ticket_gate_006_back_node",
-        "type": "gate_crossing",
+        "edge_id": "stair_025_edge",
+        "from": "stair_025_from",
+        "to": "stair_025_to",
+        "type": "vertical",
         "bidirectional": true,
-        "cost": 10.0,
-        "asset_id": "ticket_gate_006",
-        "gate_type": "ticket_gate"
+        "cost": 17.019226823693295,
+        "connector_id": "stair_025",
+        "connector_type": "stair"
+      },
+      {
+        "edge_id": "stair_026_edge",
+        "from": "stair_026_from",
+        "to": "stair_026_to",
+        "type": "vertical",
+        "bidirectional": true,
+        "cost": 15.269016580152023,
+        "connector_id": "stair_026",
+        "connector_type": "stair"
+      },
+      {
+        "edge_id": "stair_027_edge",
+        "from": "stair_027_from",
+        "to": "stair_027_to",
+        "type": "vertical",
+        "bidirectional": true,
+        "cost": 18.34447059134909,
+        "connector_id": "stair_027",
+        "connector_type": "stair"
       },
       {
         "edge_id": "ticket_gate_007_gate_crossing",
@@ -18866,6 +19020,36 @@
         "bidirectional": true,
         "cost": 10.0,
         "asset_id": "ticket_gate_008",
+        "gate_type": "ticket_gate"
+      },
+      {
+        "edge_id": "ticket_gate_009_gate_crossing",
+        "from": "ticket_gate_009_front_node",
+        "to": "ticket_gate_009_back_node",
+        "type": "gate_crossing",
+        "bidirectional": true,
+        "cost": 10.0,
+        "asset_id": "ticket_gate_009",
+        "gate_type": "ticket_gate"
+      },
+      {
+        "edge_id": "ticket_gate_010_gate_crossing",
+        "from": "ticket_gate_010_front_node",
+        "to": "ticket_gate_010_back_node",
+        "type": "gate_crossing",
+        "bidirectional": true,
+        "cost": 10.0,
+        "asset_id": "ticket_gate_010",
+        "gate_type": "ticket_gate"
+      },
+      {
+        "edge_id": "ticket_gate_011_gate_crossing",
+        "from": "ticket_gate_011_front_node",
+        "to": "ticket_gate_011_back_node",
+        "type": "gate_crossing",
+        "bidirectional": true,
+        "cost": 10.0,
+        "asset_id": "ticket_gate_011",
         "gate_type": "ticket_gate"
       },
       {
@@ -20292,29 +20476,29 @@
       },
       {
         "edge_id": "EV_007_1_to_2",
-        "from": "elevator_point_007_node",
-        "to": "elevator_point_008_node",
-        "type": "elevator",
-        "bidirectional": true,
-        "cost": 10.798740663875494,
-        "elevator_id": "EV_007"
-      },
-      {
-        "edge_id": "EV_005_1_to_2",
         "from": "elevator_point_009_node",
         "to": "elevator_point_015_node",
         "type": "elevator",
         "bidirectional": true,
         "cost": 20.235926462953415,
+        "elevator_id": "EV_007"
+      },
+      {
+        "edge_id": "EV_005_1_to_2",
+        "from": "elevator_point_019_node",
+        "to": "elevator_point_020_node",
+        "type": "elevator",
+        "bidirectional": true,
+        "cost": 7.308248173591506,
         "elevator_id": "EV_005"
       },
       {
         "edge_id": "EV_006_1_to_2",
-        "from": "elevator_point_017_node",
-        "to": "elevator_point_018_node",
+        "from": "elevator_point_022_node",
+        "to": "elevator_point_023_node",
         "type": "elevator",
         "bidirectional": true,
-        "cost": 8.86925893180694,
+        "cost": 10.122192786258559,
         "elevator_id": "EV_006"
       }
     ],
@@ -20344,23 +20528,22 @@
         "exit_stair_003_from",
         "exit_stair_004_from",
         "exit_stair_005_from",
-        "stair_014_from",
-        "stair_015_from",
-        "stair_016_from",
         "stair_017_from",
-        "stair_018_from",
-        "stair_019_from",
-        "stair_020_from",
         "stair_021_from",
         "stair_021_to",
         "stair_022_from",
         "stair_022_to",
-        "ticket_gate_004_back_node",
-        "ticket_gate_004_front_node",
-        "ticket_gate_005_back_node",
-        "ticket_gate_005_front_node",
-        "ticket_gate_006_back_node",
-        "ticket_gate_006_front_node",
+        "stair_023_from",
+        "stair_024_from",
+        "stair_025_from",
+        "stair_026_from",
+        "stair_027_from",
+        "ticket_gate_009_back_node",
+        "ticket_gate_009_front_node",
+        "ticket_gate_010_back_node",
+        "ticket_gate_010_front_node",
+        "ticket_gate_011_back_node",
+        "ticket_gate_011_front_node",
         "toilet_001_node",
         "toilet_002_node"
       ],
@@ -20450,19 +20633,40 @@
         "platform_002_car_9_door_2",
         "platform_002_car_9_door_3",
         "platform_002_car_9_door_4",
+        "stair_014_from",
         "stair_014_to",
-        "stair_015_to",
-        "stair_016_to",
         "stair_017_to",
-        "stair_018_to",
-        "stair_019_to",
-        "stair_020_to",
+        "stair_023_to",
+        "stair_024_to",
+        "stair_025_to",
+        "stair_026_to",
+        "stair_027_to",
         "subway_001_node",
         "subway_002_node"
       ],
+      "B3": [
+        "elevator_point_009_node",
+        "elevator_point_020_node",
+        "elevator_point_022_node",
+        "escalator_001_from",
+        "escalator_002_to",
+        "escalator_003_to",
+        "escalator_006_from",
+        "escalator_009_to",
+        "escalator_010_to",
+        "stair_008_from",
+        "stair_009_from",
+        "stair_010_from",
+        "stair_011_from",
+        "stair_012_from",
+        "ticket_gate_007_back_node",
+        "ticket_gate_007_front_node",
+        "ticket_gate_008_back_node",
+        "ticket_gate_008_front_node"
+      ],
       "B4": [
-        "elevator_point_007_node",
-        "elevator_point_018_node",
+        "elevator_point_019_node",
+        "elevator_point_023_node",
         "escalator_001_to",
         "escalator_006_to",
         "escalator_007_to",
@@ -20554,26 +20758,6 @@
         "stair_012_to",
         "subway_003_node",
         "subway_004_node"
-      ],
-      "B3": [
-        "elevator_point_008_node",
-        "elevator_point_009_node",
-        "elevator_point_017_node",
-        "escalator_001_from",
-        "escalator_002_to",
-        "escalator_003_to",
-        "escalator_006_from",
-        "escalator_009_to",
-        "escalator_010_to",
-        "stair_008_from",
-        "stair_009_from",
-        "stair_010_from",
-        "stair_011_from",
-        "stair_012_from",
-        "ticket_gate_007_back_node",
-        "ticket_gate_007_front_node",
-        "ticket_gate_008_back_node",
-        "ticket_gate_008_front_node"
       ]
     }
   }

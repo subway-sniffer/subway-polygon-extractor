@@ -11,25 +11,46 @@
       "female"
     ],
     "include_same_line_platform": false,
+    "route_preferences": [
+      "none",
+      "elevator"
+    ],
     "route_options": {
       "synthetic_mode": "same-polygon",
       "same_layer_radius": null,
       "zone_change_penalty": 100.0,
       "paid_free_penalty": 1000.0,
-      "route_preference": "none"
+      "route_preference": [
+        "none",
+        "elevator"
+      ]
     }
   },
   "counts": {
     "platform_car_node_count": 20,
     "exit_node_count": 6,
     "od_pair_count": 240,
-    "route_success_count": 240,
-    "toilet_route_success_count": 480,
+    "route_success_count": 480,
+    "toilet_route_success_count": 960,
     "route_failure_count": 0,
-    "unique_edge_count": 88,
+    "unique_edge_count": 136,
     "toilet_candidate_counts": {
       "male": 1,
       "female": 1
+    },
+    "per_preference": {
+      "none": {
+        "route_success_count": 240,
+        "toilet_route_success_count": 480,
+        "route_failure_count": 0,
+        "unique_edge_count": 88
+      },
+      "elevator": {
+        "route_success_count": 240,
+        "toilet_route_success_count": 480,
+        "route_failure_count": 0,
+        "unique_edge_count": 80
+      }
     }
   },
   "platform_car_nodes": [
@@ -486,6 +507,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -523,6 +547,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -560,6 +587,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -586,7 +616,7 @@
       "route_edge_type": "gate_crossing",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 360,
+      "used_by_count": 720,
       "used_by_pair_types": [
         "platform_exit",
         "platform_exit_via_toilet"
@@ -597,6 +627,10 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
       ]
     },
     {
@@ -623,13 +657,18 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 100,
+      "used_by_count": 200,
       "used_by_pair_types": [
         "platform_exit"
       ],
       "source_route_edge_ids": [
         "walk_escalator_001_to_to_ticket_gate_001_front_node_reverse"
-      ]
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
+      ],
+      "used_by_toilet_genders": []
     },
     {
       "edge_id": "N0007_N0006",
@@ -655,7 +694,7 @@
       "route_edge_type": "vertical",
       "connector_type": "escalator",
       "transport_mode": "escalator",
-      "used_by_count": 300,
+      "used_by_count": 600,
       "used_by_pair_types": [
         "platform_exit",
         "platform_exit_via_toilet"
@@ -666,6 +705,10 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
       ]
     },
     {
@@ -692,7 +735,7 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 120,
+      "used_by_count": 240,
       "used_by_pair_types": [
         "platform_exit",
         "platform_exit_via_toilet"
@@ -703,6 +746,10 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
       ]
     },
     {
@@ -729,7 +776,7 @@
       "route_edge_type": "vertical",
       "connector_type": "stair",
       "transport_mode": "stair",
-      "used_by_count": 120,
+      "used_by_count": 240,
       "used_by_pair_types": [
         "platform_exit",
         "platform_exit_via_toilet"
@@ -740,6 +787,10 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
       ]
     },
     {
@@ -766,7 +817,7 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 60,
+      "used_by_count": 120,
       "used_by_pair_types": [
         "platform_exit",
         "platform_exit_via_toilet"
@@ -777,6 +828,10 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
       ]
     },
     {
@@ -803,7 +858,7 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 240,
+      "used_by_count": 480,
       "used_by_pair_types": [
         "platform_exit_via_toilet"
       ],
@@ -813,6 +868,10 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
       ]
     },
     {
@@ -839,7 +898,7 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 200,
+      "used_by_count": 400,
       "used_by_pair_types": [
         "platform_exit_via_toilet"
       ],
@@ -849,6 +908,10 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
       ]
     },
     {
@@ -875,7 +938,7 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 60,
+      "used_by_count": 120,
       "used_by_pair_types": [
         "platform_exit",
         "platform_exit_via_toilet"
@@ -886,6 +949,10 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
       ]
     },
     {
@@ -912,7 +979,7 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 180,
+      "used_by_count": 360,
       "used_by_pair_types": [
         "platform_exit",
         "platform_exit_via_toilet"
@@ -923,6 +990,10 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
       ]
     },
     {
@@ -949,7 +1020,7 @@
       "route_edge_type": "vertical",
       "connector_type": "stair",
       "transport_mode": "stair",
-      "used_by_count": 180,
+      "used_by_count": 360,
       "used_by_pair_types": [
         "platform_exit",
         "platform_exit_via_toilet"
@@ -960,6 +1031,10 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
       ]
     },
     {
@@ -986,7 +1061,7 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 60,
+      "used_by_count": 120,
       "used_by_pair_types": [
         "platform_exit",
         "platform_exit_via_toilet"
@@ -997,6 +1072,10 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
       ]
     },
     {
@@ -1023,7 +1102,7 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 60,
+      "used_by_count": 120,
       "used_by_pair_types": [
         "platform_exit",
         "platform_exit_via_toilet"
@@ -1034,6 +1113,10 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
       ]
     },
     {
@@ -1060,13 +1143,18 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 20,
+      "used_by_count": 40,
       "used_by_pair_types": [
         "platform_exit"
       ],
       "source_route_edge_ids": [
         "walk_elevator_point_005_node_to_ticket_gate_001_front_node_reverse"
-      ]
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
+      ],
+      "used_by_toilet_genders": []
     },
     {
       "edge_id": "N0109_N0004",
@@ -1092,7 +1180,7 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 40,
+      "used_by_count": 80,
       "used_by_pair_types": [
         "platform_exit_via_toilet"
       ],
@@ -1102,6 +1190,10 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
       ]
     },
     {
@@ -1128,7 +1220,7 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 60,
+      "used_by_count": 120,
       "used_by_pair_types": [
         "platform_exit",
         "platform_exit_via_toilet"
@@ -1139,6 +1231,10 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
       ]
     },
     {
@@ -1176,6 +1272,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -1213,6 +1312,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -1250,6 +1352,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -1287,6 +1392,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -1324,6 +1432,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -1361,6 +1472,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -1398,6 +1512,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -1435,6 +1552,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -1472,6 +1592,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -1509,6 +1632,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -1546,6 +1672,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -1583,6 +1712,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -1620,6 +1752,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -1657,6 +1792,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -1694,6 +1832,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -1731,6 +1872,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -1768,6 +1912,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -1805,6 +1952,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -1842,6 +1992,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -1879,6 +2032,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -1916,6 +2072,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -1953,6 +2112,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -1990,6 +2152,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -2027,6 +2192,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -2064,6 +2232,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -2090,7 +2261,7 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 60,
+      "used_by_count": 120,
       "used_by_pair_types": [
         "exit_platform",
         "exit_platform_via_toilet"
@@ -2101,6 +2272,10 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
       ]
     },
     {
@@ -2127,7 +2302,7 @@
       "route_edge_type": "vertical",
       "connector_type": "stair",
       "transport_mode": "stair",
-      "used_by_count": 120,
+      "used_by_count": 240,
       "used_by_pair_types": [
         "exit_platform",
         "exit_platform_via_toilet"
@@ -2138,6 +2313,10 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
       ]
     },
     {
@@ -2164,7 +2343,7 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 120,
+      "used_by_count": 240,
       "used_by_pair_types": [
         "exit_platform",
         "exit_platform_via_toilet"
@@ -2175,6 +2354,10 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
       ]
     },
     {
@@ -2201,7 +2384,7 @@
       "route_edge_type": "vertical",
       "connector_type": "escalator",
       "transport_mode": "escalator",
-      "used_by_count": 300,
+      "used_by_count": 600,
       "used_by_pair_types": [
         "exit_platform",
         "exit_platform_via_toilet"
@@ -2212,6 +2395,10 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
       ]
     },
     {
@@ -2238,13 +2425,18 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 100,
+      "used_by_count": 200,
       "used_by_pair_types": [
         "exit_platform"
       ],
       "source_route_edge_ids": [
         "walk_escalator_001_to_to_ticket_gate_001_front_node"
-      ]
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
+      ],
+      "used_by_toilet_genders": []
     },
     {
       "edge_id": "N0108_N0107",
@@ -2270,7 +2462,7 @@
       "route_edge_type": "gate_crossing",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 360,
+      "used_by_count": 720,
       "used_by_pair_types": [
         "exit_platform",
         "exit_platform_via_toilet"
@@ -2281,6 +2473,10 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
       ]
     },
     {
@@ -2318,6 +2514,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -2355,6 +2554,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -2392,6 +2594,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -2418,7 +2623,7 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 200,
+      "used_by_count": 400,
       "used_by_pair_types": [
         "exit_platform_via_toilet"
       ],
@@ -2428,6 +2633,10 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
       ]
     },
     {
@@ -2454,7 +2663,7 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 240,
+      "used_by_count": 480,
       "used_by_pair_types": [
         "exit_platform_via_toilet"
       ],
@@ -2464,6 +2673,10 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
       ]
     },
     {
@@ -2501,6 +2714,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -2538,6 +2754,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -2575,6 +2794,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -2612,6 +2834,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -2649,6 +2874,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -2686,6 +2914,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -2723,6 +2954,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -2760,6 +2994,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -2797,6 +3034,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -2834,6 +3074,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -2871,6 +3114,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -2908,6 +3154,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -2945,6 +3194,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -2982,6 +3234,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -3019,6 +3274,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -3056,6 +3314,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -3093,6 +3354,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -3130,6 +3394,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -3167,6 +3434,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -3204,6 +3474,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -3241,6 +3514,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -3278,6 +3554,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -3315,6 +3594,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -3352,6 +3634,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -3389,6 +3674,9 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none"
       ]
     },
     {
@@ -3415,7 +3703,7 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 60,
+      "used_by_count": 120,
       "used_by_pair_types": [
         "exit_platform",
         "exit_platform_via_toilet"
@@ -3426,6 +3714,10 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
       ]
     },
     {
@@ -3452,7 +3744,7 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 60,
+      "used_by_count": 120,
       "used_by_pair_types": [
         "exit_platform",
         "exit_platform_via_toilet"
@@ -3463,6 +3755,10 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
       ]
     },
     {
@@ -3489,7 +3785,7 @@
       "route_edge_type": "vertical",
       "connector_type": "stair",
       "transport_mode": "stair",
-      "used_by_count": 180,
+      "used_by_count": 360,
       "used_by_pair_types": [
         "exit_platform",
         "exit_platform_via_toilet"
@@ -3500,6 +3796,10 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
       ]
     },
     {
@@ -3526,7 +3826,7 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 180,
+      "used_by_count": 360,
       "used_by_pair_types": [
         "exit_platform",
         "exit_platform_via_toilet"
@@ -3537,6 +3837,10 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
       ]
     },
     {
@@ -3563,7 +3867,7 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 60,
+      "used_by_count": 120,
       "used_by_pair_types": [
         "exit_platform",
         "exit_platform_via_toilet"
@@ -3574,6 +3878,10 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
       ]
     },
     {
@@ -3600,13 +3908,18 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 20,
+      "used_by_count": 40,
       "used_by_pair_types": [
         "exit_platform"
       ],
       "source_route_edge_ids": [
         "walk_elevator_point_005_node_to_ticket_gate_001_front_node"
-      ]
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
+      ],
+      "used_by_toilet_genders": []
     },
     {
       "edge_id": "N0004_N0109",
@@ -3632,7 +3945,7 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 40,
+      "used_by_count": 80,
       "used_by_pair_types": [
         "exit_platform_via_toilet"
       ],
@@ -3642,6 +3955,10 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
       ]
     },
     {
@@ -3668,7 +3985,7 @@
       "route_edge_type": "synthetic_walk",
       "connector_type": null,
       "transport_mode": null,
-      "used_by_count": 60,
+      "used_by_count": 120,
       "used_by_pair_types": [
         "exit_platform",
         "exit_platform_via_toilet"
@@ -3679,6 +3996,1934 @@
       "used_by_toilet_genders": [
         "male",
         "female"
+      ],
+      "used_by_route_preferences": [
+        "none",
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0019_N0005",
+      "video_title": "상도_N0019_N0005",
+      "from": {
+        "node_id": "platform_002_car_1_door_3",
+        "node_key": 19,
+        "node_key_str": "N0019",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-243.342514, 59.882163, -14]
+      },
+      "to": {
+        "node_id": "elevator_point_006_node",
+        "node_key": 5,
+        "node_key_str": "N0005",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-152.160266, 62.407969, -14]
+      },
+      "from_type": "platform_position",
+      "to_type": "elevator",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "platform_exit",
+        "platform_exit_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_006_node_to_platform_002_car_1_door_3_reverse"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0005_N0003",
+      "video_title": "상도_N0005_N0003",
+      "from": {
+        "node_id": "elevator_point_006_node",
+        "node_key": 5,
+        "node_key_str": "N0005",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-152.160266, 62.407969, -14]
+      },
+      "to": {
+        "node_id": "elevator_point_004_node",
+        "node_key": 3,
+        "node_key_str": "N0003",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-152.50258, 62.405122, -7]
+      },
+      "from_type": "elevator",
+      "to_type": "elevator",
+      "route_edge_type": "elevator",
+      "connector_type": null,
+      "transport_mode": "elevator",
+      "used_by_count": 180,
+      "used_by_pair_types": [
+        "platform_exit",
+        "platform_exit_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "EV_002_1_to_2_reverse"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ],
+      "video_required": false
+    },
+    {
+      "edge_id": "N0003_N0107",
+      "video_title": "상도_N0003_N0107",
+      "from": {
+        "node_id": "elevator_point_004_node",
+        "node_key": 3,
+        "node_key_str": "N0003",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-152.50258, 62.405122, -7]
+      },
+      "to": {
+        "node_id": "ticket_gate_001_back_node",
+        "node_key": 107,
+        "node_key_str": "N0107",
+        "type": "gate",
+        "gate_side": "back",
+        "position": [-166.487162, 55.130833, -7]
+      },
+      "from_type": "elevator",
+      "to_type": "gate",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 180,
+      "used_by_pair_types": [
+        "platform_exit",
+        "platform_exit_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_004_node_to_ticket_gate_001_back_node"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0022_N0005",
+      "video_title": "상도_N0022_N0005",
+      "from": {
+        "node_id": "platform_002_car_2_door_2",
+        "node_key": 22,
+        "node_key_str": "N0022",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-223.684588, 59.909535, -14]
+      },
+      "to": {
+        "node_id": "elevator_point_006_node",
+        "node_key": 5,
+        "node_key_str": "N0005",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-152.160266, 62.407969, -14]
+      },
+      "from_type": "platform_position",
+      "to_type": "elevator",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "platform_exit",
+        "platform_exit_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_006_node_to_platform_002_car_2_door_2_reverse"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0026_N0005",
+      "video_title": "상도_N0026_N0005",
+      "from": {
+        "node_id": "platform_002_car_3_door_2",
+        "node_key": 26,
+        "node_key_str": "N0026",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-197.47402, 59.946031, -14]
+      },
+      "to": {
+        "node_id": "elevator_point_006_node",
+        "node_key": 5,
+        "node_key_str": "N0005",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-152.160266, 62.407969, -14]
+      },
+      "from_type": "platform_position",
+      "to_type": "elevator",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "platform_exit",
+        "platform_exit_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_006_node_to_platform_002_car_3_door_2_reverse"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0030_N0005",
+      "video_title": "상도_N0030_N0005",
+      "from": {
+        "node_id": "platform_002_car_4_door_2",
+        "node_key": 30,
+        "node_key_str": "N0030",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-167.810909, 59.987355, -14]
+      },
+      "to": {
+        "node_id": "elevator_point_006_node",
+        "node_key": 5,
+        "node_key_str": "N0005",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-152.160266, 62.407969, -14]
+      },
+      "from_type": "platform_position",
+      "to_type": "elevator",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "platform_exit",
+        "platform_exit_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_006_node_to_platform_002_car_4_door_2_reverse"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0034_N0005",
+      "video_title": "상도_N0034_N0005",
+      "from": {
+        "node_id": "platform_002_car_5_door_2",
+        "node_key": 34,
+        "node_key_str": "N0034",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-134.695256, 60.033505, -14]
+      },
+      "to": {
+        "node_id": "elevator_point_006_node",
+        "node_key": 5,
+        "node_key_str": "N0005",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-152.160266, 62.407969, -14]
+      },
+      "from_type": "platform_position",
+      "to_type": "elevator",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "platform_exit",
+        "platform_exit_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_006_node_to_platform_002_car_5_door_2_reverse"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0039_N0005",
+      "video_title": "상도_N0039_N0005",
+      "from": {
+        "node_id": "platform_002_car_6_door_3",
+        "node_key": 39,
+        "node_key_str": "N0039",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-109.730889, 60.06821, -14]
+      },
+      "to": {
+        "node_id": "elevator_point_006_node",
+        "node_key": 5,
+        "node_key_str": "N0005",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-152.160266, 62.407969, -14]
+      },
+      "from_type": "platform_position",
+      "to_type": "elevator",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "platform_exit",
+        "platform_exit_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_006_node_to_platform_002_car_6_door_3_reverse"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0042_N0005",
+      "video_title": "상도_N0042_N0005",
+      "from": {
+        "node_id": "platform_002_car_7_door_2",
+        "node_key": 42,
+        "node_key_str": "N0042",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-101.32435, 60.079839, -14]
+      },
+      "to": {
+        "node_id": "elevator_point_006_node",
+        "node_key": 5,
+        "node_key_str": "N0005",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-152.160266, 62.407969, -14]
+      },
+      "from_type": "platform_position",
+      "to_type": "elevator",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "platform_exit",
+        "platform_exit_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_006_node_to_platform_002_car_7_door_2_reverse"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0047_N0005",
+      "video_title": "상도_N0047_N0005",
+      "from": {
+        "node_id": "platform_002_car_8_door_3",
+        "node_key": 47,
+        "node_key_str": "N0047",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-87.31345, 60.099221, -14]
+      },
+      "to": {
+        "node_id": "elevator_point_006_node",
+        "node_key": 5,
+        "node_key_str": "N0005",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-152.160266, 62.407969, -14]
+      },
+      "from_type": "platform_position",
+      "to_type": "elevator",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "platform_exit",
+        "platform_exit_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_006_node_to_platform_002_car_8_door_3_reverse"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0050_N0005",
+      "video_title": "상도_N0050_N0005",
+      "from": {
+        "node_id": "platform_002_car_9_door_2",
+        "node_key": 50,
+        "node_key_str": "N0050",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-78.906911, 60.11085, -14]
+      },
+      "to": {
+        "node_id": "elevator_point_006_node",
+        "node_key": 5,
+        "node_key_str": "N0005",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-152.160266, 62.407969, -14]
+      },
+      "from_type": "platform_position",
+      "to_type": "elevator",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "platform_exit",
+        "platform_exit_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_006_node_to_platform_002_car_9_door_2_reverse"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0014_N0005",
+      "video_title": "상도_N0014_N0005",
+      "from": {
+        "node_id": "platform_002_car_10_door_2",
+        "node_key": 14,
+        "node_key_str": "N0014",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-67.698191, 60.126355, -14]
+      },
+      "to": {
+        "node_id": "elevator_point_006_node",
+        "node_key": 5,
+        "node_key_str": "N0005",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-152.160266, 62.407969, -14]
+      },
+      "from_type": "platform_position",
+      "to_type": "elevator",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "platform_exit",
+        "platform_exit_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_006_node_to_platform_002_car_10_door_2_reverse"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0058_N0001",
+      "video_title": "상도_N0058_N0001",
+      "from": {
+        "node_id": "platform_003_car_1_door_2",
+        "node_key": 58,
+        "node_key_str": "N0058",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-67.224246, 49.707193, -14]
+      },
+      "to": {
+        "node_id": "elevator_point_002_node",
+        "node_key": 1,
+        "node_key_str": "N0001",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-154.141386, 47.65499, -14]
+      },
+      "from_type": "platform_position",
+      "to_type": "elevator",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "platform_exit",
+        "platform_exit_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_002_node_to_platform_003_car_1_door_2_reverse"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0001_N0002",
+      "video_title": "상도_N0001_N0002",
+      "from": {
+        "node_id": "elevator_point_002_node",
+        "node_key": 1,
+        "node_key_str": "N0001",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-154.141386, 47.65499, -14]
+      },
+      "to": {
+        "node_id": "elevator_point_003_node",
+        "node_key": 2,
+        "node_key_str": "N0002",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-153.988484, 47.610966, -7]
+      },
+      "from_type": "elevator",
+      "to_type": "elevator",
+      "route_edge_type": "elevator",
+      "connector_type": null,
+      "transport_mode": "elevator",
+      "used_by_count": 180,
+      "used_by_pair_types": [
+        "platform_exit",
+        "platform_exit_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "EV_001_1_to_2"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ],
+      "video_required": false
+    },
+    {
+      "edge_id": "N0002_N0107",
+      "video_title": "상도_N0002_N0107",
+      "from": {
+        "node_id": "elevator_point_003_node",
+        "node_key": 2,
+        "node_key_str": "N0002",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-153.988484, 47.610966, -7]
+      },
+      "to": {
+        "node_id": "ticket_gate_001_back_node",
+        "node_key": 107,
+        "node_key_str": "N0107",
+        "type": "gate",
+        "gate_side": "back",
+        "position": [-166.487162, 55.130833, -7]
+      },
+      "from_type": "elevator",
+      "to_type": "gate",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 180,
+      "used_by_pair_types": [
+        "platform_exit",
+        "platform_exit_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_003_node_to_ticket_gate_001_back_node"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0062_N0001",
+      "video_title": "상도_N0062_N0001",
+      "from": {
+        "node_id": "platform_003_car_2_door_2",
+        "node_key": 62,
+        "node_key_str": "N0062",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-87.57819, 49.730318, -14]
+      },
+      "to": {
+        "node_id": "elevator_point_002_node",
+        "node_key": 1,
+        "node_key_str": "N0001",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-154.141386, 47.65499, -14]
+      },
+      "from_type": "platform_position",
+      "to_type": "elevator",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "platform_exit",
+        "platform_exit_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_002_node_to_platform_003_car_2_door_2_reverse"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0066_N0001",
+      "video_title": "상도_N0066_N0001",
+      "from": {
+        "node_id": "platform_003_car_3_door_2",
+        "node_key": 66,
+        "node_key_str": "N0066",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-107.932133, 49.753443, -14]
+      },
+      "to": {
+        "node_id": "elevator_point_002_node",
+        "node_key": 1,
+        "node_key_str": "N0001",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-154.141386, 47.65499, -14]
+      },
+      "from_type": "platform_position",
+      "to_type": "elevator",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "platform_exit",
+        "platform_exit_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_002_node_to_platform_003_car_3_door_2_reverse"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0070_N0001",
+      "video_title": "상도_N0070_N0001",
+      "from": {
+        "node_id": "platform_003_car_4_door_2",
+        "node_key": 70,
+        "node_key_str": "N0070",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-134.64764, 49.783534, -14]
+      },
+      "to": {
+        "node_id": "elevator_point_002_node",
+        "node_key": 1,
+        "node_key_str": "N0001",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-154.141386, 47.65499, -14]
+      },
+      "from_type": "platform_position",
+      "to_type": "elevator",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "platform_exit",
+        "platform_exit_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_002_node_to_platform_003_car_4_door_2_reverse"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0075_N0001",
+      "video_title": "상도_N0075_N0001",
+      "from": {
+        "node_id": "platform_003_car_5_door_3",
+        "node_key": 75,
+        "node_key_str": "N0075",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-175.993976, 49.829856, -14]
+      },
+      "to": {
+        "node_id": "elevator_point_002_node",
+        "node_key": 1,
+        "node_key_str": "N0001",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-154.141386, 47.65499, -14]
+      },
+      "from_type": "platform_position",
+      "to_type": "elevator",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "platform_exit",
+        "platform_exit_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_002_node_to_platform_003_car_5_door_3_reverse"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0078_N0001",
+      "video_title": "상도_N0078_N0001",
+      "from": {
+        "node_id": "platform_003_car_6_door_2",
+        "node_key": 78,
+        "node_key_str": "N0078",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-191.734432, 49.847572, -14]
+      },
+      "to": {
+        "node_id": "elevator_point_002_node",
+        "node_key": 1,
+        "node_key_str": "N0001",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-154.141386, 47.65499, -14]
+      },
+      "from_type": "platform_position",
+      "to_type": "elevator",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "platform_exit",
+        "platform_exit_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_002_node_to_platform_003_car_6_door_2_reverse"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0082_N0001",
+      "video_title": "상도_N0082_N0001",
+      "from": {
+        "node_id": "platform_003_car_7_door_2",
+        "node_key": 82,
+        "node_key_str": "N0082",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-206.676811, 49.864476, -14]
+      },
+      "to": {
+        "node_id": "elevator_point_002_node",
+        "node_key": 1,
+        "node_key_str": "N0001",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-154.141386, 47.65499, -14]
+      },
+      "from_type": "platform_position",
+      "to_type": "elevator",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "platform_exit",
+        "platform_exit_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_002_node_to_platform_003_car_7_door_2_reverse"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0086_N0001",
+      "video_title": "상도_N0086_N0001",
+      "from": {
+        "node_id": "platform_003_car_8_door_2",
+        "node_key": 86,
+        "node_key_str": "N0086",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-221.619189, 49.88138, -14]
+      },
+      "to": {
+        "node_id": "elevator_point_002_node",
+        "node_key": 1,
+        "node_key_str": "N0001",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-154.141386, 47.65499, -14]
+      },
+      "from_type": "platform_position",
+      "to_type": "elevator",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "platform_exit",
+        "platform_exit_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_002_node_to_platform_003_car_8_door_2_reverse"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0091_N0001",
+      "video_title": "상도_N0091_N0001",
+      "from": {
+        "node_id": "platform_003_car_9_door_3",
+        "node_key": 91,
+        "node_key_str": "N0091",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-240.297162, 49.902511, -14]
+      },
+      "to": {
+        "node_id": "elevator_point_002_node",
+        "node_key": 1,
+        "node_key_str": "N0001",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-154.141386, 47.65499, -14]
+      },
+      "from_type": "platform_position",
+      "to_type": "elevator",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "platform_exit",
+        "platform_exit_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_002_node_to_platform_003_car_9_door_3_reverse"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0055_N0001",
+      "video_title": "상도_N0055_N0001",
+      "from": {
+        "node_id": "platform_003_car_10_door_3",
+        "node_key": 55,
+        "node_key_str": "N0055",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-255.239541, 49.919415, -14]
+      },
+      "to": {
+        "node_id": "elevator_point_002_node",
+        "node_key": 1,
+        "node_key_str": "N0001",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-154.141386, 47.65499, -14]
+      },
+      "from_type": "platform_position",
+      "to_type": "elevator",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "platform_exit",
+        "platform_exit_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_002_node_to_platform_003_car_10_door_3_reverse"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0107_N0003",
+      "video_title": "상도_N0107_N0003",
+      "from": {
+        "node_id": "ticket_gate_001_back_node",
+        "node_key": 107,
+        "node_key_str": "N0107",
+        "type": "gate",
+        "gate_side": "back",
+        "position": [-166.487162, 55.130833, -7]
+      },
+      "to": {
+        "node_id": "elevator_point_004_node",
+        "node_key": 3,
+        "node_key_str": "N0003",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-152.50258, 62.405122, -7]
+      },
+      "from_type": "gate",
+      "to_type": "elevator",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 180,
+      "used_by_pair_types": [
+        "exit_platform",
+        "exit_platform_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_004_node_to_ticket_gate_001_back_node_reverse"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0003_N0005",
+      "video_title": "상도_N0003_N0005",
+      "from": {
+        "node_id": "elevator_point_004_node",
+        "node_key": 3,
+        "node_key_str": "N0003",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-152.50258, 62.405122, -7]
+      },
+      "to": {
+        "node_id": "elevator_point_006_node",
+        "node_key": 5,
+        "node_key_str": "N0005",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-152.160266, 62.407969, -14]
+      },
+      "from_type": "elevator",
+      "to_type": "elevator",
+      "route_edge_type": "elevator",
+      "connector_type": null,
+      "transport_mode": "elevator",
+      "used_by_count": 180,
+      "used_by_pair_types": [
+        "exit_platform",
+        "exit_platform_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "EV_002_1_to_2"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ],
+      "video_required": false
+    },
+    {
+      "edge_id": "N0005_N0019",
+      "video_title": "상도_N0005_N0019",
+      "from": {
+        "node_id": "elevator_point_006_node",
+        "node_key": 5,
+        "node_key_str": "N0005",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-152.160266, 62.407969, -14]
+      },
+      "to": {
+        "node_id": "platform_002_car_1_door_3",
+        "node_key": 19,
+        "node_key_str": "N0019",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-243.342514, 59.882163, -14]
+      },
+      "from_type": "elevator",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "exit_platform",
+        "exit_platform_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_006_node_to_platform_002_car_1_door_3"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0005_N0022",
+      "video_title": "상도_N0005_N0022",
+      "from": {
+        "node_id": "elevator_point_006_node",
+        "node_key": 5,
+        "node_key_str": "N0005",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-152.160266, 62.407969, -14]
+      },
+      "to": {
+        "node_id": "platform_002_car_2_door_2",
+        "node_key": 22,
+        "node_key_str": "N0022",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-223.684588, 59.909535, -14]
+      },
+      "from_type": "elevator",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "exit_platform",
+        "exit_platform_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_006_node_to_platform_002_car_2_door_2"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0005_N0026",
+      "video_title": "상도_N0005_N0026",
+      "from": {
+        "node_id": "elevator_point_006_node",
+        "node_key": 5,
+        "node_key_str": "N0005",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-152.160266, 62.407969, -14]
+      },
+      "to": {
+        "node_id": "platform_002_car_3_door_2",
+        "node_key": 26,
+        "node_key_str": "N0026",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-197.47402, 59.946031, -14]
+      },
+      "from_type": "elevator",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "exit_platform",
+        "exit_platform_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_006_node_to_platform_002_car_3_door_2"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0005_N0030",
+      "video_title": "상도_N0005_N0030",
+      "from": {
+        "node_id": "elevator_point_006_node",
+        "node_key": 5,
+        "node_key_str": "N0005",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-152.160266, 62.407969, -14]
+      },
+      "to": {
+        "node_id": "platform_002_car_4_door_2",
+        "node_key": 30,
+        "node_key_str": "N0030",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-167.810909, 59.987355, -14]
+      },
+      "from_type": "elevator",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "exit_platform",
+        "exit_platform_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_006_node_to_platform_002_car_4_door_2"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0005_N0034",
+      "video_title": "상도_N0005_N0034",
+      "from": {
+        "node_id": "elevator_point_006_node",
+        "node_key": 5,
+        "node_key_str": "N0005",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-152.160266, 62.407969, -14]
+      },
+      "to": {
+        "node_id": "platform_002_car_5_door_2",
+        "node_key": 34,
+        "node_key_str": "N0034",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-134.695256, 60.033505, -14]
+      },
+      "from_type": "elevator",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "exit_platform",
+        "exit_platform_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_006_node_to_platform_002_car_5_door_2"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0005_N0039",
+      "video_title": "상도_N0005_N0039",
+      "from": {
+        "node_id": "elevator_point_006_node",
+        "node_key": 5,
+        "node_key_str": "N0005",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-152.160266, 62.407969, -14]
+      },
+      "to": {
+        "node_id": "platform_002_car_6_door_3",
+        "node_key": 39,
+        "node_key_str": "N0039",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-109.730889, 60.06821, -14]
+      },
+      "from_type": "elevator",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "exit_platform",
+        "exit_platform_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_006_node_to_platform_002_car_6_door_3"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0005_N0042",
+      "video_title": "상도_N0005_N0042",
+      "from": {
+        "node_id": "elevator_point_006_node",
+        "node_key": 5,
+        "node_key_str": "N0005",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-152.160266, 62.407969, -14]
+      },
+      "to": {
+        "node_id": "platform_002_car_7_door_2",
+        "node_key": 42,
+        "node_key_str": "N0042",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-101.32435, 60.079839, -14]
+      },
+      "from_type": "elevator",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "exit_platform",
+        "exit_platform_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_006_node_to_platform_002_car_7_door_2"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0005_N0047",
+      "video_title": "상도_N0005_N0047",
+      "from": {
+        "node_id": "elevator_point_006_node",
+        "node_key": 5,
+        "node_key_str": "N0005",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-152.160266, 62.407969, -14]
+      },
+      "to": {
+        "node_id": "platform_002_car_8_door_3",
+        "node_key": 47,
+        "node_key_str": "N0047",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-87.31345, 60.099221, -14]
+      },
+      "from_type": "elevator",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "exit_platform",
+        "exit_platform_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_006_node_to_platform_002_car_8_door_3"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0005_N0050",
+      "video_title": "상도_N0005_N0050",
+      "from": {
+        "node_id": "elevator_point_006_node",
+        "node_key": 5,
+        "node_key_str": "N0005",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-152.160266, 62.407969, -14]
+      },
+      "to": {
+        "node_id": "platform_002_car_9_door_2",
+        "node_key": 50,
+        "node_key_str": "N0050",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-78.906911, 60.11085, -14]
+      },
+      "from_type": "elevator",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "exit_platform",
+        "exit_platform_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_006_node_to_platform_002_car_9_door_2"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0005_N0014",
+      "video_title": "상도_N0005_N0014",
+      "from": {
+        "node_id": "elevator_point_006_node",
+        "node_key": 5,
+        "node_key_str": "N0005",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-152.160266, 62.407969, -14]
+      },
+      "to": {
+        "node_id": "platform_002_car_10_door_2",
+        "node_key": 14,
+        "node_key_str": "N0014",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-67.698191, 60.126355, -14]
+      },
+      "from_type": "elevator",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "exit_platform",
+        "exit_platform_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_006_node_to_platform_002_car_10_door_2"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0107_N0002",
+      "video_title": "상도_N0107_N0002",
+      "from": {
+        "node_id": "ticket_gate_001_back_node",
+        "node_key": 107,
+        "node_key_str": "N0107",
+        "type": "gate",
+        "gate_side": "back",
+        "position": [-166.487162, 55.130833, -7]
+      },
+      "to": {
+        "node_id": "elevator_point_003_node",
+        "node_key": 2,
+        "node_key_str": "N0002",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-153.988484, 47.610966, -7]
+      },
+      "from_type": "gate",
+      "to_type": "elevator",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 180,
+      "used_by_pair_types": [
+        "exit_platform",
+        "exit_platform_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_003_node_to_ticket_gate_001_back_node_reverse"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0002_N0001",
+      "video_title": "상도_N0002_N0001",
+      "from": {
+        "node_id": "elevator_point_003_node",
+        "node_key": 2,
+        "node_key_str": "N0002",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-153.988484, 47.610966, -7]
+      },
+      "to": {
+        "node_id": "elevator_point_002_node",
+        "node_key": 1,
+        "node_key_str": "N0001",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-154.141386, 47.65499, -14]
+      },
+      "from_type": "elevator",
+      "to_type": "elevator",
+      "route_edge_type": "elevator",
+      "connector_type": null,
+      "transport_mode": "elevator",
+      "used_by_count": 180,
+      "used_by_pair_types": [
+        "exit_platform",
+        "exit_platform_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "EV_001_1_to_2_reverse"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ],
+      "video_required": false
+    },
+    {
+      "edge_id": "N0001_N0058",
+      "video_title": "상도_N0001_N0058",
+      "from": {
+        "node_id": "elevator_point_002_node",
+        "node_key": 1,
+        "node_key_str": "N0001",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-154.141386, 47.65499, -14]
+      },
+      "to": {
+        "node_id": "platform_003_car_1_door_2",
+        "node_key": 58,
+        "node_key_str": "N0058",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-67.224246, 49.707193, -14]
+      },
+      "from_type": "elevator",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "exit_platform",
+        "exit_platform_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_002_node_to_platform_003_car_1_door_2"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0001_N0062",
+      "video_title": "상도_N0001_N0062",
+      "from": {
+        "node_id": "elevator_point_002_node",
+        "node_key": 1,
+        "node_key_str": "N0001",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-154.141386, 47.65499, -14]
+      },
+      "to": {
+        "node_id": "platform_003_car_2_door_2",
+        "node_key": 62,
+        "node_key_str": "N0062",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-87.57819, 49.730318, -14]
+      },
+      "from_type": "elevator",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "exit_platform",
+        "exit_platform_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_002_node_to_platform_003_car_2_door_2"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0001_N0066",
+      "video_title": "상도_N0001_N0066",
+      "from": {
+        "node_id": "elevator_point_002_node",
+        "node_key": 1,
+        "node_key_str": "N0001",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-154.141386, 47.65499, -14]
+      },
+      "to": {
+        "node_id": "platform_003_car_3_door_2",
+        "node_key": 66,
+        "node_key_str": "N0066",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-107.932133, 49.753443, -14]
+      },
+      "from_type": "elevator",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "exit_platform",
+        "exit_platform_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_002_node_to_platform_003_car_3_door_2"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0001_N0070",
+      "video_title": "상도_N0001_N0070",
+      "from": {
+        "node_id": "elevator_point_002_node",
+        "node_key": 1,
+        "node_key_str": "N0001",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-154.141386, 47.65499, -14]
+      },
+      "to": {
+        "node_id": "platform_003_car_4_door_2",
+        "node_key": 70,
+        "node_key_str": "N0070",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-134.64764, 49.783534, -14]
+      },
+      "from_type": "elevator",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "exit_platform",
+        "exit_platform_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_002_node_to_platform_003_car_4_door_2"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0001_N0075",
+      "video_title": "상도_N0001_N0075",
+      "from": {
+        "node_id": "elevator_point_002_node",
+        "node_key": 1,
+        "node_key_str": "N0001",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-154.141386, 47.65499, -14]
+      },
+      "to": {
+        "node_id": "platform_003_car_5_door_3",
+        "node_key": 75,
+        "node_key_str": "N0075",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-175.993976, 49.829856, -14]
+      },
+      "from_type": "elevator",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "exit_platform",
+        "exit_platform_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_002_node_to_platform_003_car_5_door_3"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0001_N0078",
+      "video_title": "상도_N0001_N0078",
+      "from": {
+        "node_id": "elevator_point_002_node",
+        "node_key": 1,
+        "node_key_str": "N0001",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-154.141386, 47.65499, -14]
+      },
+      "to": {
+        "node_id": "platform_003_car_6_door_2",
+        "node_key": 78,
+        "node_key_str": "N0078",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-191.734432, 49.847572, -14]
+      },
+      "from_type": "elevator",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "exit_platform",
+        "exit_platform_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_002_node_to_platform_003_car_6_door_2"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0001_N0082",
+      "video_title": "상도_N0001_N0082",
+      "from": {
+        "node_id": "elevator_point_002_node",
+        "node_key": 1,
+        "node_key_str": "N0001",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-154.141386, 47.65499, -14]
+      },
+      "to": {
+        "node_id": "platform_003_car_7_door_2",
+        "node_key": 82,
+        "node_key_str": "N0082",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-206.676811, 49.864476, -14]
+      },
+      "from_type": "elevator",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "exit_platform",
+        "exit_platform_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_002_node_to_platform_003_car_7_door_2"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0001_N0086",
+      "video_title": "상도_N0001_N0086",
+      "from": {
+        "node_id": "elevator_point_002_node",
+        "node_key": 1,
+        "node_key_str": "N0001",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-154.141386, 47.65499, -14]
+      },
+      "to": {
+        "node_id": "platform_003_car_8_door_2",
+        "node_key": 86,
+        "node_key_str": "N0086",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-221.619189, 49.88138, -14]
+      },
+      "from_type": "elevator",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "exit_platform",
+        "exit_platform_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_002_node_to_platform_003_car_8_door_2"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0001_N0091",
+      "video_title": "상도_N0001_N0091",
+      "from": {
+        "node_id": "elevator_point_002_node",
+        "node_key": 1,
+        "node_key_str": "N0001",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-154.141386, 47.65499, -14]
+      },
+      "to": {
+        "node_id": "platform_003_car_9_door_3",
+        "node_key": 91,
+        "node_key_str": "N0091",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-240.297162, 49.902511, -14]
+      },
+      "from_type": "elevator",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "exit_platform",
+        "exit_platform_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_002_node_to_platform_003_car_9_door_3"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
+      ]
+    },
+    {
+      "edge_id": "N0001_N0055",
+      "video_title": "상도_N0001_N0055",
+      "from": {
+        "node_id": "elevator_point_002_node",
+        "node_key": 1,
+        "node_key_str": "N0001",
+        "type": "elevator",
+        "gate_side": null,
+        "position": [-154.141386, 47.65499, -14]
+      },
+      "to": {
+        "node_id": "platform_003_car_10_door_3",
+        "node_key": 55,
+        "node_key_str": "N0055",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [-255.239541, 49.919415, -14]
+      },
+      "from_type": "elevator",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 18,
+      "used_by_pair_types": [
+        "exit_platform",
+        "exit_platform_via_toilet"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_002_node_to_platform_003_car_10_door_3"
+      ],
+      "used_by_toilet_genders": [
+        "male",
+        "female"
+      ],
+      "used_by_route_preferences": [
+        "elevator"
       ]
     }
   ],
