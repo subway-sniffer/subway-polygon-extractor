@@ -1,6 +1,6 @@
 from pipeline.route_edge_planner import exit_route_nodes, platform_car_representatives
 from route_server.app.db import connect, from_json_text, row_to_dict
-from route_server.app.station_aliases import station_alias_tokens
+from route_server.app.station_aliases import display_aliases_for_station, normalize_station_key, station_alias_tokens
 
 
 def normalize_text(value):
@@ -44,13 +44,28 @@ def station_rows():
         rows = conn.execute(
             "SELECT station_id, station_name, line_ids_json, active_version, updated_at FROM stations ORDER BY station_name, station_id"
         ).fetchall()
-    return [
-        {
+    stations = []
+    for row in rows:
+        station = {
             **row_to_dict(row),
             "line_ids": from_json_text(row["line_ids_json"], []),
         }
-        for row in rows
-    ]
+        stations.append(station)
+        existing_names = {
+            normalize_station_key(station.get("station_id")),
+            normalize_station_key(station.get("station_name")),
+        }
+        for alias in display_aliases_for_station(station.get("station_id"), station.get("station_name")):
+            if normalize_station_key(alias) in existing_names:
+                continue
+            stations.append(
+                {
+                    **station,
+                    "station_name": alias,
+                    "alias_of": station.get("station_id"),
+                }
+            )
+    return stations
 
 
 def station_row(station_id):

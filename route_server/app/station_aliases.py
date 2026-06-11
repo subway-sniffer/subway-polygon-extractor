@@ -5,6 +5,10 @@ ALIAS_GROUPS = [
     {"총신대입구", "이수"},
 ]
 
+DISPLAY_ALIASES = {
+    "총신대입구": ["이수", "이수역", "총신대입구(이수)"],
+}
+
 
 def normalize_station_key(value):
     """Return a compact station key for alias matching."""
@@ -45,3 +49,19 @@ def station_alias_tokens(*values):
         tokens |= station_name_tokens(value)
     return expand_alias_tokens(tokens)
 
+
+def display_aliases_for_station(*values):
+    """Return user-facing aliases for one registered station."""
+    tokens = station_alias_tokens(*values)
+    aliases = []
+    seen = set()
+    for key, display_values in DISPLAY_ALIASES.items():
+        if normalize_station_key(key) not in tokens:
+            continue
+        for alias in display_values:
+            normalized = normalize_station_key(alias)
+            if normalized in seen:
+                continue
+            seen.add(normalized)
+            aliases.append(alias)
+    return aliases
