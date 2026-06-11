@@ -1313,6 +1313,7 @@ def build_platform_records(annotations=None, polygons=None, transform_metadata=N
         context_point = (
             platform.get("point_source")
             or platform.get("start_point_source")
+            or ((platform.get("line_points") or [None])[0])
             or ((platform.get("anchors") or [{}])[0]).get("point_source")
         )
         polygon_id, layer, polygon_context_source = resolve_export_polygon_context(
@@ -1404,6 +1405,56 @@ def build_platform_records(annotations=None, polygons=None, transform_metadata=N
         doors_per_car = max(1, int(platform.get("doors_per_car") or 1))
         total_positions = car_count * doors_per_car
         anchors = []
+
+        line_points = [
+            point
+            for point in (platform.get("line_points") or [])
+            if isinstance(point, list) and len(point) >= 2
+        ]
+        if len(line_points) >= 2:
+            segment_lengths = [
+                float(np.linalg.norm(np.asarray(line_points[index + 1], dtype=np.float64) - np.asarray(line_points[index], dtype=np.float64)))
+                for index in range(len(line_points) - 1)
+            ]
+            total_length = sum(segment_lengths)
+            traveled = 0.0
+            for index, point in enumerate(line_points):
+                if index == 0:
+                    ordinal = 1
+                elif index == len(line_points) - 1:
+                    ordinal = total_positions
+                else:
+                    traveled += segment_lengths[index - 1]
+                    ratio = 0.0 if total_length <= 0 else traveled / total_length
+                    ordinal = int(round(1 + ratio * (total_positions - 1)))
+                    ordinal = max(1, min(total_positions, ordinal))
+                car = int((ordinal - 1) // doors_per_car) + 1
+                door = int((ordinal - 1) % doors_per_car) + 1
+                xy = scene_xy_for_polygon_point(
+                    point,
+                    layer,
+                    polygon_id=polygon_id,
+                    alignment_transforms=alignment_transforms,
+                    local_shift_offsets=local_shift_offsets,
+                    axis_corrections=axis_corrections,
+                    transform_metadata=transform_metadata,
+                    transform_info=transform_info,
+                    scale=scale,
+                    invert_x=invert_x,
+                    invert_y=invert_y,
+                )
+                anchors.append(
+                    {
+                        "car": car,
+                        "door": door,
+                        "ordinal": ordinal,
+                        "point_source": point,
+                        "position": [float(xy[0]), float(xy[1]), float(z_value)],
+                        "near_connection_id": None,
+                        "line_vertex": True,
+                    }
+                )
+
         for anchor in platform.get("anchors") or []:
             if not anchor.get("point_source") or not anchor.get("car") or not anchor.get("door"):
                 continue
@@ -1498,7 +1549,12 @@ def build_platform_records(annotations=None, polygons=None, transform_metadata=N
         deduped_anchors = {}
         for anchor in anchors:
             ordinal = int(anchor["ordinal"])
-            if ordinal not in deduped_anchors or ordinal in {1, total_positions}:
+            previous = deduped_anchors.get(ordinal)
+            if (
+                previous is None
+                or ordinal in {1, total_positions}
+                or (previous.get("line_vertex") and not anchor.get("line_vertex"))
+            ):
                 deduped_anchors[ordinal] = anchor
         anchors = list(deduped_anchors.values())
         anchors = sorted(anchors, key=lambda item: item["ordinal"])
@@ -1570,6 +1626,7 @@ def build_platform_records(annotations=None, polygons=None, transform_metadata=N
                 "car_count": car_count,
                 "doors_per_car": doors_per_car,
                 "anchors": anchors,
+                "line_points": line_points,
                 "start_point_source": anchors[0]["point_source"],
                 "end_point_source": anchors[-1]["point_source"],
                 "start_position": anchors[0]["position"],

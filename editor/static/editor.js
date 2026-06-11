@@ -229,6 +229,8 @@ const state = {
     facingPoint: null,
     lineStart: null,
     lineEnd: null,
+    linePoints: [],
+    linePhase: "line",
     anchors: [],
     quickExitRows: [],
     stationName: "",
@@ -979,13 +981,16 @@ function drawPlatforms() {
   for (const platform of state.annotations.manual_platforms || []) {
     const entries = platformDisplayEntries(platform);
     const points = entries.map((entry) => entry.point).filter(Boolean);
+    const pathPoints = (platform.line_points && platform.line_points.length >= 2)
+      ? platform.line_points
+      : points;
     if (points.length < 1) continue;
     const platformId = platform.platform_id || platform.label;
     const selected = selectedIds.has(platformId);
     const color = selected ? "rgba(255, 210, 0, 0.95)" : "rgba(155, 80, 255, 0.9)";
-    if (points.length >= 2) {
-      drawPath(points, color, selected ? 6 : 4);
-      drawPathArrow(points, color);
+    if (pathPoints.length >= 2) {
+      drawPath(pathPoints, color, selected ? 6 : 4);
+      drawPathArrow(pathPoints, color);
     }
     entries.forEach((entry, index) => {
       const point = entry.point;
@@ -1012,7 +1017,7 @@ function drawPlatforms() {
   }
   if (state.platform.active) {
     const points = state.platform.mode === "line"
-      ? [state.platform.lineStart, state.platform.lineEnd].filter(Boolean)
+      ? (state.platform.linePoints || [state.platform.lineStart, state.platform.lineEnd]).filter(Boolean)
       : [state.platform.point, state.platform.facingPoint].filter(Boolean);
     if (points.length >= 2) {
       drawPath(points, "rgba(155, 80, 255, 0.95)", 4);
@@ -1040,7 +1045,8 @@ function drawPlatforms() {
       ctx.lineWidth = 1;
       ctx.fill();
       ctx.stroke();
-      drawCanvasLabel(point, state.platform.mode === "line" ? (index === 0 ? "1호차/front" : "tail") : (index === 0 ? "platform" : "facing"), "#7b2cff", 8, 16);
+      const lineLabel = index === 0 ? "1호차/front" : (index === points.length - 1 ? "tail" : `bend ${index}`);
+      drawCanvasLabel(point, state.platform.mode === "line" ? lineLabel : (index === 0 ? "platform" : "facing"), "#7b2cff", 8, 16);
     });
   }
   ctx.restore();
@@ -6150,6 +6156,10 @@ function populatePlatformLineOptions() {
 function populatePlatformDirectionOptions(rows) {
   const previous = platformDirectionInput.value;
   const directions = Array.from(new Set((rows || []).map((row) => row.toward).filter(Boolean))).sort();
+  populatePlatformDirectionNames(directions, previous);
+}
+
+function populatePlatformDirectionNames(directions, previous = platformDirectionInput.value) {
   platformDirectionInput.innerHTML = "";
   const empty = document.createElement("option");
   empty.value = "";
@@ -6178,10 +6188,11 @@ function loadStationOptions() {
 }
 
 function projectedPointOnPlatformLine(world) {
-  if (!state.platform.lineStart || !state.platform.lineEnd) {
+  const linePoints = state.platform.linePoints || [state.platform.lineStart, state.platform.lineEnd].filter(Boolean);
+  if (linePoints.length < 2) {
     return [Number(world.x.toFixed(2)), Number(world.y.toFixed(2))];
   }
-  const projected = projectPointToSegment(world, state.platform.lineStart, state.platform.lineEnd);
+  const projected = projectPointToPolyline(world, linePoints);
   return [Number(projected[0].toFixed(2)), Number(projected[1].toFixed(2))];
 }
 
@@ -6240,7 +6251,10 @@ function platformDisplayEntries(platform) {
   const anchorEntries = Array.from(dedupedAnchors.values())
     .sort((a, b) => a.ordinal - b.ordinal)
     .map((anchor) => ({point: anchor.point_source, label: platformAnchorLabel(anchor)}));
-  return anchorEntries;
+  const manualEntries = (platform.anchors || [])
+    .filter((anchor) => anchor.point_source && !(anchor.car && anchor.door))
+    .map((anchor, index) => ({point: anchor.point_source, label: `mark ${anchor.manual_anchor_index || index + 1}`}));
+  return [...anchorEntries, ...manualEntries];
 }
 
 function selectedPlatformIds() {
@@ -6268,14 +6282,13 @@ function updatePlatformStatus(message = null) {
       `station: ${state.platform.stationName || "-"}`,
       `line: ${state.platform.lineId || "-"}`,
       `direction: ${state.platform.direction || "-"}`,
-      `line: ${state.platform.lineStart ? "start" : "-"} / ${state.platform.lineEnd ? "end" : "-"}`,
+      `phase: ${state.platform.linePhase || "line"}`,
+      `line vertices: ${(state.platform.linePoints || []).length}`,
       `anchors: ${(state.platform.anchors || []).length}/${rows.length || "manual"}`,
       rows.length ? `next door: ${rows[(state.platform.anchors || []).length]?.door_no || "done"}` : null,
-      !state.platform.lineStart
-        ? "Click train-front point. This becomes car 1."
-        : !state.platform.lineEnd
-          ? "Click train-tail point."
-          : "Click stair/access points in train-direction order. Shift saves.",
+      (state.platform.linePhase || "line") === "line"
+        ? "Click platform line vertices in train direction. Use Mark Door/Access Points when line is done."
+        : "Click door/access points. Points are projected to the platform line. Shift saves.",
     ].filter(Boolean).join("\n");
     return;
   }
@@ -6301,6 +6314,8 @@ function startPlatformLine() {
     facingPoint: null,
     lineStart: null,
     lineEnd: null,
+    linePoints: [],
+    linePhase: "line",
     anchors: [],
     quickExitRows: state.platform.quickExitRows || [],
     stationName: normalizeStationDisplayName(platformStationInput.value),
@@ -6325,6 +6340,8 @@ function resetPlatformLine() {
     facingPoint: null,
     lineStart: null,
     lineEnd: null,
+    linePoints: [],
+    linePhase: "line",
     anchors: [],
     quickExitRows: state.platform.quickExitRows || [],
     stationName: normalizeStationDisplayName(platformStationInput.value),
@@ -6392,28 +6409,54 @@ function addPlatformPoint(world, poly) {
 }
 
 function addPlatformLinePoint(world, poly) {
-  if (!state.platform.lineStart && !poly) {
+  state.platform.linePoints = state.platform.linePoints || [];
+  if ((state.platform.linePhase || "line") === "anchors") {
+    addPlatformAnchorPoint(world);
+    return;
+  }
+  if (!state.platform.linePoints.length && !poly) {
     updatePlatformStatus("Click the train-front point inside a platform polygon.");
     return;
   }
   const layer = poly ? polygonLayerValue(poly) : state.platform.layer;
-  if (!state.platform.lineStart && !layer) {
+  if (!state.platform.linePoints.length && !layer) {
     updatePlatformStatus(`Set layer first: ${poly.polygon_id}`);
     return;
   }
   const point = [Number(world.x.toFixed(2)), Number(world.y.toFixed(2))];
-  if (!state.platform.lineStart) {
+  if (!state.platform.linePoints.length) {
     state.platform.lineStart = point;
+    state.platform.lineEnd = point;
+    state.platform.linePoints = [point];
     state.platform.polygonId = poly.polygon_id;
     state.platform.layer = layer;
-    updatePlatformStatus("Train-front point set. Click train-tail point.");
+    updatePlatformStatus("Train-front point set. Continue clicking platform line vertices.");
     draw();
     return;
   }
-  if (!state.platform.lineEnd) {
-    state.platform.lineEnd = point;
-    updatePlatformStatus("Platform line set. Click access points to map quick-exit doors.");
-    draw();
+  state.platform.linePoints.push(point);
+  state.platform.lineEnd = point;
+  updatePlatformStatus(`Platform line vertex ${state.platform.linePoints.length} added. Shift saves.`);
+  draw();
+}
+
+function startPlatformAnchorMarking() {
+  if (!state.platform.active || state.platform.mode !== "line") {
+    updatePlatformStatus("Start Platform first.");
+    return;
+  }
+  if ((state.platform.linePoints || []).length < 2) {
+    updatePlatformStatus("Draw at least 2 platform line points first.");
+    return;
+  }
+  state.platform.linePhase = "anchors";
+  updatePlatformStatus("Door/access marking enabled.");
+  draw();
+}
+
+function addPlatformAnchorPoint(world) {
+  if ((state.platform.linePoints || []).length < 2) {
+    updatePlatformStatus("Draw platform line first.");
     return;
   }
   const rows = sortedQuickExitRowsForDirection(state.platform.quickExitRows, state.platform.direction, state.platform.doorsPerCar);
@@ -6423,24 +6466,26 @@ function addPlatformLinePoint(world, poly) {
   state.platform.anchors = state.platform.anchors || [];
   state.platform.anchors.push({
     point_source: mappedPoint,
-    car: parsed ? parsed.car : 1,
-    door: parsed ? parsed.door : state.platform.anchors.length + 1,
+    car: parsed ? parsed.car : null,
+    door: parsed ? parsed.door : null,
     car_door: parsed ? parsed.carDoor : null,
     quick_exit: nextRow,
+    manual_anchor_index: parsed ? null : state.platform.anchors.length + 1,
     near_connection_id: null,
   });
-  updatePlatformStatus(nextRow ? `Mapped ${nextRow.door_no}.` : "Anchor added without quick-exit door.");
+  updatePlatformStatus(nextRow ? `Mapped ${nextRow.door_no}.` : `Manual anchor ${state.platform.anchors.length} added.`);
   draw();
 }
 
 function applyPlatformLine() {
   if (!state.platform.active || state.platform.mode !== "line") return;
-  if (!state.platform.lineStart || !state.platform.lineEnd) {
-    updatePlatformStatus("Platform line needs start and end points.");
+  const linePoints = (state.platform.linePoints || [state.platform.lineStart, state.platform.lineEnd]).filter(Boolean);
+  if (linePoints.length < 2) {
+    updatePlatformStatus("Platform line needs at least 2 points.");
     return;
   }
   const platformId = nextPlatformId();
-  const anchors = (state.platform.anchors || []).filter((anchor) => anchor.point_source && anchor.car && anchor.door);
+  const anchors = (state.platform.anchors || []).filter((anchor) => anchor.point_source);
   state.annotations.manual_platforms = state.annotations.manual_platforms || [];
   state.annotations.manual_platforms.push({
     platform_id: platformId,
@@ -6454,8 +6499,9 @@ function applyPlatformLine() {
     car_count: state.platform.carCount || selectedPlatformCarCount(),
     doors_per_car: state.platform.doorsPerCar || selectedPlatformDoorsPerCar(),
     car_order: "train_direction_front_is_car_1",
-    start_point_source: state.platform.lineStart,
-    end_point_source: state.platform.lineEnd,
+    start_point_source: linePoints[0],
+    end_point_source: linePoints[linePoints.length - 1],
+    line_points: linePoints,
     anchors,
     quick_exit_rows: state.platform.quickExitRows || [],
     bidirectional: false,
@@ -6482,10 +6528,13 @@ function undoPlatformInputPoint() {
   }
   if ((state.platform.anchors || []).length) {
     state.platform.anchors.pop();
-  } else if (state.platform.lineEnd) {
-    state.platform.lineEnd = null;
-  } else if (state.platform.lineStart) {
+  } else if ((state.platform.linePoints || []).length > 1) {
+    state.platform.linePoints.pop();
+    state.platform.lineEnd = state.platform.linePoints[state.platform.linePoints.length - 1] || null;
+  } else if ((state.platform.linePoints || []).length === 1 || state.platform.lineStart) {
+    state.platform.linePoints = [];
     state.platform.lineStart = null;
+    state.platform.lineEnd = null;
     state.platform.polygonId = null;
     state.platform.layer = null;
   }
@@ -6509,6 +6558,10 @@ function fetchQuickExitDoors() {
 
 function quickExitUrl(station, line) {
   return `/api/quick_exit?station=${encodeURIComponent(station)}&line=${encodeURIComponent(line)}&facility=${encodeURIComponent("계단")}`;
+}
+
+function platformDirectionsUrl(station, line) {
+  return `/api/platform_directions?station=${encodeURIComponent(station)}&line=${encodeURIComponent(line)}`;
 }
 
 function quickExitDoorSummary(rows) {
@@ -6552,10 +6605,34 @@ function fetchQuickExitForLine(station, line) {
     .then(({ok, data}) => {
       if (!ok) throw new Error(data.error || "quick exit request failed");
       const rows = data.rows || [];
+      if (!rows.length) {
+        return fetchPlatformDirectionsFallback(station, line, "quick exit: no door rows");
+      }
       applyQuickExitRows(line, rows);
     })
     .catch((error) => {
       quickExitStatus.textContent = `quick exit: ${error.message || error}`;
+    });
+}
+
+function fetchPlatformDirectionsFallback(station, line, prefix = "direction fallback") {
+  return fetch(platformDirectionsUrl(station, line))
+    .then((response) => response.json().then((data) => ({ok: response.ok, data})))
+    .then(({ok, data}) => {
+      if (!ok) throw new Error(data.error || "platform direction request failed");
+      const directions = data.directions || [];
+      state.platform.quickExitRows = [];
+      platformLineInput.value = line;
+      populatePlatformDirectionNames(directions);
+      quickExitStatus.textContent = [
+        `${prefix}: ${directions.length ? "directions loaded" : "no direction data"}`,
+        `line: ${line}`,
+        data.source ? `source: ${data.source}` : null,
+        directions.length ? `directions: ${directions.map((direction) => `${direction} 방면`).join(", ")}` : null,
+        "door positions must be entered manually.",
+      ].filter(Boolean).join("\n");
+      updatePlatformStatus();
+      draw();
     });
 }
 
@@ -6571,15 +6648,50 @@ function fetchQuickExitLinesForStation(station) {
         .filter((result) => result.ok && (result.data.rows || []).length)
         .map((result) => ({line: result.line, rows: result.data.rows || []}));
       if (!matches.length) {
-        const errors = results
-          .filter((result) => !result.ok && result.data?.error)
-          .slice(0, 2)
-          .map((result) => `${result.line}: ${result.data.error}`);
-        quickExitStatus.textContent = [
-          "quick exit: no line data found",
-          errors.join("\n") || null,
-        ].filter(Boolean).join("\n");
-        return;
+        return Promise.all(DEFAULT_PLATFORM_LINES.map((line) => (
+          fetch(platformDirectionsUrl(station, line))
+            .then((response) => response.json().then((data) => ({ok: response.ok, line, data})))
+            .catch((error) => ({ok: false, line, data: {error: String(error)}}))
+        ))).then((directionResults) => {
+          const directionMatches = directionResults
+            .filter((result) => result.ok && (result.data.directions || []).length)
+            .map((result) => ({line: result.line, directions: result.data.directions || [], source: result.data.source}));
+          if (!directionMatches.length) {
+            const errors = results
+              .filter((result) => !result.ok && result.data?.error)
+              .slice(0, 2)
+              .map((result) => `${result.line}: ${result.data.error}`);
+            quickExitStatus.textContent = [
+              "quick exit: no line data found",
+              errors.join("\n") || null,
+            ].filter(Boolean).join("\n");
+            return;
+          }
+          platformLineInput.innerHTML = "";
+          const empty = document.createElement("option");
+          empty.value = "";
+          empty.textContent = "select line";
+          platformLineInput.appendChild(empty);
+          for (const match of directionMatches) {
+            const option = document.createElement("option");
+            option.value = match.line;
+            option.textContent = match.line;
+            platformLineInput.appendChild(option);
+          }
+          const selected = directionMatches[0];
+          platformLineInput.value = selected.line;
+          populatePlatformDirectionNames(selected.directions);
+          quickExitStatus.textContent = [
+            "quick exit: no door rows",
+            `line: ${selected.line}`,
+            `source: ${selected.source || "direction fallback"}`,
+            `directions: ${selected.directions.map((direction) => `${direction} 방면`).join(", ")}`,
+            directionMatches.length > 1 ? `found direction lines: ${directionMatches.map((match) => match.line).join(", ")}` : null,
+            "door positions must be entered manually.",
+          ].filter(Boolean).join("\n");
+          updatePlatformStatus();
+          draw();
+        });
       }
       platformLineInput.innerHTML = "";
       const empty = document.createElement("option");
@@ -7504,6 +7616,21 @@ function projectPointToSegment(point, segA, segB) {
   if (denom === 0) return [ax, ay];
   const t = Math.max(0, Math.min(1, ((point.x - ax) * abx + (point.y - ay) * aby) / denom));
   return [ax + abx * t, ay + aby * t];
+}
+
+function projectPointToPolyline(point, points) {
+  if (!points || points.length < 2) return [point.x, point.y];
+  let best = null;
+  const mouseScreen = worldToScreen([point.x, point.y]);
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const projected = projectPointToSegment(point, points[index], points[index + 1]);
+    const screen = worldToScreen(projected);
+    const distance = Math.hypot(screen.x - mouseScreen.x, screen.y - mouseScreen.y);
+    if (!best || distance < best.distance) {
+      best = {point: projected, distance};
+    }
+  }
+  return best ? best.point : [point.x, point.y];
 }
 
 function nearestEdgeForPolygon(poly, world, maxScreenDistance = 14) {
@@ -9529,6 +9656,7 @@ platformDirectionInput.addEventListener("change", () => {
   updatePlatformStatus();
 });
 document.getElementById("startPlatformBtn").addEventListener("click", startPlatformLine);
+document.getElementById("markPlatformAnchorsBtn")?.addEventListener("click", startPlatformAnchorMarking);
 document.getElementById("applyPlatformLineBtn").addEventListener("click", applyPlatformLine);
 document.getElementById("applyPlatformMetadataBtn").addEventListener("click", applyPlatformMetadataToSelected);
 document.getElementById("clearPlatformSelectionBtn").addEventListener("click", clearPlatformSelection);

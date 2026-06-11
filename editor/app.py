@@ -84,6 +84,11 @@ MAX_IMAGE_PIXELS = 80_000_000
 MAX_IMAGE_SIDE = 20_000
 QUICK_EXIT_URL = "https://apis.data.go.kr/B553766/inout/getFstExit"
 DEFAULT_QUICK_EXIT_SERVICE_KEY = "53689e54755f719c9ca21bdbd09894ed1a0e7c005449a2446696c975375180b7"
+URBAN_RAIL_ROUTE_CSV_CANDIDATES = [
+    ROOT_DIR / "국토교통부_도시철도 전체노선_20251211.csv",
+    ROOT_DIR.parent / "국토교통부_도시철도 전체노선_20251211.csv",
+    ROOT_DIR.parent / "test_image_output" / "web_projects" / "국토교통부_도시철도 전체노선_20251211.csv",
+]
 STATION_CSV_CANDIDATES = [
     ROOT_DIR / "서울교통공사_역사건축정보_20250310.csv",
     ROOT_DIR / "서울교통공사_역사심도정보_20241104.csv",
@@ -323,6 +328,82 @@ def quick_exit_station_aliases(station, line):
     return aliases
 
 
+def urban_rail_line_candidates(line):
+    """Return comparable line labels for the urban rail route CSV."""
+    value = str(line or "").strip()
+    normalized = normalize_line_name(value)
+    digits = "".join(ch for ch in value if ch.isdigit())
+    candidates = {value, normalized}
+    if digits:
+        candidates.add(f"{int(digits)}호선")
+    if value == "공항철도":
+        candidates.add("공항")
+    return {candidate for candidate in candidates if candidate}
+
+
+def normalize_urban_rail_line_value(value):
+    """Normalize one route CSV line value to comparable labels."""
+    raw = str(value or "").strip()
+    candidates = {raw, normalize_line_name(raw)}
+    if raw == "공항":
+        candidates.add("공항철도")
+    return {candidate for candidate in candidates if candidate}
+
+
+def urban_rail_route_csv_path():
+    """Return the first available urban rail route CSV path."""
+    return next((path for path in URBAN_RAIL_ROUTE_CSV_CANDIDATES if path.exists()), None)
+
+
+def load_urban_rail_route_rows():
+    """Load urban rail route rows from the local CSV file."""
+    path = urban_rail_route_csv_path()
+    if not path:
+        return [], None
+    for encoding in ("utf-8-sig", "cp949", "euc-kr"):
+        try:
+            with path.open("r", encoding=encoding, newline="") as file:
+                return list(csv.DictReader(file)), path
+        except UnicodeDecodeError:
+            continue
+    return [], path
+
+
+def urban_rail_platform_directions(station, line):
+    """Return adjacent station direction candidates from the route-order CSV."""
+    station_key = quick_exit_station_key(station)
+    line_keys = urban_rail_line_candidates(line)
+    rows, path = load_urban_rail_route_rows()
+    matching_rows = [
+        row for row in rows
+        if quick_exit_station_key(row.get("역명")) == station_key
+        and normalize_urban_rail_line_value(row.get("노선명")).intersection(line_keys)
+    ]
+    directions = []
+    for match in matching_rows:
+        line_name = match.get("노선명")
+        try:
+            order = int(str(match.get("순번") or "").strip())
+        except ValueError:
+            continue
+        same_line = [
+            row for row in rows
+            if normalize_urban_rail_line_value(row.get("노선명")).intersection(normalize_urban_rail_line_value(line_name))
+        ]
+        by_order = {}
+        for row in same_line:
+            try:
+                by_order[int(str(row.get("순번") or "").strip())] = quick_exit_station_key(row.get("역명"))
+            except ValueError:
+                continue
+        if by_order.get(order - 1):
+            directions.append(by_order[order - 1])
+        if by_order.get(order + 1):
+            directions.append(by_order[order + 1])
+    directions = list(dict.fromkeys(direction for direction in directions if direction))
+    return directions, path, len(rows)
+
+
 def normalize_station_name(name):
     """Return station name in API-friendly display form."""
     value = str(name or "").strip()
@@ -340,7 +421,7 @@ def normalize_line_name(line):
 
 
 def load_station_line_options():
-    """Load station/line candidates from local Seoul Metro CSV files."""
+    """Load station/line candidates from local metadata and route-order CSV files."""
     by_station = {}
     for path in STATION_CSV_CANDIDATES:
         if not path.exists():
@@ -353,6 +434,17 @@ def load_station_line_options():
                 if not station or not line:
                     continue
                 by_station.setdefault(station, set()).add(line)
+    rows, _ = load_urban_rail_route_rows()
+    for row in rows:
+        station = normalize_station_name(row.get("역명"))
+        line = str(row.get("노선명") or "").strip()
+        if line == "공항":
+            line = "공항철도"
+        elif line and not line.endswith("호선") and line[:1].isdigit():
+            line = normalize_line_name(line)
+        if not station or not line:
+            continue
+        by_station.setdefault(station, set()).add(line)
     stations = [
         {"station": station, "lines": sorted(lines, key=lambda item: (len(item), item))}
         for station, lines in sorted(by_station.items())
@@ -1231,6 +1323,26 @@ def create_app(args):
                 "facility": facility,
                 "count": len(rows),
                 "rows": rows,
+            }
+        )
+
+    @app.route("/api/platform_directions", methods=["GET"])
+    def platform_directions():
+        """Return platform direction candidates from the local urban rail route CSV."""
+        station = (request.args.get("station") or "").strip()
+        line = (request.args.get("line") or "").strip()
+        if not station or not line:
+            return jsonify({"error": "station and line are required"}), 400
+        directions, source_path, row_count = urban_rail_platform_directions(station, line)
+        return jsonify(
+            {
+                "station": station,
+                "line": line,
+                "source": "urban_rail_route_csv" if source_path else "none",
+                "source_file": str(source_path) if source_path else None,
+                "source_row_count": row_count,
+                "count": len(directions),
+                "directions": directions,
             }
         )
 

@@ -1,0 +1,976 @@
+{
+  "format": "route_video_edge_subset",
+  "station_name": "고속터미널",
+  "scenario": "압구정에서 고속터미널 환승 후 여의도 도착",
+  "source_graph": "/d/capstone2/test_image_output/web_projects/0329-고속터미널_crop/navigation_graph_0329-고속터미널_crop.json",
+  "route_options": {
+    "route_preference": "none",
+    "include_toilet": false,
+    "synthetic_mode": "same-polygon"
+  },
+  "assumptions": {
+    "arrival_platform": "3호선 교대 방향",
+    "arrival_cars": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "arrival_door_rule": "각 호차의 중앙 문 대표점 사용",
+    "transfer_boarding_point": "9호선 신반포 방향 1호차 2번문",
+    "reason": "압구정에서 3호선으로 도착 후 여의도 방향 9호선으로 환승하는 단순 환승 edge 추출"
+  },
+  "goal": {
+    "node_id": "platform_002_car_1_door_2",
+    "node_key": "N0103",
+    "line_id": "9호선",
+    "direction": "신반포",
+    "car": 1,
+    "door": 2,
+    "position": [
+      -273.557067,
+      29.6529,
+      -41
+    ]
+  },
+  "route_count": 10,
+  "unique_edge_count": 18,
+  "routes": [
+    {
+      "arrival_car": 1,
+      "start_node_id": "platform_004_car_1_door_2",
+      "start_node_key": "N0183",
+      "start_door": 2,
+      "goal_node_id": "platform_002_car_1_door_2",
+      "goal_node_key": "N0103",
+      "goal_car": 1,
+      "goal_door": 2,
+      "total_cost": 496.4562638119229,
+      "node_ids": [
+        "platform_004_car_1_door_2",
+        "escalator_021_to",
+        "escalator_021_from",
+        "escalator_072_from",
+        "escalator_072_to",
+        "elevator_point_015_node",
+        "elevator_point_014_node",
+        "platform_002_car_1_door_2"
+      ],
+      "edge_ids": [
+        "N0183_N0050",
+        "N0050_N0049",
+        "N0049_N0087",
+        "N0087_N0088",
+        "N0088_N0009",
+        "N0009_N0008",
+        "N0008_N0103"
+      ]
+    },
+    {
+      "arrival_car": 2,
+      "start_node_id": "platform_004_car_2_door_2",
+      "start_node_key": "N0187",
+      "start_door": 2,
+      "goal_node_id": "platform_002_car_1_door_2",
+      "goal_node_key": "N0103",
+      "goal_car": 1,
+      "goal_door": 2,
+      "total_cost": 470.37226769070656,
+      "node_ids": [
+        "platform_004_car_2_door_2",
+        "escalator_021_to",
+        "escalator_021_from",
+        "escalator_072_from",
+        "escalator_072_to",
+        "elevator_point_015_node",
+        "elevator_point_014_node",
+        "platform_002_car_1_door_2"
+      ],
+      "edge_ids": [
+        "N0187_N0050",
+        "N0050_N0049",
+        "N0049_N0087",
+        "N0087_N0088",
+        "N0088_N0009",
+        "N0009_N0008",
+        "N0008_N0103"
+      ]
+    },
+    {
+      "arrival_car": 3,
+      "start_node_id": "platform_004_car_3_door_2",
+      "start_node_key": "N0191",
+      "start_door": 2,
+      "goal_node_id": "platform_002_car_1_door_2",
+      "goal_node_key": "N0103",
+      "goal_car": 1,
+      "goal_door": 2,
+      "total_cost": 456.7362469802969,
+      "node_ids": [
+        "platform_004_car_3_door_2",
+        "escalator_021_to",
+        "escalator_021_from",
+        "escalator_072_from",
+        "escalator_072_to",
+        "elevator_point_015_node",
+        "elevator_point_014_node",
+        "platform_002_car_1_door_2"
+      ],
+      "edge_ids": [
+        "N0191_N0050",
+        "N0050_N0049",
+        "N0049_N0087",
+        "N0087_N0088",
+        "N0088_N0009",
+        "N0009_N0008",
+        "N0008_N0103"
+      ]
+    },
+    {
+      "arrival_car": 4,
+      "start_node_id": "platform_004_car_4_door_2",
+      "start_node_key": "N0195",
+      "start_door": 2,
+      "goal_node_id": "platform_002_car_1_door_2",
+      "goal_node_key": "N0103",
+      "goal_car": 1,
+      "goal_door": 2,
+      "total_cost": 439.6054746184123,
+      "node_ids": [
+        "platform_004_car_4_door_2",
+        "escalator_021_to",
+        "escalator_021_from",
+        "escalator_072_from",
+        "escalator_072_to",
+        "elevator_point_015_node",
+        "elevator_point_014_node",
+        "platform_002_car_1_door_2"
+      ],
+      "edge_ids": [
+        "N0195_N0050",
+        "N0050_N0049",
+        "N0049_N0087",
+        "N0087_N0088",
+        "N0088_N0009",
+        "N0009_N0008",
+        "N0008_N0103"
+      ]
+    },
+    {
+      "arrival_car": 5,
+      "start_node_id": "platform_004_car_5_door_2",
+      "start_node_key": "N0199",
+      "start_door": 2,
+      "goal_node_id": "platform_002_car_1_door_2",
+      "goal_node_key": "N0103",
+      "goal_car": 1,
+      "goal_door": 2,
+      "total_cost": 417.7683593366367,
+      "node_ids": [
+        "platform_004_car_5_door_2",
+        "escalator_021_to",
+        "escalator_021_from",
+        "escalator_072_from",
+        "escalator_072_to",
+        "elevator_point_015_node",
+        "elevator_point_014_node",
+        "platform_002_car_1_door_2"
+      ],
+      "edge_ids": [
+        "N0199_N0050",
+        "N0050_N0049",
+        "N0049_N0087",
+        "N0087_N0088",
+        "N0088_N0009",
+        "N0009_N0008",
+        "N0008_N0103"
+      ]
+    },
+    {
+      "arrival_car": 6,
+      "start_node_id": "platform_004_car_6_door_2",
+      "start_node_key": "N0203",
+      "start_door": 2,
+      "goal_node_id": "platform_002_car_1_door_2",
+      "goal_node_key": "N0103",
+      "goal_car": 1,
+      "goal_door": 2,
+      "total_cost": 395.2313742154114,
+      "node_ids": [
+        "platform_004_car_6_door_2",
+        "escalator_021_to",
+        "escalator_021_from",
+        "escalator_072_from",
+        "escalator_072_to",
+        "elevator_point_015_node",
+        "elevator_point_014_node",
+        "platform_002_car_1_door_2"
+      ],
+      "edge_ids": [
+        "N0203_N0050",
+        "N0050_N0049",
+        "N0049_N0087",
+        "N0087_N0088",
+        "N0088_N0009",
+        "N0009_N0008",
+        "N0008_N0103"
+      ]
+    },
+    {
+      "arrival_car": 7,
+      "start_node_id": "platform_004_car_7_door_2",
+      "start_node_key": "N0207",
+      "start_door": 2,
+      "goal_node_id": "platform_002_car_1_door_2",
+      "goal_node_key": "N0103",
+      "goal_car": 1,
+      "goal_door": 2,
+      "total_cost": 373.6935981912038,
+      "node_ids": [
+        "platform_004_car_7_door_2",
+        "escalator_021_to",
+        "escalator_021_from",
+        "escalator_072_from",
+        "escalator_072_to",
+        "elevator_point_015_node",
+        "elevator_point_014_node",
+        "platform_002_car_1_door_2"
+      ],
+      "edge_ids": [
+        "N0207_N0050",
+        "N0050_N0049",
+        "N0049_N0087",
+        "N0087_N0088",
+        "N0088_N0009",
+        "N0009_N0008",
+        "N0008_N0103"
+      ]
+    },
+    {
+      "arrival_car": 8,
+      "start_node_id": "platform_004_car_8_door_2",
+      "start_node_key": "N0211",
+      "start_door": 2,
+      "goal_node_id": "platform_002_car_1_door_2",
+      "goal_node_key": "N0103",
+      "goal_car": 1,
+      "goal_door": 2,
+      "total_cost": 376.048214198311,
+      "node_ids": [
+        "platform_004_car_8_door_2",
+        "escalator_021_to",
+        "escalator_021_from",
+        "escalator_072_from",
+        "escalator_072_to",
+        "elevator_point_015_node",
+        "elevator_point_014_node",
+        "platform_002_car_1_door_2"
+      ],
+      "edge_ids": [
+        "N0211_N0050",
+        "N0050_N0049",
+        "N0049_N0087",
+        "N0087_N0088",
+        "N0088_N0009",
+        "N0009_N0008",
+        "N0008_N0103"
+      ]
+    },
+    {
+      "arrival_car": 9,
+      "start_node_id": "platform_004_car_9_door_2",
+      "start_node_key": "N0215",
+      "start_door": 2,
+      "goal_node_id": "platform_002_car_1_door_2",
+      "goal_node_key": "N0103",
+      "goal_car": 1,
+      "goal_door": 2,
+      "total_cost": 370.58306122974403,
+      "node_ids": [
+        "platform_004_car_9_door_2",
+        "escalator_020_to",
+        "escalator_020_from",
+        "escalator_072_from",
+        "escalator_072_to",
+        "elevator_point_015_node",
+        "elevator_point_014_node",
+        "platform_002_car_1_door_2"
+      ],
+      "edge_ids": [
+        "N0215_N0048",
+        "N0048_N0047",
+        "N0047_N0087",
+        "N0087_N0088",
+        "N0088_N0009",
+        "N0009_N0008",
+        "N0008_N0103"
+      ]
+    },
+    {
+      "arrival_car": 10,
+      "start_node_id": "platform_004_car_10_door_2",
+      "start_node_key": "N0179",
+      "start_door": 2,
+      "goal_node_id": "platform_002_car_1_door_2",
+      "goal_node_key": "N0103",
+      "goal_car": 1,
+      "goal_door": 2,
+      "total_cost": 385.43104356587475,
+      "node_ids": [
+        "platform_004_car_10_door_2",
+        "escalator_020_to",
+        "escalator_020_from",
+        "escalator_072_from",
+        "escalator_072_to",
+        "elevator_point_015_node",
+        "elevator_point_014_node",
+        "platform_002_car_1_door_2"
+      ],
+      "edge_ids": [
+        "N0179_N0048",
+        "N0048_N0047",
+        "N0047_N0087",
+        "N0087_N0088",
+        "N0088_N0009",
+        "N0009_N0008",
+        "N0008_N0103"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "N0183_N0050",
+      "video_title": "고속터미널_N0183_N0050",
+      "video_required": true,
+      "from_node_id": "platform_004_car_1_door_2",
+      "to_node_id": "escalator_021_to",
+      "from_node_key": "N0183",
+      "to_node_key": "N0050",
+      "from_type": "platform_position",
+      "to_type": "connector",
+      "from_position": [
+        -185.606473,
+        196.703076,
+        -14
+      ],
+      "to_position": [
+        -261.104798,
+        97.441668,
+        -14
+      ],
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "synthetic": true,
+      "cost": 124.71096261334884,
+      "zone_from": "paid",
+      "zone_to": "paid",
+      "used_by_arrival_cars": [
+        1
+      ],
+      "index": 1
+    },
+    {
+      "edge_id": "N0050_N0049",
+      "video_title": "고속터미널_N0050_N0049",
+      "video_required": true,
+      "from_node_id": "escalator_021_to",
+      "to_node_id": "escalator_021_from",
+      "from_node_key": "N0050",
+      "to_node_key": "N0049",
+      "from_type": "connector",
+      "to_type": "connector",
+      "from_position": [
+        -261.104798,
+        97.441668,
+        -14
+      ],
+      "to_position": [
+        -270.792923,
+        96.177949,
+        -7
+      ],
+      "route_edge_type": "vertical",
+      "connector_type": "escalator",
+      "transport_mode": "escalator",
+      "synthetic": false,
+      "cost": 12.01901629480442,
+      "zone_from": "paid",
+      "zone_to": "paid",
+      "used_by_arrival_cars": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "index": 2
+    },
+    {
+      "edge_id": "N0049_N0087",
+      "video_title": "고속터미널_N0049_N0087",
+      "video_required": true,
+      "from_node_id": "escalator_021_from",
+      "to_node_id": "escalator_072_from",
+      "from_node_key": "N0049",
+      "to_node_key": "N0087",
+      "from_type": "connector",
+      "to_type": "connector",
+      "from_position": [
+        -270.792923,
+        96.177949,
+        -7
+      ],
+      "to_position": [
+        -321.037854,
+        71.841424,
+        -7
+      ],
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "synthetic": true,
+      "cost": 55.82848323454961,
+      "zone_from": "paid",
+      "zone_to": "paid",
+      "used_by_arrival_cars": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "index": 3
+    },
+    {
+      "edge_id": "N0087_N0088",
+      "video_title": "고속터미널_N0087_N0088",
+      "video_required": true,
+      "from_node_id": "escalator_072_from",
+      "to_node_id": "escalator_072_to",
+      "from_node_key": "N0087",
+      "to_node_key": "N0088",
+      "from_type": "connector",
+      "to_type": "connector",
+      "from_position": [
+        -321.037854,
+        71.841424,
+        -7
+      ],
+      "to_position": [
+        -321.813082,
+        59.024893,
+        -29
+      ],
+      "route_edge_type": "vertical",
+      "connector_type": "escalator",
+      "transport_mode": "escalator",
+      "synthetic": false,
+      "cost": 25.472817518599822,
+      "zone_from": "paid",
+      "zone_to": "paid",
+      "used_by_arrival_cars": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "index": 4
+    },
+    {
+      "edge_id": "N0088_N0009",
+      "video_title": "고속터미널_N0088_N0009",
+      "video_required": true,
+      "from_node_id": "escalator_072_to",
+      "to_node_id": "elevator_point_015_node",
+      "from_node_key": "N0088",
+      "to_node_key": "N0009",
+      "from_type": "connector",
+      "to_type": "elevator",
+      "from_position": [
+        -321.813082,
+        59.024893,
+        -29
+      ],
+      "to_position": [
+        -371.448754,
+        48.207257,
+        -29
+      ],
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "synthetic": true,
+      "cost": 50.80079904411031,
+      "zone_from": "paid",
+      "zone_to": "paid",
+      "used_by_arrival_cars": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "index": 5
+    },
+    {
+      "edge_id": "N0009_N0008",
+      "video_title": "고속터미널_N0009_N0008",
+      "video_required": true,
+      "from_node_id": "elevator_point_015_node",
+      "to_node_id": "elevator_point_014_node",
+      "from_node_key": "N0009",
+      "to_node_key": "N0008",
+      "from_type": "elevator",
+      "to_type": "elevator",
+      "from_position": [
+        -371.448754,
+        48.207257,
+        -29
+      ],
+      "to_position": [
+        -379.414144,
+        52.123812,
+        -41
+      ],
+      "route_edge_type": "elevator",
+      "connector_type": null,
+      "transport_mode": "elevator",
+      "synthetic": false,
+      "cost": 119.40837000956732,
+      "zone_from": "paid",
+      "zone_to": "paid",
+      "used_by_arrival_cars": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "index": 6
+    },
+    {
+      "edge_id": "N0008_N0103",
+      "video_title": "고속터미널_N0008_N0103",
+      "video_required": true,
+      "from_node_id": "elevator_point_014_node",
+      "to_node_id": "platform_002_car_1_door_2",
+      "from_node_key": "N0008",
+      "to_node_key": "N0103",
+      "from_type": "elevator",
+      "to_type": "platform_position",
+      "from_position": [
+        -379.414144,
+        52.123812,
+        -41
+      ],
+      "to_position": [
+        -273.557067,
+        29.6529,
+        -41
+      ],
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "synthetic": true,
+      "cost": 108.21581509694262,
+      "zone_from": "paid",
+      "zone_to": "paid",
+      "used_by_arrival_cars": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "index": 7
+    },
+    {
+      "edge_id": "N0187_N0050",
+      "video_title": "고속터미널_N0187_N0050",
+      "video_required": true,
+      "from_node_id": "platform_004_car_2_door_2",
+      "to_node_id": "escalator_021_to",
+      "from_node_key": "N0187",
+      "to_node_key": "N0050",
+      "from_type": "platform_position",
+      "to_type": "connector",
+      "from_position": [
+        -201.656682,
+        176.138555,
+        -14
+      ],
+      "to_position": [
+        -261.104798,
+        97.441668,
+        -14
+      ],
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "synthetic": true,
+      "cost": 98.62696649213251,
+      "zone_from": "paid",
+      "zone_to": "paid",
+      "used_by_arrival_cars": [
+        2
+      ],
+      "index": 8
+    },
+    {
+      "edge_id": "N0191_N0050",
+      "video_title": "고속터미널_N0191_N0050",
+      "video_required": true,
+      "from_node_id": "platform_004_car_3_door_2",
+      "to_node_id": "escalator_021_to",
+      "from_node_key": "N0191",
+      "to_node_key": "N0050",
+      "from_type": "platform_position",
+      "to_type": "connector",
+      "from_position": [
+        -210.046653,
+        165.386695,
+        -14
+      ],
+      "to_position": [
+        -261.104798,
+        97.441668,
+        -14
+      ],
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "synthetic": true,
+      "cost": 84.99094578172287,
+      "zone_from": "paid",
+      "zone_to": "paid",
+      "used_by_arrival_cars": [
+        3
+      ],
+      "index": 9
+    },
+    {
+      "edge_id": "N0195_N0050",
+      "video_title": "고속터미널_N0195_N0050",
+      "video_required": true,
+      "from_node_id": "platform_004_car_4_door_2",
+      "to_node_id": "escalator_021_to",
+      "from_node_key": "N0195",
+      "to_node_key": "N0050",
+      "from_type": "platform_position",
+      "to_type": "connector",
+      "from_position": [
+        -220.612058,
+        151.896614,
+        -14
+      ],
+      "to_position": [
+        -261.104798,
+        97.441668,
+        -14
+      ],
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "synthetic": true,
+      "cost": 67.86017341983822,
+      "zone_from": "paid",
+      "zone_to": "paid",
+      "used_by_arrival_cars": [
+        4
+      ],
+      "index": 10
+    },
+    {
+      "edge_id": "N0199_N0050",
+      "video_title": "고속터미널_N0199_N0050",
+      "video_required": true,
+      "from_node_id": "platform_004_car_5_door_2",
+      "to_node_id": "escalator_021_to",
+      "from_node_key": "N0199",
+      "to_node_key": "N0050",
+      "from_type": "platform_position",
+      "to_type": "connector",
+      "from_position": [
+        -234.095765,
+        134.706048,
+        -14
+      ],
+      "to_position": [
+        -261.104798,
+        97.441668,
+        -14
+      ],
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "synthetic": true,
+      "cost": 46.0230581380626,
+      "zone_from": "paid",
+      "zone_to": "paid",
+      "used_by_arrival_cars": [
+        5
+      ],
+      "index": 11
+    },
+    {
+      "edge_id": "N0203_N0050",
+      "video_title": "고속터미널_N0203_N0050",
+      "video_required": true,
+      "from_node_id": "platform_004_car_6_door_2",
+      "to_node_id": "escalator_021_to",
+      "from_node_key": "N0203",
+      "to_node_key": "N0050",
+      "from_type": "platform_position",
+      "to_type": "connector",
+      "from_position": [
+        -248.026812,
+        116.949664,
+        -14
+      ],
+      "to_position": [
+        -261.104798,
+        97.441668,
+        -14
+      ],
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "synthetic": true,
+      "cost": 23.486073016837274,
+      "zone_from": "paid",
+      "zone_to": "paid",
+      "used_by_arrival_cars": [
+        6
+      ],
+      "index": 12
+    },
+    {
+      "edge_id": "N0207_N0050",
+      "video_title": "고속터미널_N0207_N0050",
+      "video_required": true,
+      "from_node_id": "platform_004_car_7_door_2",
+      "to_node_id": "escalator_021_to",
+      "from_node_key": "N0207",
+      "to_node_key": "N0050",
+      "from_type": "platform_position",
+      "to_type": "connector",
+      "from_position": [
+        -261.957859,
+        99.193281,
+        -14
+      ],
+      "to_position": [
+        -261.104798,
+        97.441668,
+        -14
+      ],
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "synthetic": true,
+      "cost": 1.9482969926296958,
+      "zone_from": "paid",
+      "zone_to": "paid",
+      "used_by_arrival_cars": [
+        7
+      ],
+      "index": 13
+    },
+    {
+      "edge_id": "N0211_N0050",
+      "video_title": "고속터미널_N0211_N0050",
+      "video_required": true,
+      "from_node_id": "platform_004_car_8_door_2",
+      "to_node_id": "escalator_021_to",
+      "from_node_key": "N0211",
+      "to_node_key": "N0050",
+      "from_type": "platform_position",
+      "to_type": "connector",
+      "from_position": [
+        -264.968034,
+        95.546815,
+        -14
+      ],
+      "to_position": [
+        -261.104798,
+        97.441668,
+        -14
+      ],
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "synthetic": true,
+      "cost": 4.302912999736903,
+      "zone_from": "paid",
+      "zone_to": "paid",
+      "used_by_arrival_cars": [
+        8
+      ],
+      "index": 14
+    },
+    {
+      "edge_id": "N0215_N0048",
+      "video_title": "고속터미널_N0215_N0048",
+      "video_required": true,
+      "from_node_id": "platform_004_car_9_door_2",
+      "to_node_id": "escalator_020_to",
+      "from_node_key": "N0215",
+      "to_node_key": "N0048",
+      "from_type": "platform_position",
+      "to_type": "connector",
+      "from_position": [
+        -280.206999,
+        77.101886,
+        -14
+      ],
+      "to_position": [
+        -278.973316,
+        79.262505,
+        -14
+      ],
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "synthetic": true,
+      "cost": 2.488020941963715,
+      "zone_from": "paid",
+      "zone_to": "paid",
+      "used_by_arrival_cars": [
+        9
+      ],
+      "index": 15
+    },
+    {
+      "edge_id": "N0048_N0047",
+      "video_title": "고속터미널_N0048_N0047",
+      "video_required": true,
+      "from_node_id": "escalator_020_to",
+      "to_node_id": "escalator_020_from",
+      "from_node_key": "N0048",
+      "to_node_key": "N0047",
+      "from_type": "connector",
+      "to_type": "connector",
+      "from_position": [
+        -278.973316,
+        79.262505,
+        -14
+      ],
+      "to_position": [
+        -274.653208,
+        90.731282,
+        -7
+      ],
+      "route_edge_type": "vertical",
+      "connector_type": "escalator",
+      "transport_mode": "escalator",
+      "synthetic": false,
+      "cost": 14.113687228852724,
+      "zone_from": "paid",
+      "zone_to": "paid",
+      "used_by_arrival_cars": [
+        9,
+        10
+      ],
+      "index": 16
+    },
+    {
+      "edge_id": "N0047_N0087",
+      "video_title": "고속터미널_N0047_N0087",
+      "video_required": true,
+      "from_node_id": "escalator_020_from",
+      "to_node_id": "escalator_072_from",
+      "from_node_key": "N0047",
+      "to_node_key": "N0087",
+      "from_type": "connector",
+      "to_type": "connector",
+      "from_position": [
+        -274.653208,
+        90.731282,
+        -7
+      ],
+      "to_position": [
+        -321.037854,
+        71.841424,
+        -7
+      ],
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "synthetic": true,
+      "cost": 50.08355138970755,
+      "zone_from": "paid",
+      "zone_to": "paid",
+      "used_by_arrival_cars": [
+        9,
+        10
+      ],
+      "index": 17
+    },
+    {
+      "edge_id": "N0179_N0048",
+      "video_title": "고속터미널_N0179_N0048",
+      "video_required": true,
+      "from_node_id": "platform_004_car_10_door_2",
+      "to_node_id": "escalator_020_to",
+      "from_node_key": "N0179",
+      "to_node_key": "N0048",
+      "from_type": "platform_position",
+      "to_type": "connector",
+      "from_position": [
+        -289.685816,
+        65.632415,
+        -14
+      ],
+      "to_position": [
+        -278.973316,
+        79.262505,
+        -14
+      ],
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "synthetic": true,
+      "cost": 17.3360032780944,
+      "zone_from": "paid",
+      "zone_to": "paid",
+      "used_by_arrival_cars": [
+        10
+      ],
+      "index": 18
+    }
+  ]
+}
