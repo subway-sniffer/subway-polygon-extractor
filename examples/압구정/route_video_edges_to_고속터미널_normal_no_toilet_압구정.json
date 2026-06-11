@@ -1,0 +1,3460 @@
+{
+  "metadata": {
+    "format": "route_video_edges",
+    "station_name": "압구정",
+    "source_graph": "/d/capstone2/test_image_output/web_projects/압구정/navigation_graph_압구정.json",
+    "purpose": "exit_to_platform_edges_from_압구정_to_고속터미널_normal_no_toilet",
+    "platform_granularity": "car",
+    "edge_deduplication": "undirected",
+    "edge_order": "first_route_occurrence",
+    "include_toilet_routes": false,
+    "toilet_genders": [],
+    "include_same_line_platform": false,
+    "route_preferences": [
+      "none"
+    ],
+    "route_options": {
+      "synthetic_mode": "same-polygon",
+      "zone_change_penalty": 100.0,
+      "paid_free_penalty": 1000.0,
+      "route_preference": [
+        "none"
+      ]
+    },
+    "selection": {
+      "line_id": "3호선",
+      "direction": "신사",
+      "start_context": "압구정 출구에서 고속터미널 방향 승차"
+    }
+  },
+  "counts": {
+    "platform_car_node_count": 10,
+    "exit_node_count": 8,
+    "od_pair_count": 80,
+    "route_success_count": 80,
+    "toilet_route_success_count": 0,
+    "route_failure_count": 0,
+    "unique_edge_count": 47,
+    "toilet_candidate_counts": {},
+    "per_preference": {
+      "none": {
+        "route_success_count": 80,
+        "route_failure_count": 0,
+        "unique_edge_count": 47
+      }
+    }
+  },
+  "platform_car_nodes": [
+    {
+      "platform_id": "platform_002",
+      "station_name": "압구정역",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 1,
+      "node_id": "platform_002_car_1_door_3",
+      "node_key": 61,
+      "node_key_str": "N0061",
+      "position": [
+        -222.291426,
+        61.521722,
+        -7
+      ],
+      "source_door_count": 4,
+      "source_doors": [
+        "1-1",
+        "1-2",
+        "1-3",
+        "1-4"
+      ]
+    },
+    {
+      "platform_id": "platform_002",
+      "station_name": "압구정역",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 2,
+      "node_id": "platform_002_car_2_door_3",
+      "node_key": 65,
+      "node_key_str": "N0065",
+      "position": [
+        -204.883727,
+        61.852168,
+        -7
+      ],
+      "source_door_count": 4,
+      "source_doors": [
+        "2-1",
+        "2-2",
+        "2-3",
+        "2-4"
+      ]
+    },
+    {
+      "platform_id": "platform_002",
+      "station_name": "압구정역",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 3,
+      "node_id": "platform_002_car_3_door_2",
+      "node_key": 68,
+      "node_key_str": "N0068",
+      "position": [
+        -183.571086,
+        62.256528,
+        -7
+      ],
+      "source_door_count": 4,
+      "source_doors": [
+        "3-1",
+        "3-2",
+        "3-3",
+        "3-4"
+      ]
+    },
+    {
+      "platform_id": "platform_002",
+      "station_name": "압구정역",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 4,
+      "node_id": "platform_002_car_4_door_2",
+      "node_key": 72,
+      "node_key_str": "N0072",
+      "position": [
+        -155.154232,
+        62.795676,
+        -7
+      ],
+      "source_door_count": 4,
+      "source_doors": [
+        "4-1",
+        "4-2",
+        "4-3",
+        "4-4"
+      ]
+    },
+    {
+      "platform_id": "platform_002",
+      "station_name": "압구정역",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 5,
+      "node_id": "platform_002_car_5_door_2",
+      "node_key": 76,
+      "node_key_str": "N0076",
+      "position": [
+        -140.13023,
+        63.080868,
+        -7
+      ],
+      "source_door_count": 4,
+      "source_doors": [
+        "5-1",
+        "5-2",
+        "5-3",
+        "5-4"
+      ]
+    },
+    {
+      "platform_id": "platform_002",
+      "station_name": "압구정역",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 6,
+      "node_id": "platform_002_car_6_door_3",
+      "node_key": 81,
+      "node_key_str": "N0081",
+      "position": [
+        -121.350229,
+        63.437358,
+        -7
+      ],
+      "source_door_count": 4,
+      "source_doors": [
+        "6-1",
+        "6-2",
+        "6-3",
+        "6-4"
+      ]
+    },
+    {
+      "platform_id": "platform_002",
+      "station_name": "압구정역",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 7,
+      "node_id": "platform_002_car_7_door_3",
+      "node_key": 85,
+      "node_key_str": "N0085",
+      "position": [
+        -106.326227,
+        63.72255,
+        -7
+      ],
+      "source_door_count": 4,
+      "source_doors": [
+        "7-1",
+        "7-2",
+        "7-3",
+        "7-4"
+      ]
+    },
+    {
+      "platform_id": "platform_002",
+      "station_name": "압구정역",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 8,
+      "node_id": "platform_002_car_8_door_2",
+      "node_key": 88,
+      "node_key_str": "N0088",
+      "position": [
+        -85.991592,
+        64.108371,
+        -7
+      ],
+      "source_door_count": 4,
+      "source_doors": [
+        "8-1",
+        "8-2",
+        "8-3",
+        "8-4"
+      ]
+    },
+    {
+      "platform_id": "platform_002",
+      "station_name": "압구정역",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 9,
+      "node_id": "platform_002_car_9_door_2",
+      "node_key": 92,
+      "node_key_str": "N0092",
+      "position": [
+        -58.878746,
+        64.6228,
+        -7
+      ],
+      "source_door_count": 4,
+      "source_doors": [
+        "9-1",
+        "9-2",
+        "9-3",
+        "9-4"
+      ]
+    },
+    {
+      "platform_id": "platform_002",
+      "station_name": "압구정역",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 10,
+      "node_id": "platform_002_car_10_door_3",
+      "node_key": 57,
+      "node_key_str": "N0057",
+      "position": [
+        -34.759923,
+        65.080508,
+        -7
+      ],
+      "source_door_count": 4,
+      "source_doors": [
+        "10-1",
+        "10-2",
+        "10-3",
+        "10-4"
+      ]
+    }
+  ],
+  "exit_nodes": [
+    {
+      "node_id": "exit_escalator_007_from",
+      "node_key": 11,
+      "node_key_str": "N0011",
+      "type": "exit",
+      "exit_number": "1",
+      "layer": "B1",
+      "position": [
+        -52.271449,
+        34.533818,
+        0
+      ]
+    },
+    {
+      "node_id": "elevator_point_007_node",
+      "node_key": 6,
+      "node_key_str": "N0006",
+      "type": "exit_elevator",
+      "exit_number": "2",
+      "layer": "B1",
+      "position": [
+        -67.58961,
+        26.151312,
+        0
+      ]
+    },
+    {
+      "node_id": "exit_stair_003_from",
+      "node_key": 13,
+      "node_key_str": "N0013",
+      "type": "exit",
+      "exit_number": "2",
+      "layer": "B1",
+      "position": [
+        -60.307834,
+        28.854407,
+        0
+      ]
+    },
+    {
+      "node_id": "elevator_point_006_node",
+      "node_key": 5,
+      "node_key_str": "N0005",
+      "type": "exit_elevator",
+      "exit_number": "3",
+      "layer": "B1",
+      "position": [
+        -199.12021,
+        36.035204,
+        0
+      ]
+    },
+    {
+      "node_id": "exit_escalator_008_from",
+      "node_key": 12,
+      "node_key_str": "N0012",
+      "type": "exit",
+      "exit_number": "3",
+      "layer": "B1",
+      "position": [
+        -185.073453,
+        22.55141,
+        6
+      ]
+    },
+    {
+      "node_id": "exit_stair_004_from",
+      "node_key": 14,
+      "node_key_str": "N0014",
+      "type": "exit",
+      "exit_number": "4",
+      "layer": "B1",
+      "position": [
+        -201.133567,
+        85.791958,
+        0
+      ]
+    },
+    {
+      "node_id": "exit_escalator_005_from",
+      "node_key": 9,
+      "node_key_str": "N0009",
+      "type": "exit",
+      "exit_number": "5",
+      "layer": "B1",
+      "position": [
+        -69.629447,
+        85.221577,
+        0
+      ]
+    },
+    {
+      "node_id": "exit_escalator_006_from",
+      "node_key": 10,
+      "node_key_str": "N0010",
+      "type": "exit",
+      "exit_number": "6",
+      "layer": "B2",
+      "position": [
+        -29.382653,
+        103.385612,
+        -2
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "N0011_N0122",
+      "video_title": "압구정_N0011_N0122",
+      "from": {
+        "node_id": "exit_escalator_007_from",
+        "node_key": 11,
+        "node_key_str": "N0011",
+        "type": "exit",
+        "gate_side": null,
+        "position": [
+          -52.271449,
+          34.533818,
+          0
+        ]
+      },
+      "to": {
+        "node_id": "ticket_gate_003_front_node",
+        "node_key": 122,
+        "node_key_str": "N0122",
+        "type": "gate",
+        "gate_side": "front",
+        "position": [
+          -176.070986,
+          63.45804,
+          0
+        ]
+      },
+      "from_type": "exit",
+      "to_type": "gate",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 2,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_exit_escalator_007_from_to_ticket_gate_003_front_node"
+      ]
+    },
+    {
+      "edge_id": "N0122_N0121",
+      "video_title": "압구정_N0122_N0121",
+      "from": {
+        "node_id": "ticket_gate_003_front_node",
+        "node_key": 122,
+        "node_key_str": "N0122",
+        "type": "gate",
+        "gate_side": "front",
+        "position": [
+          -176.070986,
+          63.45804,
+          0
+        ]
+      },
+      "to": {
+        "node_id": "ticket_gate_003_back_node",
+        "node_key": 121,
+        "node_key_str": "N0121",
+        "type": "gate",
+        "gate_side": "back",
+        "position": [
+          -176.107138,
+          65.457713,
+          0
+        ]
+      },
+      "from_type": "gate",
+      "to_type": "gate",
+      "route_edge_type": "gate_crossing",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 35,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "ticket_gate_003_gate_crossing"
+      ]
+    },
+    {
+      "edge_id": "N0121_N0101",
+      "video_title": "압구정_N0121_N0101",
+      "from": {
+        "node_id": "ticket_gate_003_back_node",
+        "node_key": 121,
+        "node_key_str": "N0121",
+        "type": "gate",
+        "gate_side": "back",
+        "position": [
+          -176.107138,
+          65.457713,
+          0
+        ]
+      },
+      "to": {
+        "node_id": "stair_004_from",
+        "node_key": 101,
+        "node_key_str": "N0101",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -179.495655,
+          70.530284,
+          0
+        ]
+      },
+      "from_type": "gate",
+      "to_type": "connector",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 19,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_stair_004_from_to_ticket_gate_003_back_node_reverse"
+      ]
+    },
+    {
+      "edge_id": "N0101_N0102",
+      "video_title": "압구정_N0101_N0102",
+      "from": {
+        "node_id": "stair_004_from",
+        "node_key": 101,
+        "node_key_str": "N0101",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -179.495655,
+          70.530284,
+          0
+        ]
+      },
+      "to": {
+        "node_id": "stair_004_to",
+        "node_key": 102,
+        "node_key_str": "N0102",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -201.639849,
+          68.676649,
+          -7
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "connector",
+      "route_edge_type": "vertical",
+      "connector_type": "stair",
+      "transport_mode": "stair",
+      "used_by_count": 19,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "stair_004_edge"
+      ]
+    },
+    {
+      "edge_id": "N0102_N0061",
+      "video_title": "압구정_N0102_N0061",
+      "from": {
+        "node_id": "stair_004_to",
+        "node_key": 102,
+        "node_key_str": "N0102",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -201.639849,
+          68.676649,
+          -7
+        ]
+      },
+      "to": {
+        "node_id": "platform_002_car_1_door_3",
+        "node_key": 61,
+        "node_key_str": "N0061",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [
+          -222.291426,
+          61.521722,
+          -7
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 8,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_platform_002_car_1_door_3_to_stair_004_to_reverse"
+      ]
+    },
+    {
+      "edge_id": "N0102_N0065",
+      "video_title": "압구정_N0102_N0065",
+      "from": {
+        "node_id": "stair_004_to",
+        "node_key": 102,
+        "node_key_str": "N0102",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -201.639849,
+          68.676649,
+          -7
+        ]
+      },
+      "to": {
+        "node_id": "platform_002_car_2_door_3",
+        "node_key": 65,
+        "node_key_str": "N0065",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [
+          -204.883727,
+          61.852168,
+          -7
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 8,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_platform_002_car_2_door_3_to_stair_004_to_reverse"
+      ]
+    },
+    {
+      "edge_id": "N0011_N0118",
+      "video_title": "압구정_N0011_N0118",
+      "from": {
+        "node_id": "exit_escalator_007_from",
+        "node_key": 11,
+        "node_key_str": "N0011",
+        "type": "exit",
+        "gate_side": null,
+        "position": [
+          -52.271449,
+          34.533818,
+          0
+        ]
+      },
+      "to": {
+        "node_id": "ticket_gate_001_front_node",
+        "node_key": 118,
+        "node_key_str": "N0118",
+        "type": "gate",
+        "gate_side": "front",
+        "position": [
+          -80.02424,
+          64.531987,
+          0
+        ]
+      },
+      "from_type": "exit",
+      "to_type": "gate",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 8,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_exit_escalator_007_from_to_ticket_gate_001_front_node"
+      ]
+    },
+    {
+      "edge_id": "N0118_N0117",
+      "video_title": "압구정_N0118_N0117",
+      "from": {
+        "node_id": "ticket_gate_001_front_node",
+        "node_key": 118,
+        "node_key_str": "N0118",
+        "type": "gate",
+        "gate_side": "front",
+        "position": [
+          -80.02424,
+          64.531987,
+          0
+        ]
+      },
+      "to": {
+        "node_id": "ticket_gate_001_back_node",
+        "node_key": 117,
+        "node_key_str": "N0117",
+        "type": "gate",
+        "gate_side": "back",
+        "position": [
+          -80.093604,
+          66.530784,
+          0
+        ]
+      },
+      "from_type": "gate",
+      "to_type": "gate",
+      "route_edge_type": "gate_crossing",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 45,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "ticket_gate_001_gate_crossing"
+      ]
+    },
+    {
+      "edge_id": "N0117_N0097",
+      "video_title": "압구정_N0117_N0097",
+      "from": {
+        "node_id": "ticket_gate_001_back_node",
+        "node_key": 117,
+        "node_key_str": "N0117",
+        "type": "gate",
+        "gate_side": "back",
+        "position": [
+          -80.093604,
+          66.530784,
+          0
+        ]
+      },
+      "to": {
+        "node_id": "stair_002_from",
+        "node_key": 97,
+        "node_key_str": "N0097",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -83.966789,
+          72.872873,
+          0
+        ]
+      },
+      "from_type": "gate",
+      "to_type": "connector",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 30,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_stair_002_from_to_ticket_gate_001_back_node_reverse"
+      ]
+    },
+    {
+      "edge_id": "N0097_N0098",
+      "video_title": "압구정_N0097_N0098",
+      "from": {
+        "node_id": "stair_002_from",
+        "node_key": 97,
+        "node_key_str": "N0097",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -83.966789,
+          72.872873,
+          0
+        ]
+      },
+      "to": {
+        "node_id": "stair_002_to",
+        "node_key": 98,
+        "node_key_str": "N0098",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -103.054463,
+          70.599796,
+          -7
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "connector",
+      "route_edge_type": "vertical",
+      "connector_type": "stair",
+      "transport_mode": "stair",
+      "used_by_count": 30,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "stair_002_edge"
+      ]
+    },
+    {
+      "edge_id": "N0098_N0068",
+      "video_title": "압구정_N0098_N0068",
+      "from": {
+        "node_id": "stair_002_to",
+        "node_key": 98,
+        "node_key_str": "N0098",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -103.054463,
+          70.599796,
+          -7
+        ]
+      },
+      "to": {
+        "node_id": "platform_002_car_3_door_2",
+        "node_key": 68,
+        "node_key_str": "N0068",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [
+          -183.571086,
+          62.256528,
+          -7
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 5,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_platform_002_car_3_door_2_to_stair_002_to_reverse"
+      ]
+    },
+    {
+      "edge_id": "N0098_N0072",
+      "video_title": "압구정_N0098_N0072",
+      "from": {
+        "node_id": "stair_002_to",
+        "node_key": 98,
+        "node_key_str": "N0098",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -103.054463,
+          70.599796,
+          -7
+        ]
+      },
+      "to": {
+        "node_id": "platform_002_car_4_door_2",
+        "node_key": 72,
+        "node_key_str": "N0072",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [
+          -155.154232,
+          62.795676,
+          -7
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 5,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_platform_002_car_4_door_2_to_stair_002_to_reverse"
+      ]
+    },
+    {
+      "edge_id": "N0098_N0076",
+      "video_title": "압구정_N0098_N0076",
+      "from": {
+        "node_id": "stair_002_to",
+        "node_key": 98,
+        "node_key_str": "N0098",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -103.054463,
+          70.599796,
+          -7
+        ]
+      },
+      "to": {
+        "node_id": "platform_002_car_5_door_2",
+        "node_key": 76,
+        "node_key_str": "N0076",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [
+          -140.13023,
+          63.080868,
+          -7
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 5,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_platform_002_car_5_door_2_to_stair_002_to_reverse"
+      ]
+    },
+    {
+      "edge_id": "N0098_N0081",
+      "video_title": "압구정_N0098_N0081",
+      "from": {
+        "node_id": "stair_002_to",
+        "node_key": 98,
+        "node_key_str": "N0098",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -103.054463,
+          70.599796,
+          -7
+        ]
+      },
+      "to": {
+        "node_id": "platform_002_car_6_door_3",
+        "node_key": 81,
+        "node_key_str": "N0081",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [
+          -121.350229,
+          63.437358,
+          -7
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 5,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_platform_002_car_6_door_3_to_stair_002_to_reverse"
+      ]
+    },
+    {
+      "edge_id": "N0098_N0085",
+      "video_title": "압구정_N0098_N0085",
+      "from": {
+        "node_id": "stair_002_to",
+        "node_key": 98,
+        "node_key_str": "N0098",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -103.054463,
+          70.599796,
+          -7
+        ]
+      },
+      "to": {
+        "node_id": "platform_002_car_7_door_3",
+        "node_key": 85,
+        "node_key_str": "N0085",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [
+          -106.326227,
+          63.72255,
+          -7
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 5,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_platform_002_car_7_door_3_to_stair_002_to_reverse"
+      ]
+    },
+    {
+      "edge_id": "N0098_N0088",
+      "video_title": "압구정_N0098_N0088",
+      "from": {
+        "node_id": "stair_002_to",
+        "node_key": 98,
+        "node_key_str": "N0098",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -103.054463,
+          70.599796,
+          -7
+        ]
+      },
+      "to": {
+        "node_id": "platform_002_car_8_door_2",
+        "node_key": 88,
+        "node_key_str": "N0088",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [
+          -85.991592,
+          64.108371,
+          -7
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 5,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_platform_002_car_8_door_2_to_stair_002_to_reverse"
+      ]
+    },
+    {
+      "edge_id": "N0117_N0095",
+      "video_title": "압구정_N0117_N0095",
+      "from": {
+        "node_id": "ticket_gate_001_back_node",
+        "node_key": 117,
+        "node_key_str": "N0117",
+        "type": "gate",
+        "gate_side": "back",
+        "position": [
+          -80.093604,
+          66.530784,
+          0
+        ]
+      },
+      "to": {
+        "node_id": "stair_001_from",
+        "node_key": 95,
+        "node_key_str": "N0095",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -75.33951,
+          73.231332,
+          0
+        ]
+      },
+      "from_type": "gate",
+      "to_type": "connector",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 15,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_stair_001_from_to_ticket_gate_001_back_node_reverse"
+      ]
+    },
+    {
+      "edge_id": "N0095_N0096",
+      "video_title": "압구정_N0095_N0096",
+      "from": {
+        "node_id": "stair_001_from",
+        "node_key": 95,
+        "node_key_str": "N0095",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -75.33951,
+          73.231332,
+          0
+        ]
+      },
+      "to": {
+        "node_id": "stair_001_to",
+        "node_key": 96,
+        "node_key_str": "N0096",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -58.984847,
+          71.086348,
+          -7
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "connector",
+      "route_edge_type": "vertical",
+      "connector_type": "stair",
+      "transport_mode": "stair",
+      "used_by_count": 15,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "stair_001_edge"
+      ]
+    },
+    {
+      "edge_id": "N0096_N0092",
+      "video_title": "압구정_N0096_N0092",
+      "from": {
+        "node_id": "stair_001_to",
+        "node_key": 96,
+        "node_key_str": "N0096",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -58.984847,
+          71.086348,
+          -7
+        ]
+      },
+      "to": {
+        "node_id": "platform_002_car_9_door_2",
+        "node_key": 92,
+        "node_key_str": "N0092",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [
+          -58.878746,
+          64.6228,
+          -7
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 7,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_platform_002_car_9_door_2_to_stair_001_to_reverse"
+      ]
+    },
+    {
+      "edge_id": "N0096_N0057",
+      "video_title": "압구정_N0096_N0057",
+      "from": {
+        "node_id": "stair_001_to",
+        "node_key": 96,
+        "node_key_str": "N0096",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -58.984847,
+          71.086348,
+          -7
+        ]
+      },
+      "to": {
+        "node_id": "platform_002_car_10_door_3",
+        "node_key": 57,
+        "node_key_str": "N0057",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [
+          -34.759923,
+          65.080508,
+          -7
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 8,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_platform_002_car_10_door_3_to_stair_001_to_reverse"
+      ]
+    },
+    {
+      "edge_id": "N0006_N0122",
+      "video_title": "압구정_N0006_N0122",
+      "from": {
+        "node_id": "elevator_point_007_node",
+        "node_key": 6,
+        "node_key_str": "N0006",
+        "type": "exit_elevator",
+        "gate_side": null,
+        "position": [
+          -67.58961,
+          26.151312,
+          0
+        ]
+      },
+      "to": {
+        "node_id": "ticket_gate_003_front_node",
+        "node_key": 122,
+        "node_key_str": "N0122",
+        "type": "gate",
+        "gate_side": "front",
+        "position": [
+          -176.070986,
+          63.45804,
+          0
+        ]
+      },
+      "from_type": "exit_elevator",
+      "to_type": "gate",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 2,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_007_node_to_ticket_gate_003_front_node"
+      ]
+    },
+    {
+      "edge_id": "N0006_N0118",
+      "video_title": "압구정_N0006_N0118",
+      "from": {
+        "node_id": "elevator_point_007_node",
+        "node_key": 6,
+        "node_key_str": "N0006",
+        "type": "exit_elevator",
+        "gate_side": null,
+        "position": [
+          -67.58961,
+          26.151312,
+          0
+        ]
+      },
+      "to": {
+        "node_id": "ticket_gate_001_front_node",
+        "node_key": 118,
+        "node_key_str": "N0118",
+        "type": "gate",
+        "gate_side": "front",
+        "position": [
+          -80.02424,
+          64.531987,
+          0
+        ]
+      },
+      "from_type": "exit_elevator",
+      "to_type": "gate",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 8,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_007_node_to_ticket_gate_001_front_node"
+      ]
+    },
+    {
+      "edge_id": "N0013_N0122",
+      "video_title": "압구정_N0013_N0122",
+      "from": {
+        "node_id": "exit_stair_003_from",
+        "node_key": 13,
+        "node_key_str": "N0013",
+        "type": "exit",
+        "gate_side": null,
+        "position": [
+          -60.307834,
+          28.854407,
+          0
+        ]
+      },
+      "to": {
+        "node_id": "ticket_gate_003_front_node",
+        "node_key": 122,
+        "node_key_str": "N0122",
+        "type": "gate",
+        "gate_side": "front",
+        "position": [
+          -176.070986,
+          63.45804,
+          0
+        ]
+      },
+      "from_type": "exit",
+      "to_type": "gate",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 2,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_exit_stair_003_from_to_ticket_gate_003_front_node"
+      ]
+    },
+    {
+      "edge_id": "N0013_N0118",
+      "video_title": "압구정_N0013_N0118",
+      "from": {
+        "node_id": "exit_stair_003_from",
+        "node_key": 13,
+        "node_key_str": "N0013",
+        "type": "exit",
+        "gate_side": null,
+        "position": [
+          -60.307834,
+          28.854407,
+          0
+        ]
+      },
+      "to": {
+        "node_id": "ticket_gate_001_front_node",
+        "node_key": 118,
+        "node_key_str": "N0118",
+        "type": "gate",
+        "gate_side": "front",
+        "position": [
+          -80.02424,
+          64.531987,
+          0
+        ]
+      },
+      "from_type": "exit",
+      "to_type": "gate",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 8,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_exit_stair_003_from_to_ticket_gate_001_front_node"
+      ]
+    },
+    {
+      "edge_id": "N0005_N0122",
+      "video_title": "압구정_N0005_N0122",
+      "from": {
+        "node_id": "elevator_point_006_node",
+        "node_key": 5,
+        "node_key_str": "N0005",
+        "type": "exit_elevator",
+        "gate_side": null,
+        "position": [
+          -199.12021,
+          36.035204,
+          0
+        ]
+      },
+      "to": {
+        "node_id": "ticket_gate_003_front_node",
+        "node_key": 122,
+        "node_key_str": "N0122",
+        "type": "gate",
+        "gate_side": "front",
+        "position": [
+          -176.070986,
+          63.45804,
+          0
+        ]
+      },
+      "from_type": "exit_elevator",
+      "to_type": "gate",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 8,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_006_node_to_ticket_gate_003_front_node"
+      ]
+    },
+    {
+      "edge_id": "N0102_N0068",
+      "video_title": "압구정_N0102_N0068",
+      "from": {
+        "node_id": "stair_004_to",
+        "node_key": 102,
+        "node_key_str": "N0102",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -201.639849,
+          68.676649,
+          -7
+        ]
+      },
+      "to": {
+        "node_id": "platform_002_car_3_door_2",
+        "node_key": 68,
+        "node_key_str": "N0068",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [
+          -183.571086,
+          62.256528,
+          -7
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 3,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_platform_002_car_3_door_2_to_stair_004_to_reverse"
+      ]
+    },
+    {
+      "edge_id": "N0121_N0099",
+      "video_title": "압구정_N0121_N0099",
+      "from": {
+        "node_id": "ticket_gate_003_back_node",
+        "node_key": 121,
+        "node_key_str": "N0121",
+        "type": "gate",
+        "gate_side": "back",
+        "position": [
+          -176.107138,
+          65.457713,
+          0
+        ]
+      },
+      "to": {
+        "node_id": "stair_003_from",
+        "node_key": 99,
+        "node_key_str": "N0099",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -170.839782,
+          70.623453,
+          0
+        ]
+      },
+      "from_type": "gate",
+      "to_type": "connector",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 16,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_stair_003_from_to_ticket_gate_003_back_node_reverse"
+      ]
+    },
+    {
+      "edge_id": "N0099_N0100",
+      "video_title": "압구정_N0099_N0100",
+      "from": {
+        "node_id": "stair_003_from",
+        "node_key": 99,
+        "node_key_str": "N0099",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -170.839782,
+          70.623453,
+          0
+        ]
+      },
+      "to": {
+        "node_id": "stair_003_to",
+        "node_key": 100,
+        "node_key_str": "N0100",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -154.644554,
+          68.935906,
+          -7
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "connector",
+      "route_edge_type": "vertical",
+      "connector_type": "stair",
+      "transport_mode": "stair",
+      "used_by_count": 16,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "stair_003_edge"
+      ]
+    },
+    {
+      "edge_id": "N0100_N0072",
+      "video_title": "압구정_N0100_N0072",
+      "from": {
+        "node_id": "stair_003_to",
+        "node_key": 100,
+        "node_key_str": "N0100",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -154.644554,
+          68.935906,
+          -7
+        ]
+      },
+      "to": {
+        "node_id": "platform_002_car_4_door_2",
+        "node_key": 72,
+        "node_key_str": "N0072",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [
+          -155.154232,
+          62.795676,
+          -7
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 3,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_platform_002_car_4_door_2_to_stair_003_to_reverse"
+      ]
+    },
+    {
+      "edge_id": "N0100_N0076",
+      "video_title": "압구정_N0100_N0076",
+      "from": {
+        "node_id": "stair_003_to",
+        "node_key": 100,
+        "node_key_str": "N0100",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -154.644554,
+          68.935906,
+          -7
+        ]
+      },
+      "to": {
+        "node_id": "platform_002_car_5_door_2",
+        "node_key": 76,
+        "node_key_str": "N0076",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [
+          -140.13023,
+          63.080868,
+          -7
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 3,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_platform_002_car_5_door_2_to_stair_003_to_reverse"
+      ]
+    },
+    {
+      "edge_id": "N0100_N0081",
+      "video_title": "압구정_N0100_N0081",
+      "from": {
+        "node_id": "stair_003_to",
+        "node_key": 100,
+        "node_key_str": "N0100",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -154.644554,
+          68.935906,
+          -7
+        ]
+      },
+      "to": {
+        "node_id": "platform_002_car_6_door_3",
+        "node_key": 81,
+        "node_key_str": "N0081",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [
+          -121.350229,
+          63.437358,
+          -7
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 3,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_platform_002_car_6_door_3_to_stair_003_to_reverse"
+      ]
+    },
+    {
+      "edge_id": "N0100_N0085",
+      "video_title": "압구정_N0100_N0085",
+      "from": {
+        "node_id": "stair_003_to",
+        "node_key": 100,
+        "node_key_str": "N0100",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -154.644554,
+          68.935906,
+          -7
+        ]
+      },
+      "to": {
+        "node_id": "platform_002_car_7_door_3",
+        "node_key": 85,
+        "node_key_str": "N0085",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [
+          -106.326227,
+          63.72255,
+          -7
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 3,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_platform_002_car_7_door_3_to_stair_003_to_reverse"
+      ]
+    },
+    {
+      "edge_id": "N0100_N0088",
+      "video_title": "압구정_N0100_N0088",
+      "from": {
+        "node_id": "stair_003_to",
+        "node_key": 100,
+        "node_key_str": "N0100",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -154.644554,
+          68.935906,
+          -7
+        ]
+      },
+      "to": {
+        "node_id": "platform_002_car_8_door_2",
+        "node_key": 88,
+        "node_key_str": "N0088",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [
+          -85.991592,
+          64.108371,
+          -7
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 3,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_platform_002_car_8_door_2_to_stair_003_to_reverse"
+      ]
+    },
+    {
+      "edge_id": "N0005_N0118",
+      "video_title": "압구정_N0005_N0118",
+      "from": {
+        "node_id": "elevator_point_006_node",
+        "node_key": 5,
+        "node_key_str": "N0005",
+        "type": "exit_elevator",
+        "gate_side": null,
+        "position": [
+          -199.12021,
+          36.035204,
+          0
+        ]
+      },
+      "to": {
+        "node_id": "ticket_gate_001_front_node",
+        "node_key": 118,
+        "node_key_str": "N0118",
+        "type": "gate",
+        "gate_side": "front",
+        "position": [
+          -80.02424,
+          64.531987,
+          0
+        ]
+      },
+      "from_type": "exit_elevator",
+      "to_type": "gate",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 2,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_elevator_point_006_node_to_ticket_gate_001_front_node"
+      ]
+    },
+    {
+      "edge_id": "N0012_N0007",
+      "video_title": "압구정_N0012_N0007",
+      "from": {
+        "node_id": "exit_escalator_008_from",
+        "node_key": 12,
+        "node_key_str": "N0012",
+        "type": "exit",
+        "gate_side": null,
+        "position": [
+          -185.073453,
+          22.55141,
+          6
+        ]
+      },
+      "to": {
+        "node_id": "escalator_001_from",
+        "node_key": 7,
+        "node_key_str": "N0007",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -196.75353,
+          21.97703,
+          6
+        ]
+      },
+      "from_type": "exit",
+      "to_type": "connector",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 10,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_escalator_001_from_to_exit_escalator_008_from_reverse"
+      ]
+    },
+    {
+      "edge_id": "N0007_N0008",
+      "video_title": "압구정_N0007_N0008",
+      "from": {
+        "node_id": "escalator_001_from",
+        "node_key": 7,
+        "node_key_str": "N0007",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -196.75353,
+          21.97703,
+          6
+        ]
+      },
+      "to": {
+        "node_id": "escalator_001_to",
+        "node_key": 8,
+        "node_key_str": "N0008",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -199.483553,
+          28.494725,
+          0
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "connector",
+      "route_edge_type": "vertical",
+      "connector_type": "escalator",
+      "transport_mode": "escalator",
+      "used_by_count": 10,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "escalator_001_edge"
+      ]
+    },
+    {
+      "edge_id": "N0008_N0122",
+      "video_title": "압구정_N0008_N0122",
+      "from": {
+        "node_id": "escalator_001_to",
+        "node_key": 8,
+        "node_key_str": "N0008",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -199.483553,
+          28.494725,
+          0
+        ]
+      },
+      "to": {
+        "node_id": "ticket_gate_003_front_node",
+        "node_key": 122,
+        "node_key_str": "N0122",
+        "type": "gate",
+        "gate_side": "front",
+        "position": [
+          -176.070986,
+          63.45804,
+          0
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "gate",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 8,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_escalator_001_to_to_ticket_gate_003_front_node"
+      ]
+    },
+    {
+      "edge_id": "N0008_N0118",
+      "video_title": "압구정_N0008_N0118",
+      "from": {
+        "node_id": "escalator_001_to",
+        "node_key": 8,
+        "node_key_str": "N0008",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -199.483553,
+          28.494725,
+          0
+        ]
+      },
+      "to": {
+        "node_id": "ticket_gate_001_front_node",
+        "node_key": 118,
+        "node_key_str": "N0118",
+        "type": "gate",
+        "gate_side": "front",
+        "position": [
+          -80.02424,
+          64.531987,
+          0
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "gate",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 2,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_escalator_001_to_to_ticket_gate_001_front_node"
+      ]
+    },
+    {
+      "edge_id": "N0014_N0122",
+      "video_title": "압구정_N0014_N0122",
+      "from": {
+        "node_id": "exit_stair_004_from",
+        "node_key": 14,
+        "node_key_str": "N0014",
+        "type": "exit",
+        "gate_side": null,
+        "position": [
+          -201.133567,
+          85.791958,
+          0
+        ]
+      },
+      "to": {
+        "node_id": "ticket_gate_003_front_node",
+        "node_key": 122,
+        "node_key_str": "N0122",
+        "type": "gate",
+        "gate_side": "front",
+        "position": [
+          -176.070986,
+          63.45804,
+          0
+        ]
+      },
+      "from_type": "exit",
+      "to_type": "gate",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 9,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_exit_stair_004_from_to_ticket_gate_003_front_node"
+      ]
+    },
+    {
+      "edge_id": "N0100_N0092",
+      "video_title": "압구정_N0100_N0092",
+      "from": {
+        "node_id": "stair_003_to",
+        "node_key": 100,
+        "node_key_str": "N0100",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -154.644554,
+          68.935906,
+          -7
+        ]
+      },
+      "to": {
+        "node_id": "platform_002_car_9_door_2",
+        "node_key": 92,
+        "node_key_str": "N0092",
+        "type": "platform_position",
+        "gate_side": null,
+        "position": [
+          -58.878746,
+          64.6228,
+          -7
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "platform_position",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 1,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_platform_002_car_9_door_2_to_stair_003_to_reverse"
+      ]
+    },
+    {
+      "edge_id": "N0014_N0118",
+      "video_title": "압구정_N0014_N0118",
+      "from": {
+        "node_id": "exit_stair_004_from",
+        "node_key": 14,
+        "node_key_str": "N0014",
+        "type": "exit",
+        "gate_side": null,
+        "position": [
+          -201.133567,
+          85.791958,
+          0
+        ]
+      },
+      "to": {
+        "node_id": "ticket_gate_001_front_node",
+        "node_key": 118,
+        "node_key_str": "N0118",
+        "type": "gate",
+        "gate_side": "front",
+        "position": [
+          -80.02424,
+          64.531987,
+          0
+        ]
+      },
+      "from_type": "exit",
+      "to_type": "gate",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 1,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_exit_stair_004_from_to_ticket_gate_001_front_node"
+      ]
+    },
+    {
+      "edge_id": "N0009_N0122",
+      "video_title": "압구정_N0009_N0122",
+      "from": {
+        "node_id": "exit_escalator_005_from",
+        "node_key": 9,
+        "node_key_str": "N0009",
+        "type": "exit",
+        "gate_side": null,
+        "position": [
+          -69.629447,
+          85.221577,
+          0
+        ]
+      },
+      "to": {
+        "node_id": "ticket_gate_003_front_node",
+        "node_key": 122,
+        "node_key_str": "N0122",
+        "type": "gate",
+        "gate_side": "front",
+        "position": [
+          -176.070986,
+          63.45804,
+          0
+        ]
+      },
+      "from_type": "exit",
+      "to_type": "gate",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 2,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_exit_escalator_005_from_to_ticket_gate_003_front_node"
+      ]
+    },
+    {
+      "edge_id": "N0009_N0118",
+      "video_title": "압구정_N0009_N0118",
+      "from": {
+        "node_id": "exit_escalator_005_from",
+        "node_key": 9,
+        "node_key_str": "N0009",
+        "type": "exit",
+        "gate_side": null,
+        "position": [
+          -69.629447,
+          85.221577,
+          0
+        ]
+      },
+      "to": {
+        "node_id": "ticket_gate_001_front_node",
+        "node_key": 118,
+        "node_key_str": "N0118",
+        "type": "gate",
+        "gate_side": "front",
+        "position": [
+          -80.02424,
+          64.531987,
+          0
+        ]
+      },
+      "from_type": "exit",
+      "to_type": "gate",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 8,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_exit_escalator_005_from_to_ticket_gate_001_front_node"
+      ]
+    },
+    {
+      "edge_id": "N0010_N0114",
+      "video_title": "압구정_N0010_N0114",
+      "from": {
+        "node_id": "exit_escalator_006_from",
+        "node_key": 10,
+        "node_key_str": "N0010",
+        "type": "exit",
+        "gate_side": null,
+        "position": [
+          -29.382653,
+          103.385612,
+          -2
+        ]
+      },
+      "to": {
+        "node_id": "stair_011_to",
+        "node_key": 114,
+        "node_key_str": "N0114",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -45.952478,
+          83.444514,
+          -2
+        ]
+      },
+      "from_type": "exit",
+      "to_type": "connector",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 10,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_exit_escalator_006_from_to_stair_011_to"
+      ]
+    },
+    {
+      "edge_id": "N0114_N0113",
+      "video_title": "압구정_N0114_N0113",
+      "from": {
+        "node_id": "stair_011_to",
+        "node_key": 114,
+        "node_key_str": "N0114",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -45.952478,
+          83.444514,
+          -2
+        ]
+      },
+      "to": {
+        "node_id": "stair_011_from",
+        "node_key": 113,
+        "node_key_str": "N0113",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -55.783779,
+          83.719485,
+          0
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "connector",
+      "route_edge_type": "vertical",
+      "connector_type": "stair",
+      "transport_mode": "stair",
+      "used_by_count": 10,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "stair_011_edge_reverse"
+      ]
+    },
+    {
+      "edge_id": "N0113_N0122",
+      "video_title": "압구정_N0113_N0122",
+      "from": {
+        "node_id": "stair_011_from",
+        "node_key": 113,
+        "node_key_str": "N0113",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -55.783779,
+          83.719485,
+          0
+        ]
+      },
+      "to": {
+        "node_id": "ticket_gate_003_front_node",
+        "node_key": 122,
+        "node_key_str": "N0122",
+        "type": "gate",
+        "gate_side": "front",
+        "position": [
+          -176.070986,
+          63.45804,
+          0
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "gate",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 2,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_stair_011_from_to_ticket_gate_003_front_node"
+      ]
+    },
+    {
+      "edge_id": "N0113_N0118",
+      "video_title": "압구정_N0113_N0118",
+      "from": {
+        "node_id": "stair_011_from",
+        "node_key": 113,
+        "node_key_str": "N0113",
+        "type": "connector",
+        "gate_side": null,
+        "position": [
+          -55.783779,
+          83.719485,
+          0
+        ]
+      },
+      "to": {
+        "node_id": "ticket_gate_001_front_node",
+        "node_key": 118,
+        "node_key_str": "N0118",
+        "type": "gate",
+        "gate_side": "front",
+        "position": [
+          -80.02424,
+          64.531987,
+          0
+        ]
+      },
+      "from_type": "connector",
+      "to_type": "gate",
+      "route_edge_type": "synthetic_walk",
+      "connector_type": null,
+      "transport_mode": null,
+      "used_by_count": 8,
+      "used_by_pair_types": [
+        "exit_platform"
+      ],
+      "source_route_edge_ids": [
+        "walk_stair_011_from_to_ticket_gate_001_front_node"
+      ]
+    }
+  ],
+  "routes": [
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_007_from",
+      "start_node_key_str": "N0011",
+      "exit_number": "1",
+      "goal_node_id": "platform_002_car_1_door_3",
+      "goal_node_key_str": "N0061",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 1,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 5
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_007_from",
+      "start_node_key_str": "N0011",
+      "exit_number": "1",
+      "goal_node_id": "platform_002_car_2_door_3",
+      "goal_node_key_str": "N0065",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 2,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 1
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_007_from",
+      "start_node_key_str": "N0011",
+      "exit_number": "1",
+      "goal_node_id": "platform_002_car_3_door_2",
+      "goal_node_key_str": "N0068",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 3,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 5
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_007_from",
+      "start_node_key_str": "N0011",
+      "exit_number": "1",
+      "goal_node_id": "platform_002_car_4_door_2",
+      "goal_node_key_str": "N0072",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 4,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 1
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_007_from",
+      "start_node_key_str": "N0011",
+      "exit_number": "1",
+      "goal_node_id": "platform_002_car_5_door_2",
+      "goal_node_key_str": "N0076",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 5,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 1
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_007_from",
+      "start_node_key_str": "N0011",
+      "exit_number": "1",
+      "goal_node_id": "platform_002_car_6_door_3",
+      "goal_node_key_str": "N0081",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 6,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 1
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_007_from",
+      "start_node_key_str": "N0011",
+      "exit_number": "1",
+      "goal_node_id": "platform_002_car_7_door_3",
+      "goal_node_key_str": "N0085",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 7,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 1
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_007_from",
+      "start_node_key_str": "N0011",
+      "exit_number": "1",
+      "goal_node_id": "platform_002_car_8_door_2",
+      "goal_node_key_str": "N0088",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 8,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 1
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_007_from",
+      "start_node_key_str": "N0011",
+      "exit_number": "1",
+      "goal_node_id": "platform_002_car_9_door_2",
+      "goal_node_key_str": "N0092",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 9,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 3
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_007_from",
+      "start_node_key_str": "N0011",
+      "exit_number": "1",
+      "goal_node_id": "platform_002_car_10_door_3",
+      "goal_node_key_str": "N0057",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 10,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 1
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "elevator_point_007_node",
+      "start_node_key_str": "N0006",
+      "exit_number": "2",
+      "goal_node_id": "platform_002_car_1_door_3",
+      "goal_node_key_str": "N0061",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 1,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 1
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "elevator_point_007_node",
+      "start_node_key_str": "N0006",
+      "exit_number": "2",
+      "goal_node_id": "platform_002_car_2_door_3",
+      "goal_node_key_str": "N0065",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 2,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "elevator_point_007_node",
+      "start_node_key_str": "N0006",
+      "exit_number": "2",
+      "goal_node_id": "platform_002_car_3_door_2",
+      "goal_node_key_str": "N0068",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 3,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 1
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "elevator_point_007_node",
+      "start_node_key_str": "N0006",
+      "exit_number": "2",
+      "goal_node_id": "platform_002_car_4_door_2",
+      "goal_node_key_str": "N0072",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 4,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "elevator_point_007_node",
+      "start_node_key_str": "N0006",
+      "exit_number": "2",
+      "goal_node_id": "platform_002_car_5_door_2",
+      "goal_node_key_str": "N0076",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 5,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "elevator_point_007_node",
+      "start_node_key_str": "N0006",
+      "exit_number": "2",
+      "goal_node_id": "platform_002_car_6_door_3",
+      "goal_node_key_str": "N0081",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 6,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "elevator_point_007_node",
+      "start_node_key_str": "N0006",
+      "exit_number": "2",
+      "goal_node_id": "platform_002_car_7_door_3",
+      "goal_node_key_str": "N0085",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 7,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "elevator_point_007_node",
+      "start_node_key_str": "N0006",
+      "exit_number": "2",
+      "goal_node_id": "platform_002_car_8_door_2",
+      "goal_node_key_str": "N0088",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 8,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "elevator_point_007_node",
+      "start_node_key_str": "N0006",
+      "exit_number": "2",
+      "goal_node_id": "platform_002_car_9_door_2",
+      "goal_node_key_str": "N0092",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 9,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "elevator_point_007_node",
+      "start_node_key_str": "N0006",
+      "exit_number": "2",
+      "goal_node_id": "platform_002_car_10_door_3",
+      "goal_node_key_str": "N0057",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 10,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_stair_003_from",
+      "start_node_key_str": "N0013",
+      "exit_number": "2",
+      "goal_node_id": "platform_002_car_1_door_3",
+      "goal_node_key_str": "N0061",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 1,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 1
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_stair_003_from",
+      "start_node_key_str": "N0013",
+      "exit_number": "2",
+      "goal_node_id": "platform_002_car_2_door_3",
+      "goal_node_key_str": "N0065",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 2,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_stair_003_from",
+      "start_node_key_str": "N0013",
+      "exit_number": "2",
+      "goal_node_id": "platform_002_car_3_door_2",
+      "goal_node_key_str": "N0068",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 3,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 1
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_stair_003_from",
+      "start_node_key_str": "N0013",
+      "exit_number": "2",
+      "goal_node_id": "platform_002_car_4_door_2",
+      "goal_node_key_str": "N0072",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 4,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_stair_003_from",
+      "start_node_key_str": "N0013",
+      "exit_number": "2",
+      "goal_node_id": "platform_002_car_5_door_2",
+      "goal_node_key_str": "N0076",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 5,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_stair_003_from",
+      "start_node_key_str": "N0013",
+      "exit_number": "2",
+      "goal_node_id": "platform_002_car_6_door_3",
+      "goal_node_key_str": "N0081",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 6,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_stair_003_from",
+      "start_node_key_str": "N0013",
+      "exit_number": "2",
+      "goal_node_id": "platform_002_car_7_door_3",
+      "goal_node_key_str": "N0085",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 7,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_stair_003_from",
+      "start_node_key_str": "N0013",
+      "exit_number": "2",
+      "goal_node_id": "platform_002_car_8_door_2",
+      "goal_node_key_str": "N0088",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 8,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_stair_003_from",
+      "start_node_key_str": "N0013",
+      "exit_number": "2",
+      "goal_node_id": "platform_002_car_9_door_2",
+      "goal_node_key_str": "N0092",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 9,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_stair_003_from",
+      "start_node_key_str": "N0013",
+      "exit_number": "2",
+      "goal_node_id": "platform_002_car_10_door_3",
+      "goal_node_key_str": "N0057",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 10,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "elevator_point_006_node",
+      "start_node_key_str": "N0005",
+      "exit_number": "3",
+      "goal_node_id": "platform_002_car_1_door_3",
+      "goal_node_key_str": "N0061",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 1,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 1
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "elevator_point_006_node",
+      "start_node_key_str": "N0005",
+      "exit_number": "3",
+      "goal_node_id": "platform_002_car_2_door_3",
+      "goal_node_key_str": "N0065",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 2,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "elevator_point_006_node",
+      "start_node_key_str": "N0005",
+      "exit_number": "3",
+      "goal_node_id": "platform_002_car_3_door_2",
+      "goal_node_key_str": "N0068",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 3,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 1
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "elevator_point_006_node",
+      "start_node_key_str": "N0005",
+      "exit_number": "3",
+      "goal_node_id": "platform_002_car_4_door_2",
+      "goal_node_key_str": "N0072",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 4,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 3
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "elevator_point_006_node",
+      "start_node_key_str": "N0005",
+      "exit_number": "3",
+      "goal_node_id": "platform_002_car_5_door_2",
+      "goal_node_key_str": "N0076",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 5,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 1
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "elevator_point_006_node",
+      "start_node_key_str": "N0005",
+      "exit_number": "3",
+      "goal_node_id": "platform_002_car_6_door_3",
+      "goal_node_key_str": "N0081",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 6,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 1
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "elevator_point_006_node",
+      "start_node_key_str": "N0005",
+      "exit_number": "3",
+      "goal_node_id": "platform_002_car_7_door_3",
+      "goal_node_key_str": "N0085",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 7,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 1
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "elevator_point_006_node",
+      "start_node_key_str": "N0005",
+      "exit_number": "3",
+      "goal_node_id": "platform_002_car_8_door_2",
+      "goal_node_key_str": "N0088",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 8,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 1
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "elevator_point_006_node",
+      "start_node_key_str": "N0005",
+      "exit_number": "3",
+      "goal_node_id": "platform_002_car_9_door_2",
+      "goal_node_key_str": "N0092",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 9,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 1
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "elevator_point_006_node",
+      "start_node_key_str": "N0005",
+      "exit_number": "3",
+      "goal_node_id": "platform_002_car_10_door_3",
+      "goal_node_key_str": "N0057",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 10,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_008_from",
+      "start_node_key_str": "N0012",
+      "exit_number": "3",
+      "goal_node_id": "platform_002_car_1_door_3",
+      "goal_node_key_str": "N0061",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 1,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 3
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_008_from",
+      "start_node_key_str": "N0012",
+      "exit_number": "3",
+      "goal_node_id": "platform_002_car_2_door_3",
+      "goal_node_key_str": "N0065",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 2,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_008_from",
+      "start_node_key_str": "N0012",
+      "exit_number": "3",
+      "goal_node_id": "platform_002_car_3_door_2",
+      "goal_node_key_str": "N0068",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 3,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_008_from",
+      "start_node_key_str": "N0012",
+      "exit_number": "3",
+      "goal_node_id": "platform_002_car_4_door_2",
+      "goal_node_key_str": "N0072",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 4,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_008_from",
+      "start_node_key_str": "N0012",
+      "exit_number": "3",
+      "goal_node_id": "platform_002_car_5_door_2",
+      "goal_node_key_str": "N0076",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 5,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_008_from",
+      "start_node_key_str": "N0012",
+      "exit_number": "3",
+      "goal_node_id": "platform_002_car_6_door_3",
+      "goal_node_key_str": "N0081",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 6,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_008_from",
+      "start_node_key_str": "N0012",
+      "exit_number": "3",
+      "goal_node_id": "platform_002_car_7_door_3",
+      "goal_node_key_str": "N0085",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 7,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_008_from",
+      "start_node_key_str": "N0012",
+      "exit_number": "3",
+      "goal_node_id": "platform_002_car_8_door_2",
+      "goal_node_key_str": "N0088",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 8,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_008_from",
+      "start_node_key_str": "N0012",
+      "exit_number": "3",
+      "goal_node_id": "platform_002_car_9_door_2",
+      "goal_node_key_str": "N0092",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 9,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 1
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_008_from",
+      "start_node_key_str": "N0012",
+      "exit_number": "3",
+      "goal_node_id": "platform_002_car_10_door_3",
+      "goal_node_key_str": "N0057",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 10,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_stair_004_from",
+      "start_node_key_str": "N0014",
+      "exit_number": "4",
+      "goal_node_id": "platform_002_car_1_door_3",
+      "goal_node_key_str": "N0061",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 1,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 1
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_stair_004_from",
+      "start_node_key_str": "N0014",
+      "exit_number": "4",
+      "goal_node_id": "platform_002_car_2_door_3",
+      "goal_node_key_str": "N0065",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 2,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_stair_004_from",
+      "start_node_key_str": "N0014",
+      "exit_number": "4",
+      "goal_node_id": "platform_002_car_3_door_2",
+      "goal_node_key_str": "N0068",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 3,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_stair_004_from",
+      "start_node_key_str": "N0014",
+      "exit_number": "4",
+      "goal_node_id": "platform_002_car_4_door_2",
+      "goal_node_key_str": "N0072",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 4,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_stair_004_from",
+      "start_node_key_str": "N0014",
+      "exit_number": "4",
+      "goal_node_id": "platform_002_car_5_door_2",
+      "goal_node_key_str": "N0076",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 5,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_stair_004_from",
+      "start_node_key_str": "N0014",
+      "exit_number": "4",
+      "goal_node_id": "platform_002_car_6_door_3",
+      "goal_node_key_str": "N0081",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 6,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_stair_004_from",
+      "start_node_key_str": "N0014",
+      "exit_number": "4",
+      "goal_node_id": "platform_002_car_7_door_3",
+      "goal_node_key_str": "N0085",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 7,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_stair_004_from",
+      "start_node_key_str": "N0014",
+      "exit_number": "4",
+      "goal_node_id": "platform_002_car_8_door_2",
+      "goal_node_key_str": "N0088",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 8,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_stair_004_from",
+      "start_node_key_str": "N0014",
+      "exit_number": "4",
+      "goal_node_id": "platform_002_car_9_door_2",
+      "goal_node_key_str": "N0092",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 9,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 1
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_stair_004_from",
+      "start_node_key_str": "N0014",
+      "exit_number": "4",
+      "goal_node_id": "platform_002_car_10_door_3",
+      "goal_node_key_str": "N0057",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 10,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 1
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_005_from",
+      "start_node_key_str": "N0009",
+      "exit_number": "5",
+      "goal_node_id": "platform_002_car_1_door_3",
+      "goal_node_key_str": "N0061",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 1,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 1
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_005_from",
+      "start_node_key_str": "N0009",
+      "exit_number": "5",
+      "goal_node_id": "platform_002_car_2_door_3",
+      "goal_node_key_str": "N0065",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 2,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_005_from",
+      "start_node_key_str": "N0009",
+      "exit_number": "5",
+      "goal_node_id": "platform_002_car_3_door_2",
+      "goal_node_key_str": "N0068",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 3,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 1
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_005_from",
+      "start_node_key_str": "N0009",
+      "exit_number": "5",
+      "goal_node_id": "platform_002_car_4_door_2",
+      "goal_node_key_str": "N0072",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 4,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_005_from",
+      "start_node_key_str": "N0009",
+      "exit_number": "5",
+      "goal_node_id": "platform_002_car_5_door_2",
+      "goal_node_key_str": "N0076",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 5,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_005_from",
+      "start_node_key_str": "N0009",
+      "exit_number": "5",
+      "goal_node_id": "platform_002_car_6_door_3",
+      "goal_node_key_str": "N0081",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 6,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_005_from",
+      "start_node_key_str": "N0009",
+      "exit_number": "5",
+      "goal_node_id": "platform_002_car_7_door_3",
+      "goal_node_key_str": "N0085",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 7,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_005_from",
+      "start_node_key_str": "N0009",
+      "exit_number": "5",
+      "goal_node_id": "platform_002_car_8_door_2",
+      "goal_node_key_str": "N0088",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 8,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_005_from",
+      "start_node_key_str": "N0009",
+      "exit_number": "5",
+      "goal_node_id": "platform_002_car_9_door_2",
+      "goal_node_key_str": "N0092",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 9,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_005_from",
+      "start_node_key_str": "N0009",
+      "exit_number": "5",
+      "goal_node_id": "platform_002_car_10_door_3",
+      "goal_node_key_str": "N0057",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 10,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_006_from",
+      "start_node_key_str": "N0010",
+      "exit_number": "6",
+      "goal_node_id": "platform_002_car_1_door_3",
+      "goal_node_key_str": "N0061",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 1,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 3
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_006_from",
+      "start_node_key_str": "N0010",
+      "exit_number": "6",
+      "goal_node_id": "platform_002_car_2_door_3",
+      "goal_node_key_str": "N0065",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 2,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_006_from",
+      "start_node_key_str": "N0010",
+      "exit_number": "6",
+      "goal_node_id": "platform_002_car_3_door_2",
+      "goal_node_key_str": "N0068",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 3,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 1
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_006_from",
+      "start_node_key_str": "N0010",
+      "exit_number": "6",
+      "goal_node_id": "platform_002_car_4_door_2",
+      "goal_node_key_str": "N0072",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 4,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_006_from",
+      "start_node_key_str": "N0010",
+      "exit_number": "6",
+      "goal_node_id": "platform_002_car_5_door_2",
+      "goal_node_key_str": "N0076",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 5,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_006_from",
+      "start_node_key_str": "N0010",
+      "exit_number": "6",
+      "goal_node_id": "platform_002_car_6_door_3",
+      "goal_node_key_str": "N0081",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 6,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_006_from",
+      "start_node_key_str": "N0010",
+      "exit_number": "6",
+      "goal_node_id": "platform_002_car_7_door_3",
+      "goal_node_key_str": "N0085",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 7,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_006_from",
+      "start_node_key_str": "N0010",
+      "exit_number": "6",
+      "goal_node_id": "platform_002_car_8_door_2",
+      "goal_node_key_str": "N0088",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 8,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_006_from",
+      "start_node_key_str": "N0010",
+      "exit_number": "6",
+      "goal_node_id": "platform_002_car_9_door_2",
+      "goal_node_key_str": "N0092",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 9,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    },
+    {
+      "type": "exit_platform",
+      "route_preference": "none",
+      "start_node_id": "exit_escalator_006_from",
+      "start_node_key_str": "N0010",
+      "exit_number": "6",
+      "goal_node_id": "platform_002_car_10_door_3",
+      "goal_node_key_str": "N0057",
+      "line_id": "3호선",
+      "direction": "신사",
+      "car": 10,
+      "cost": null,
+      "edge_ids": [],
+      "new_edge_count": 0
+    }
+  ],
+  "route_failures": []
+}
