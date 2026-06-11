@@ -3,6 +3,7 @@ import shutil
 
 from route_server.app.config import settings
 from route_server.app.json_utils import load_json, save_json
+from route_server.app.station_aliases import station_alias_tokens
 
 
 def safe_path_part(value):
@@ -41,10 +42,24 @@ def save_station_index(index):
 
 def find_station(station_id):
     """Find one station record by id."""
-    for station in load_station_index().get("stations", []):
+    stations = load_station_index().get("stations", [])
+    for station in stations:
         if str(station.get("station_id")) == str(station_id):
             return station
+    requested_tokens = station_alias_tokens(station_id)
+    for station in stations:
+        station_tokens = station_alias_tokens(station.get("station_id"), station.get("station_name"))
+        if requested_tokens & station_tokens:
+            return station
     return None
+
+
+def resolve_station_id(station_id):
+    """Resolve a station id or alias using stations.json."""
+    station = find_station(station_id)
+    if station:
+        return str(station.get("station_id"))
+    return str(station_id)
 
 
 def upsert_station(metadata):
@@ -69,6 +84,7 @@ def active_version(station):
 
 def station_files(station_id, version=None):
     """Return core JSON paths for a station version."""
+    station_id = resolve_station_id(station_id)
     station = find_station(station_id)
     selected_version = str(version or active_version(station or {"version": "v001"}))
     root = version_dir(station_id, selected_version)

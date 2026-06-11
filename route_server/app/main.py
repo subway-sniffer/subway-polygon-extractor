@@ -12,6 +12,7 @@ from route_server.app.indexing import (
     active_version_for_station,
     db_facility_nodes,
     db_route_options,
+    resolve_station_id,
     resolve_route_endpoint_db,
     station_row,
     station_rows,
@@ -186,6 +187,7 @@ def stations():
 @app.get("/stations/{station_id}")
 def station_detail(station_id: str):
     """Return one registered station."""
+    station_id = resolve_station_id(station_id)
     station = station_row(station_id)
     if not station:
         raise HTTPException(status_code=404, detail="station not found")
@@ -205,6 +207,7 @@ def station_detail(station_id: str):
 @app.get("/stations/{station_id}/nodes")
 def station_nodes(station_id: str, version: str | None = None):
     """Return compact route nodes for debugging and admin UI."""
+    station_id = resolve_station_id(station_id)
     try:
         _, graph, _ = load_station_package(station_id, version)
     except FileNotFoundError as exc:
@@ -215,6 +218,7 @@ def station_nodes(station_id: str, version: str | None = None):
 @app.get("/stations/{station_id}/image")
 def station_image(station_id: str, version: str | None = None):
     """Return the stored station guide image."""
+    station_id = resolve_station_id(station_id)
     try:
         selected_version = active_version_for_station(station_id, version)
     except KeyError as exc:
@@ -228,6 +232,7 @@ def station_image(station_id: str, version: str | None = None):
 @app.get("/stations/{station_id}/route-options")
 def station_route_options(station_id: str, version: str | None = None):
     """Return app-facing route options such as platform cars and exits."""
+    station_id = resolve_station_id(station_id)
     try:
         metadata, _, _ = load_station_package(station_id, version)
         options = db_route_options(station_id, version)
@@ -240,18 +245,19 @@ def station_route_options(station_id: str, version: str | None = None):
 def route(request_data: RouteRequest, request: Request):
     """Find a route and return matching pre-rendered video edges."""
     try:
-        version = active_version_for_station(request_data.station_id, request_data.version)
-        metadata, graph, _ = load_station_package(request_data.station_id, version)
+        station_id = resolve_station_id(request_data.station_id)
+        version = active_version_for_station(station_id, request_data.version)
+        metadata, graph, _ = load_station_package(station_id, version)
         start_endpoint = request_data.start.model_dump() if hasattr(request_data.start, "model_dump") else request_data.start
         goal_endpoint = request_data.goal.model_dump() if hasattr(request_data.goal, "model_dump") else request_data.goal
         start = resolve_route_endpoint_db(
-            request_data.station_id,
+            station_id,
             version,
             start_endpoint,
             route_preference=request_data.route_preference,
         )
         goal = resolve_route_endpoint_db(
-            request_data.station_id,
+            station_id,
             version,
             goal_endpoint,
             route_preference=request_data.route_preference,
@@ -265,7 +271,7 @@ def route(request_data: RouteRequest, request: Request):
         )
         if request_data.include_toilet:
             toilet_nodes = db_facility_nodes(
-                request_data.station_id,
+                station_id,
                 version,
                 facility_type="toilet",
                 facility_subtypes=toilet_subtypes_for_request(request_data.toilet_gender),
@@ -273,15 +279,15 @@ def route(request_data: RouteRequest, request: Request):
             result = best_toilet_route(graph, start, goal, toilet_nodes, route_options)
         else:
             result = build_route_result(graph, start, goal, **route_options)
-        video_matches, missing_videos = match_route_videos_db(request_data.station_id, version, metadata, graph, result)
+        video_matches, missing_videos = match_route_videos_db(station_id, version, metadata, graph, result)
     except (FileNotFoundError, KeyError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     segments = route_segments(result, video_matches)
     return {
-        "station_id": request_data.station_id,
+        "station_id": station_id,
         "version": version,
         "segments": segments,
-        "overlay": route_overlay(result, request, request_data.station_id, version),
+        "overlay": route_overlay(result, request, station_id, version),
         "debug": {
             "start_node": start,
             "goal_node": goal,

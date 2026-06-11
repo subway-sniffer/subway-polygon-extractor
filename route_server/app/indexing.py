@@ -1,5 +1,6 @@
 from pipeline.route_edge_planner import exit_route_nodes, platform_car_representatives
 from route_server.app.db import connect, from_json_text, row_to_dict
+from route_server.app.station_aliases import station_alias_tokens
 
 
 def normalize_text(value):
@@ -7,10 +8,29 @@ def normalize_text(value):
     return str(value or "").strip()
 
 
+def resolve_station_id(station_id):
+    """Resolve a station id or alias to a registered canonical station id."""
+    requested = str(station_id)
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT station_id, station_name FROM stations ORDER BY station_name, station_id"
+        ).fetchall()
+    for row in rows:
+        if str(row["station_id"]) == requested:
+            return str(row["station_id"])
+    requested_tokens = station_alias_tokens(requested)
+    for row in rows:
+        row_tokens = station_alias_tokens(row["station_id"], row["station_name"])
+        if requested_tokens & row_tokens:
+            return str(row["station_id"])
+    return requested
+
+
 def active_version_for_station(station_id, version=None):
     """Return the active or requested version for a station."""
     if version:
         return str(version)
+    station_id = resolve_station_id(station_id)
     with connect() as conn:
         row = conn.execute("SELECT active_version FROM stations WHERE station_id = ?", (str(station_id),)).fetchone()
     if not row:
@@ -35,6 +55,7 @@ def station_rows():
 
 def station_row(station_id):
     """Return one station row from SQLite."""
+    station_id = resolve_station_id(station_id)
     with connect() as conn:
         row = conn.execute(
             "SELECT station_id, station_name, line_ids_json, active_version, updated_at FROM stations WHERE station_id = ?",
@@ -50,6 +71,7 @@ def station_row(station_id):
 
 def station_version_row(station_id, version=None):
     """Return one station version row from SQLite."""
+    station_id = resolve_station_id(station_id)
     selected_version = active_version_for_station(station_id, version)
     with connect() as conn:
         row = conn.execute(
@@ -67,6 +89,7 @@ def station_version_row(station_id, version=None):
 
 def db_route_options(station_id, version=None):
     """Build app-facing route options from SQLite indexes."""
+    station_id = resolve_station_id(station_id)
     selected_version = active_version_for_station(station_id, version)
     with connect() as conn:
         platform_rows = conn.execute(
@@ -135,6 +158,7 @@ def db_route_options(station_id, version=None):
 
 def db_platform_node(station_id, version=None, line_id=None, direction=None, platform_id=None, car=None):
     """Resolve a platform endpoint from SQLite indexes."""
+    station_id = resolve_station_id(station_id)
     selected_version = active_version_for_station(station_id, version)
     clauses = ["station_id = ?", "version = ?"]
     params = [str(station_id), selected_version]
@@ -162,6 +186,7 @@ def db_platform_node(station_id, version=None, line_id=None, direction=None, pla
 
 def db_exit_node(station_id, version=None, exit_number=None, route_preference="none"):
     """Resolve an exit endpoint from SQLite indexes."""
+    station_id = resolve_station_id(station_id)
     selected_version = active_version_for_station(station_id, version)
     preference = normalize_text(route_preference).lower()
     if preference == "elevator":
@@ -196,6 +221,7 @@ def db_exit_node(station_id, version=None, exit_number=None, route_preference="n
 
 def db_facility_node(station_id, version=None, facility_type=None, facility_subtype=None, label=None):
     """Resolve a facility endpoint from SQLite indexes."""
+    station_id = resolve_station_id(station_id)
     selected_version = active_version_for_station(station_id, version)
     clauses = ["station_id = ?", "version = ?", "facility_type = ?"]
     params = [str(station_id), selected_version, str(facility_type)]
@@ -217,6 +243,7 @@ def db_facility_node(station_id, version=None, facility_type=None, facility_subt
 
 def db_facility_nodes(station_id, version=None, facility_type=None, facility_subtypes=None):
     """Return matching facility node ids from SQLite indexes."""
+    station_id = resolve_station_id(station_id)
     selected_version = active_version_for_station(station_id, version)
     clauses = ["station_id = ?", "version = ?", "facility_type = ?"]
     params = [str(station_id), selected_version, str(facility_type)]
