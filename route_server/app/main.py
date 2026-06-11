@@ -261,8 +261,8 @@ def draw_route_preview(image_path, points, padding):
     draw = ImageDraw.Draw(crop)
     translated = [(x - left, y - top) for x, y in points]
     if len(translated) >= 2:
-        draw.line(translated, fill=(255, 122, 0), width=6)
-        draw.line(translated, fill=(255, 255, 255), width=2)
+        draw.line(translated, fill=(120, 0, 0), width=9)
+        draw.line(translated, fill=(255, 30, 30), width=5)
     for index, point in enumerate(translated):
         x, y = point
         color = (0, 160, 80)
